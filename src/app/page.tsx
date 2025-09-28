@@ -13,15 +13,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      <section className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white">
-        <Image
-            src={heroImageUrl}
-            alt="A beautiful sunset over a calm lake, with mountains in the background."
-            fill
-            className="object-cover"
-            data-ai-hint="sunset lake"
-            priority
-          />
+      <section 
+        className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white bg-cover bg-center"
+        style={{ backgroundImage: `url('${heroImageUrl}')` }}
+      >
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 p-6 max-w-4xl mx-auto bg-white/10 rounded-xl shadow-lg border border-white/20 backdrop-blur-lg">
           <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg">
