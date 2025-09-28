@@ -10,7 +10,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 export default function Home() {
   const featuredCamps = upcomingCamps.slice(0, 3);
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-sunset');
-  const heroImageUrl = heroImage ? heroImage.imageUrl : "https://images.unsplash.com/photo-1505881502628-ac0bf1ae3e2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjYW1wZmlyZXxlbnwwfHx8fDE3NjAyOTE5ODV8MA&ixlib=rb-4.1.0&q=80&w=1080";
+  const heroImageUrl = heroImage ? heroImage.imageUrl : "https://images.unsplash.com/photo-1476610182048-b716b8518a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdW5zZXQlMjBsYWtlfGVufDB8fHx8MTc1OTA1NjIxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
