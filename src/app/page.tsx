@@ -30,7 +30,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105"
+              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/camps">Explore Camps</Link>
             </Button>

@@ -4,19 +4,19 @@
 
 @layer base {
   :root {
-    --background: 25 100% 90%;
+    --background: 35 100% 90%;
     --foreground: 25 25% 15%;
-    --card: 25 100% 95%;
+    --card: 35 100% 95%;
     --card-foreground: 25 25% 15%;
-    --popover: 25 100% 95%;
+    --popover: 35 100% 95%;
     --popover-foreground: 25 25% 15%;
-    --primary: 35 95% 55%;
+    --primary: 120 70% 30%; /* Forest Green */
     --primary-foreground: 0 0% 100%;
     --secondary: 260 100% 70%;
     --secondary-foreground: 0 0% 100%;
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
-    --accent: 330 90% 65%;
+    --accent: 25 95% 55%; /* Burnt Orange */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -46,13 +46,13 @@
     --card-foreground: 0 0% 98%;
     --popover: 260 50% 12%;
     --popover-foreground: 0 0% 98%;
-    --primary: 35 100% 60%;
+    --primary: 120 70% 30%; /* Forest Green */
     --primary-foreground: 0 0% 100%;
     --secondary: 260 100% 75%;
     --secondary-foreground: 0 0% 100%;
     --muted: 240 4% 16%;
     --muted-foreground: 240 5% 65%;
-    --accent: 330 95% 70%;
+    --accent: 25 95% 55%; /* Burnt Orange */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -94,6 +94,9 @@
   }
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+  .bg-green-gradient {
+    @apply bg-gradient-to-r from-green-500 to-green-700;
   }
 }
 
