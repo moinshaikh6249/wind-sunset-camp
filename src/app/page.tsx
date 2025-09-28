@@ -8,22 +8,20 @@ import { upcomingCamps } from "@/lib/mock-data";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-sunset");
   const featuredCamps = upcomingCamps.slice(0, 3);
+  const heroImageUrl = "https://images.unsplash.com/photo-1476610182048-b716b8518a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdW5zZXQlMjBsYWtlfGVufDB8fHx8MTc1OTA1NjIxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
       <section className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
+        <Image
+            src={heroImageUrl}
+            alt="A beautiful sunset over a calm lake, with mountains in the background."
             fill
             className="object-cover"
-            data-ai-hint={heroImage.imageHint}
+            data-ai-hint="sunset lake"
             priority
           />
-        )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 p-6 max-w-4xl mx-auto bg-white/10 rounded-xl shadow-lg border border-white/20 backdrop-blur-lg">
           <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg">
