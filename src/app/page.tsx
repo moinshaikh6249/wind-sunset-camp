@@ -23,8 +23,8 @@ export default function Home() {
             priority
           />
         )}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 p-4 max-w-4xl mx-auto">
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 p-6 max-w-4xl mx-auto bg-white/10 rounded-xl shadow-lg border border-white/20 backdrop-blur-lg">
           <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg">
             Rediscover the Wild
           </h1>
