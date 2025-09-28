@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Sunset Camp",
-  description: "Your next adventure awaits at Sunset Camp.",
+  title: "Wind & Sunset Camp",
+  description: "Your next adventure awaits at Wind & Sunset Camp.",
 };
 
 export default function RootLayout({

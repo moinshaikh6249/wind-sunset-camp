@@ -23,7 +23,7 @@ export default function Home() {
             Rediscover the Wild
           </h1>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto drop-shadow-md font-body">
-            Unforgettable camping experiences under the stars. Join us at Sunset
+            Unforgettable camping experiences under the stars. Join us at Wind & Sunset
             Camp for an adventure that renews your spirit.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -52,7 +52,7 @@ export default function Home() {
             An Adventure for Everyone
           </h2>
           <p className="max-w-3xl mx-auto text-muted-foreground mb-12">
-            Whether you&apos;re a seasoned explorer or a first-time camper, Sunset
+            Whether you&apos;re a seasoned explorer or a first-time camper, Wind & Sunset
             Camp offers a unique blend of adventure, relaxation, and connection
             with nature.
           </p>

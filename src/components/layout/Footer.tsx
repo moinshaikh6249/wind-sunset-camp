@@ -52,7 +52,7 @@ export function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Sunset Camp. All rights reserved.
+            &copy; {new Date().getFullYear()} Wind & Sunset Camp. All rights reserved.
           </p>
         </div>
       </div>

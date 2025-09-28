@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,7 +86,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-headline text-xl text-gradient">Email Us</h3>
-                <a href="mailto:hello@sunsetcamp.com" className="text-muted-foreground hover:text-accent transition-colors">hello@sunsetcamp.com</a>
+                <a href="mailto:hello@windsunsetcamp.com" className="text-muted-foreground hover:text-accent transition-colors">hello@windsunsetcamp.com</a>
               </div>
             </div>
             <div className="flex items-start gap-4">

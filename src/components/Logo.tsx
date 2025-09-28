@@ -8,7 +8,7 @@ export function Logo() {
       className="flex items-center gap-2 text-2xl font-headline font-bold"
     >
       <Sunset className="h-7 w-7 text-accent dark:icon-glow" />
-      <span className="text-gradient dark:text-glow">Sunset Camp</span>
+      <span className="text-gradient dark:text-glow">Wind & Sunset Camp</span>
     </Link>
   );
 }

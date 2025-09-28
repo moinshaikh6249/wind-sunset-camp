@@ -8,7 +8,7 @@ export default function GalleryPage() {
             <div className="text-center max-w-4xl mx-auto mb-12">
                 <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">Camp Gallery</h1>
                 <p className="text-lg text-muted-foreground">
-                A glimpse into the adventures and serene moments at Sunset Camp.
+                A glimpse into the adventures and serene moments at Wind & Sunset Camp.
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

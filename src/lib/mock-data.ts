@@ -14,7 +14,7 @@ export const teamMembers = [
   {
     name: 'Alex Johnson',
     role: 'Founder & Lead Guide',
-    bio: 'Alex founded Sunset Camp with the vision of sharing the transformative power of nature. An expert survivalist and storyteller.',
+    bio: 'Alex founded Wind & Sunset Camp with the vision of sharing the transformative power of nature. An expert survivalist and storyteller.',
     image: findImage('team-1'),
   },
   {

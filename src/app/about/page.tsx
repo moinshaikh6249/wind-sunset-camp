@@ -11,7 +11,7 @@ export default function AboutPage() {
             Our Story
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Sunset Camp was born from a simple yet profound love for the great
+            Wind & Sunset Camp was born from a simple yet profound love for the great
             outdoors. We believe that spending time in nature is not just a
             leisure activity, but a vital practice for well-being, connection,
             and personal growth.
