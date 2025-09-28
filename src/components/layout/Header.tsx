@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
@@ -16,7 +17,7 @@ export function Header() {
         <DesktopNav />
         <div className="flex flex-1 items-center justify-end gap-4">
           <ThemeToggle />
-          <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90">
+          <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 transition-transform duration-200 transform hover:scale-105">
             <Link href="/booking">Book Now</Link>
           </Button>
           <Sheet>

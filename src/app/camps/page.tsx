@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import {
   Card,
@@ -60,7 +61,7 @@ export default function CampsPage() {
                     {camp.description}
                   </p>
                   <div className="mt-auto">
-                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground transform hover:scale-105 transition-transform duration-200">
+                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105">
                       <Link href={`/booking?camp=${encodeURIComponent(camp.name)}`}>Book This Camp</Link>
                     </Button>
                   </div>

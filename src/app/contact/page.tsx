@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -157,7 +158,7 @@ export default function ContactPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={form.formState.isSubmitting}>
+                <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>

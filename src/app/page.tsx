@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ export default function Home() {
             <Button
               asChild
               variant="link"
-              className="text-accent hover:text-accent/80 font-bold"
+              className="text-accent hover:text-accent/80 font-bold transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/camps">
                 View All <ArrowRight className="ml-2 h-4 w-4" />
@@ -142,7 +143,7 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-4 flex-grow">
                     {camp.description}
                   </p>
-                  <Button asChild className="w-full mt-auto">
+                  <Button asChild className="w-full mt-auto transition-transform duration-200 transform hover:scale-105">
                     <Link href={`/camps#${camp.id}`}>Learn More</Link>
                   </Button>
                 </CardContent>
