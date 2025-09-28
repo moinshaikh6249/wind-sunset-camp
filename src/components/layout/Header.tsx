@@ -15,10 +15,13 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Logo />
         <DesktopNav />
-        <div className="flex flex-1 items-center justify-end gap-4">
+        <div className="flex flex-1 items-center justify-end gap-2">
           <ThemeToggle />
-          <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 transition-transform duration-200 transform hover:scale-105">
+          <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
             <Link href="/booking">Book Now</Link>
+          </Button>
+          <Button asChild variant="ghost" className="hidden md:flex">
+             <Link href="/contact">Contact Us</Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild className="md:hidden">

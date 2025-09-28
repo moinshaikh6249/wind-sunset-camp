@@ -3,13 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { upcomingCamps } from "@/lib/mock-data";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
 
 export default function Home() {
   const featuredCamps = upcomingCamps.slice(0, 3);
-  const heroImageUrl = "https://images.unsplash.com/photo-1496545672447-f699b503d270?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYW1wZmlyZSUyMG5pZ2h0fGVufDB8fHx8MTc1ODk4ODQ5Nnww&ixlib=rb-4.1.0&q=80&w=1080";
+  const heroImageUrl = "https://images.unsplash.com/photo-1476610182048-b716b8518a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdW5zZXQlMjBsYWtlfGVufDB8fHx8MTc1OTA1NjIxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
@@ -17,30 +16,37 @@ export default function Home() {
         className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white bg-cover bg-center"
         style={{ backgroundImage: `url('${heroImageUrl}')` }}
       >
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 p-6 max-w-4xl mx-auto bg-white/10 rounded-xl shadow-lg border border-white/20 backdrop-blur-lg">
-          <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg text-gradient">
-            Rediscover the Wild
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 p-6 max-w-4xl mx-auto">
+          <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white drop-shadow-lg">
+            Adventure Under the Open Sky
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto drop-shadow-md font-body">
-            Unforgettable camping experiences under the stars. Join us at Wind & Sunset
-            Camp for an adventure that renews your spirit.
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto drop-shadow-md font-body text-gray-200">
+            Join us at Wind & Sunset Camp for an adventure that renews your spirit.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               asChild
               size="lg"
-              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105"
             >
-              <Link href="/camps">Explore Camps</Link>
+              <Link href="/camps">View Camps</Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="secondary"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105"
+            >
+              <Link href="/booking">Book Now</Link>
             </Button>
             <Button
               asChild
               size="lg"
               variant="outline"
-              className="bg-transparent border-white text-white hover:bg-white hover:text-primary transition-all duration-200 transform hover:scale-105"
+              className="border-white text-white hover:bg-white/10 transition-all duration-200 transform hover:scale-105"
             >
-              <Link href="/booking">Book Your Stay</Link>
+              <Link href="/contact">Contact Us</Link>
             </Button>
           </div>
         </div>
@@ -48,7 +54,7 @@ export default function Home() {
 
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4 text-gradient">
+          <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
             An Adventure for Everyone
           </h2>
           <p className="max-w-3xl mx-auto text-muted-foreground mb-12">
@@ -61,7 +67,7 @@ export default function Home() {
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Mountain className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2 font-headline text-gradient">
+              <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Expert-Led Expeditions
               </h3>
               <p className="text-muted-foreground">
@@ -73,7 +79,7 @@ export default function Home() {
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Sun className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2 font-headline text-gradient">
+              <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Stunning Locations
               </h3>
               <p className="text-muted-foreground">
@@ -85,7 +91,7 @@ export default function Home() {
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <UsersRound className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2 font-headline text-gradient">
+              <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Community & Connection
               </h3>
               <p className="text-muted-foreground">
@@ -96,10 +102,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-secondary/20">
+      <section className="py-16 md:py-24 bg-card">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="font-headline text-3xl md:text-4xl text-gradient">
+            <h2 className="font-headline text-3xl md:text-4xl text-primary">
               Upcoming Camps
             </h2>
             <Button
@@ -116,7 +122,7 @@ export default function Home() {
             {featuredCamps.map((camp) => (
               <Card
                 key={camp.id}
-                className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1"
+                className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1 bg-background"
               >
                 {camp.image && (
                   <div className="relative h-48 w-full">
@@ -130,13 +136,13 @@ export default function Home() {
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="font-headline text-gradient">{camp.name}</CardTitle>
+                  <CardTitle className="font-headline text-primary">{camp.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col">
                   <p className="text-sm text-muted-foreground mb-4 flex-grow">
                     {camp.description}
                   </p>
-                  <Button asChild className="w-full mt-auto transition-transform duration-200 transform hover:scale-105">
+                  <Button asChild className="w-full mt-auto bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
                     <Link href={`/camps#${camp.id}`}>Learn More</Link>
                   </Button>
                 </CardContent>

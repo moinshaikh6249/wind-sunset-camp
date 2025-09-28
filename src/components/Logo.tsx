@@ -5,10 +5,10 @@ export function Logo() {
   return (
     <Link
       href="/"
-      className="flex items-center gap-2 text-2xl font-headline font-bold"
+      className="flex items-center gap-2 text-2xl font-headline font-bold text-foreground"
     >
-      <Flame className="h-7 w-7 text-accent dark:icon-glow" />
-      <span className="text-gradient dark:text-glow">Wind & Sunset Camp</span>
+      <Flame className="h-7 w-7 text-accent" />
+      <span>Wind & Sunset Camp</span>
     </Link>
   );
 }
