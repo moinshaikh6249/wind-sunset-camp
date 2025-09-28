@@ -26,7 +26,7 @@ export function Footer() {
               <ul className="space-y-2">
                 {navLinks.map(({ href, label }) => (
                   <li key={href}>
-                    <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
                       {label}
                     </Link>
                   </li>
@@ -37,12 +37,12 @@ export function Footer() {
               <h3 className="font-semibold text-primary mb-2">Legal</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
                     Terms of Service
                   </Link>
                 </li>

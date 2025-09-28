@@ -13,12 +13,12 @@ export default function GalleryPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {galleryImages.map((image, index) => (
-                <div key={image.id} className="relative aspect-[3/2] rounded-lg overflow-hidden group shadow-md">
+                <div key={image.id} className="relative aspect-[3/2] rounded-lg overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
                     <Image
                     src={image.imageUrl}
                     alt={image.description}
                     fill
-                    className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    className="object-cover transform group-hover:scale-110 transition-transform duration-500"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     data-ai-hint={image.imageHint}
                     />

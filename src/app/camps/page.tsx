@@ -30,7 +30,7 @@ export default function CampsPage() {
             <Card
               key={camp.id}
               id={camp.id}
-              className="flex flex-col md:flex-row overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card"
+              className="flex flex-col md:flex-row overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card transform hover:-translate-y-2 hover:rotate-[-1deg]"
             >
               <div className="md:w-1/3 relative h-64 md:h-auto">
                 <Image
@@ -60,7 +60,7 @@ export default function CampsPage() {
                     {camp.description}
                   </p>
                   <div className="mt-auto">
-                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground transform hover:scale-105 transition-transform duration-200">
                       <Link href={`/booking?camp=${encodeURIComponent(camp.name)}`}>Book This Camp</Link>
                     </Button>
                   </div>

@@ -36,7 +36,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/camps">Explore Camps</Link>
             </Button>
@@ -44,7 +44,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="outline"
-              className="bg-transparent border-white text-white hover:bg-white hover:text-primary"
+              className="bg-transparent border-white text-white hover:bg-white hover:text-primary transition-all duration-200 transform hover:scale-105"
             >
               <Link href="/booking">Book Your Stay</Link>
             </Button>
@@ -63,7 +63,7 @@ export default function Home() {
             with nature.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center p-4">
+            <div className="flex flex-col items-center p-4 transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Mountain className="w-8 h-8 text-primary" />
               </div>
@@ -75,7 +75,7 @@ export default function Home() {
                 outdoors.
               </p>
             </div>
-            <div className="flex flex-col items-center p-4">
+            <div className="flex flex-col items-center p-4 transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Sun className="w-8 h-8 text-primary" />
               </div>
@@ -87,7 +87,7 @@ export default function Home() {
                 are breathtaking.
               </p>
             </div>
-            <div className="flex flex-col items-center p-4">
+            <div className="flex flex-col items-center p-4 transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <UsersRound className="w-8 h-8 text-primary" />
               </div>
@@ -122,7 +122,7 @@ export default function Home() {
             {featuredCamps.map((camp) => (
               <Card
                 key={camp.id}
-                className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
+                className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1"
               >
                 {camp.image && (
                   <div className="relative h-48 w-full">
