@@ -8,7 +8,7 @@ import { upcomingCamps } from "@/lib/mock-data";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-1");
+  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-sunset");
   const featuredCamps = upcomingCamps.slice(0, 3);
 
   return (
