@@ -80,7 +80,7 @@ function BookingFormComponent() {
         const suggestions = await getCompletionSuggestions(partialForm);
         
         // The AI might suggest other fields based on the camp name
-        // For this app, we're keeping it simple, but this is where you'd handle it.
+        // For this app, we're keeping it here for simple, but this is where you'd handle it.
         // e.g., if (suggestions.startDate) form.setValue('startDate', suggestions.startDate);
       });
     }
