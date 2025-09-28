@@ -6,7 +6,7 @@ export default function GalleryPage() {
     <div className="bg-background">
         <div className="container mx-auto px-4 py-16 md:py-24">
             <div className="text-center max-w-4xl mx-auto mb-12">
-                <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6">Camp Gallery</h1>
+                <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">Camp Gallery</h1>
                 <p className="text-lg text-muted-foreground">
                 A glimpse into the adventures and serene moments at Sunset Camp.
                 </p>

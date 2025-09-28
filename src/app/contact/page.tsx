@@ -61,7 +61,7 @@ export default function ContactPage() {
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center max-w-4xl mx-auto mb-12">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6">
+          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
             Get in Touch
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -77,7 +77,7 @@ export default function ContactPage() {
                 <MapPin className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-headline text-xl text-primary">Our Basecamp</h3>
+                <h3 className="font-headline text-xl text-gradient">Our Basecamp</h3>
                 <p className="text-muted-foreground">123 Adventure Lane<br />Wilderness, WY 82801</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function ContactPage() {
                 <Mail className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-headline text-xl text-primary">Email Us</h3>
+                <h3 className="font-headline text-xl text-gradient">Email Us</h3>
                 <a href="mailto:hello@sunsetcamp.com" className="text-muted-foreground hover:text-accent transition-colors">hello@sunsetcamp.com</a>
               </div>
             </div>
@@ -95,7 +95,7 @@ export default function ContactPage() {
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-headline text-xl text-primary">Call Us</h3>
+                <h3 className="font-headline text-xl text-gradient">Call Us</h3>
                 <a href="tel:+1234567890" className="text-muted-foreground hover:text-accent transition-colors">(123) 456-7890</a>
               </div>
             </div>

@@ -7,7 +7,7 @@ export default function AboutPage() {
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <section className="text-center max-w-4xl mx-auto">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6">
+          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
             Our Story
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
@@ -27,7 +27,7 @@ export default function AboutPage() {
         </section>
 
         <section className="mt-16 md:mt-24">
-          <h2 className="font-headline text-3xl md:text-5xl text-primary text-center mb-12">
+          <h2 className="font-headline text-3xl md:text-5xl text-primary text-center mb-12 text-gradient">
             Meet the Team
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
@@ -46,7 +46,7 @@ export default function AboutPage() {
                       data-ai-hint={member.image.imageHint}
                     />
                   </div>
-                  <CardTitle className="font-headline text-2xl">
+                  <CardTitle className="font-headline text-2xl text-gradient">
                     {member.name}
                   </CardTitle>
                   <p className="text-accent font-semibold">{member.role}</p>

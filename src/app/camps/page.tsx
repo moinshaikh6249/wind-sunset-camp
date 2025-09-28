@@ -17,7 +17,7 @@ export default function CampsPage() {
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center max-w-4xl mx-auto mb-12">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6">
+          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
             Upcoming Camps
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -44,7 +44,7 @@ export default function CampsPage() {
               </div>
               <div className="md:w-2/3 flex flex-col">
                 <CardHeader>
-                  <CardTitle className="font-headline text-3xl">
+                  <CardTitle className="font-headline text-3xl text-gradient">
                     {camp.name}
                   </CardTitle>
                   <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-2 pt-2">
