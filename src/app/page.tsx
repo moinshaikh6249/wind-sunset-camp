@@ -8,7 +8,7 @@ import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
 
 export default function Home() {
   const featuredCamps = upcomingCamps.slice(0, 3);
-  const heroImageUrl = "https://images.unsplash.com/photo-1575768228585-48ea2c99369e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMHN1bnNldHxlbnwwfHx8fDE3NjAxMTg2NjB8MA&ixlib=rb-4.1.0&q=80&w=1080";
+  const heroImageUrl = "https://images.unsplash.com/photo-1505881502628-ac0bf1ae3e2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjYW1wZmlyZXxlbnwwfHx8fDE3NjAyOTE5ODV8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="flex flex-col">
