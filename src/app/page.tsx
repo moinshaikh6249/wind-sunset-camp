@@ -28,7 +28,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105"
+              className="woody-texture text-shadow-engraved transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/camps">View Camps</Link>
             </Button>
@@ -36,7 +36,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="secondary"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105"
+              className="woody-texture text-shadow-engraved transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
@@ -44,7 +44,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white/10 transition-all duration-200 transform hover:scale-105"
+              className="border-white text-white hover:bg-white/10 transition-all duration-200 transform hover:scale-105 woody-texture text-shadow-engraved"
             >
               <Link href="/contact">Contact Us</Link>
             </Button>
