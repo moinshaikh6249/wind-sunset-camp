@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -18,6 +18,12 @@ export function Header() {
           <Logo />
         </div>
         <div className="flex items-center gap-2 ml-auto">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/login">
+              <User />
+              <span className="sr-only">User Login</span>
+            </Link>
+          </Button>
           <ThemeToggle />
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
