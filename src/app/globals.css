@@ -118,6 +118,12 @@
   .btn-glow-on-active:active {
     box-shadow: 0 0 15px #5DD62C;
   }
+  .card-glow {
+    box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.7);
+  }
+  .dark .card-glow {
+    box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.1);
+  }
 }
 
 @layer components {
