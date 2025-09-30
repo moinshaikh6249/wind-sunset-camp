@@ -31,22 +31,21 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-custom-green text-white border border-white btn-glow"
+              className="btn-glow"
             >
               <Link href="/camps">View Camps</Link>
             </Button>
             <Button
               asChild
               size="lg"
-              className="bg-custom-green text-white border border-white btn-glow"
+              className="btn-glow"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
             <Button
               asChild
               size="lg"
-              variant="outline"
-              className="bg-custom-green text-white border-white btn-glow"
+              className="btn-glow"
             >
               <Link href="/contact">Contact Us</Link>
             </Button>
@@ -145,7 +144,7 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-4 flex-grow">
                     {camp.description}
                   </p>
-                  <Button asChild className="w-full mt-auto bg-primary hover:bg-primary/90 text-primary-foreground btn-glow">
+                  <Button asChild className="w-full mt-auto btn-glow">
                     <Link href={`/camps#${camp.id}`}>Learn More</Link>
                   </Button>
                 </CardContent>

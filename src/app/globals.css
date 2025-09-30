@@ -18,7 +18,7 @@
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
     --accent: 30 79% 51%; /* #E67E22 - Burnt Orange */
-    --accent-foreground: 24 38% 28%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 6% 90%;
@@ -223,13 +223,11 @@
     background-image: linear-gradient(to bottom, #1E1E1E, #16241E);
   }
   .btn-glow {
-    @apply transition-transform duration-200 transform hover:scale-105;
+    @apply bg-accent text-accent-foreground transition-transform duration-200 transform hover:scale-105;
   }
   .btn-glow:hover {
-    box-shadow: 0 0 15px #f97316;
-  }
-  .dark .btn-glow:hover {
-    box-shadow: 0 0 15px #22c55e;
+    @apply bg-accent/90;
+    box-shadow: 0 0 15px hsl(var(--accent));
   }
 }
 
@@ -258,3 +256,4 @@
     
 
     
+

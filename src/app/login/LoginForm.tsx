@@ -90,7 +90,7 @@ export function LoginForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-custom-green hover:bg-custom-green/90 dark:btn-glow-on-active btn-glow"
+              className="w-full btn-glow"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? "Logging in..." : "Login"}

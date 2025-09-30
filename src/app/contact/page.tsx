@@ -158,7 +158,7 @@ export default function ContactPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground btn-glow" disabled={form.formState.isSubmitting}>
+                <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>

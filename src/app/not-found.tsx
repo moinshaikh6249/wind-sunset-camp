@@ -11,7 +11,7 @@ export default function NotFound() {
       <p className="text-lg text-muted-foreground mb-8 max-w-lg">
         It seems you&apos;ve wandered off the beaten path. Don&apos;t worry, we can guide you back to camp.
       </p>
-      <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground btn-glow">
+      <Button asChild size="lg" className="btn-glow">
         <Link href="/">Return to Homepage</Link>
       </Button>
     </div>

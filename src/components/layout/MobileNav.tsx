@@ -43,7 +43,7 @@ export function MobileNav() {
           ))}
         </nav>
         <SheetClose asChild>
-            <Button asChild size="lg" className="mt-auto bg-primary hover:bg-primary/90 btn-glow">
+            <Button asChild size="lg" className="mt-auto btn-glow">
                 <Link href="/booking">Book Now</Link>
             </Button>
         </SheetClose>
