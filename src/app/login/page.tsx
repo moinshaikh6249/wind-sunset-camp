@@ -1,137 +1,27 @@
 
-"use client";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { User } from "lucide-react";
-import Image from "next/image";
-
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
-});
+import { LoginForm } from "./LoginForm";
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
 
 export default function LoginPage() {
-  const { toast } = useToast();
-  const router = useRouter();
   const loginImage = PlaceHolderImages.find(img => img.id === 'gallery-3');
-  const loginImageUrl = loginImage?.imageUrl || "https://images.unsplash.com/photo-1475483768296-6163e08872a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU4OTg4NDk2fDA&ixlib=rb-4.1.0&q=80&w=1080";
-  const loginImageHint = loginImage?.imageHint || "campfire friends";
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      router.push("/");
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  }
+  const loginImageUrl = loginImage ? loginImage.imageUrl : "https://images.unsplash.com/photo-1475483768296-6163e08872a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU4OTg4NDk2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
   return (
     <div className="w-full lg:grid lg:min-h-[calc(100vh-8rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-8rem)]">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-         <Image
-            src={loginImageUrl}
-            alt="People around a campfire at night"
-            fill
-            className="object-cover"
-            data-ai-hint={loginImageHint}
-          />
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="relative z-20">
-            <Link href="/" className="flex items-center text-2xl font-headline font-bold">
-              Wind & Sunset Camp
-            </Link>
-          </div>
-           <div className="relative z-20 mt-auto">
-            <p className="text-lg">
-              "The wilderness holds answers to questions we have not yet learned to ask."
-            </p>
-            <footer className="text-sm">- Nancy Newhall</footer>
-          </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src={loginImageUrl}
+          alt="Login image"
+          width="1920"
+          height="1080"
+          className="h-full w-full object-cover dark:brightness-[0.7]"
+          data-ai-hint="campfire friends"
+        />
       </div>
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
-           <div className="grid gap-2 text-center">
-             <h1 className="text-3xl font-bold text-gradient font-headline">User Login</h1>
-             <p className="text-balance text-muted-foreground">
-              Enter your credentials to access your account.
-            </p>
-          </div>
-          <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="user@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Logging in..." : "Login"}
-                </Button>
-              </form>
-            </Form>
-            <div className="mt-4 text-center text-sm">
-              Don't have an account?{" "}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
-                  Sign up
-              </Link>
-          </div>
+          <LoginForm />
         </div>
       </div>
     </div>
