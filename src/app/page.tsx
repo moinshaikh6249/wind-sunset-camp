@@ -66,7 +66,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
-                <Mountain className="w-8 h-8 text-primary" />
+                <Mountain className="w-8 h-8 text-accent" />
               </div>
               <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Expert-Led Expeditions
@@ -78,7 +78,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
-                <Sun className="w-8 h-8 text-primary" />
+                <Sun className="w-8 h-8 text-accent" />
               </div>
               <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Stunning Locations
@@ -90,7 +90,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
-                <UsersRound className="w-8 h-8 text-primary" />
+                <UsersRound className="w-8 h-8 text-accent" />
               </div>
               <h3 className="text-xl font-bold mb-2 font-headline text-foreground">
                 Community & Connection
