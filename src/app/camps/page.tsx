@@ -17,7 +17,7 @@ export default function CampsPage() {
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center max-w-4xl mx-auto mb-12">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
+          <h1 className="font-headline text-4xl md:text-6xl mb-4 text-heading-color heading-shadow heading-underline">
             Upcoming Camps
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -26,14 +26,14 @@ export default function CampsPage() {
           </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {upcomingCamps.map((camp) => (
             <Card
               key={camp.id}
               id={camp.id}
-              className="flex flex-col md:flex-row overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card transform hover:-translate-y-2 hover:rotate-[-1deg]"
+              className="flex flex-col overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 bg-card transform hover:-translate-y-2 hover:scale-105 rounded-2xl"
             >
-              <div className="md:w-1/3 relative h-64 md:h-auto">
+              <div className="relative h-56 w-full">
                 <Image
                   src={camp.image.imageUrl}
                   alt={camp.name}
@@ -42,12 +42,12 @@ export default function CampsPage() {
                   data-ai-hint={camp.image.imageHint}
                 />
               </div>
-              <div className="md:w-2/3 flex flex-col">
+              <div className="flex flex-col flex-grow">
                 <CardHeader>
-                  <CardTitle className="font-headline text-3xl text-gradient">
+                  <CardTitle className="font-headline text-2xl text-gradient">
                     {camp.name}
                   </CardTitle>
-                  <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-2 pt-2">
+                  <CardDescription className="flex flex-col pt-2 text-sm">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="h-4 w-4 text-accent" /> {camp.date}
                     </span>
@@ -61,7 +61,7 @@ export default function CampsPage() {
                     {camp.description}
                   </p>
                   <div className="mt-auto">
-                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105">
+                    <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105">
                       <Link href={`/booking?camp=${encodeURIComponent(camp.name)}`}>Book This Camp</Link>
                     </Button>
                   </div>
