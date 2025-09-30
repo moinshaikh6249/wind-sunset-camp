@@ -59,9 +59,9 @@ export default function ContactPage() {
 
   return (
     <div className="bg-background">
-      <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="container mx-auto px-4 sm:px-8 py-12 md:py-16">
         <div className="text-center max-w-4xl mx-auto mb-12">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
+          <h1 className="font-headline text-4xl md:text-5xl text-heading-color heading-shadow heading-underline mb-6">
             Get in Touch
           </h1>
           <p className="text-lg text-muted-foreground">
