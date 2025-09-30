@@ -113,7 +113,7 @@ export function SignupForm() {
         </Form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-accent hover:underline">
+          <Link href="/login" className="font-semibold text-custom-green hover:underline">
             Log in
           </Link>
         </p>
