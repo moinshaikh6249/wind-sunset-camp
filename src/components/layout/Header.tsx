@@ -19,6 +19,12 @@ export function Header() {
         </div>
         <div className="flex flex-1 items-center justify-end gap-2">
           <ThemeToggle />
+           <Button asChild variant="ghost" size="icon">
+            <Link href="/login">
+              <User className="h-5 w-5" />
+              <span className="sr-only">User Login</span>
+            </Link>
+          </Button>
           <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
             <Link href="/booking">Book Now</Link>
           </Button>
