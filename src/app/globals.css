@@ -125,16 +125,16 @@
     box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.1);
   }
   .card-glow-green {
-    box-shadow: 0 0 8px 2px hsla(var(--foreground), 0.4);
+    box-shadow: 0 0 8px 2px rgba(253, 164, 129, 0.3);
   }
   .card-glow-green:hover {
-    box-shadow: 0 0 15px 5px hsla(var(--foreground), 0.6);
+    box-shadow: 0 0 15px 5px rgba(253, 164, 129, 0.45);
   }
   .dark .card-glow-green {
-    box-shadow: 0 0 8px 2px rgba(93, 214, 44, 0.3);
+    box-shadow: none;
   }
   .dark .card-glow-green:hover {
-    box-shadow: 0 0 15px 5px rgba(93, 214, 44, 0.5);
+    box-shadow: none;
   }
 }
 
