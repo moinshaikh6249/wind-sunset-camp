@@ -30,8 +30,8 @@ export default function AboutPage() {
               Our mission is to create accessible, memorable, and safe camping
               experiences for everyone. From seasoned mountaineers to families
               looking for their first adventure, we provide the guidance, gear, and
-              gourmet campfire meals to make your trip unforgettable. We&apos;re more
-              than a camping company; we&apos;re a community of nature lovers dedicated
+              gourmet campfire meals to make your trip unforgettable. We're more
+              than a camping company; we're a community of nature lovers dedicated
               to preserving our wild spaces for generations to come.
             </p>
           </div>
