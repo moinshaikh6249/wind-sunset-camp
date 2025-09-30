@@ -226,13 +226,13 @@
     @apply font-bold transition-all duration-300;
     @apply focus:outline-none focus:ring-4;
     border-radius: var(--radius);
-    background-color: #f97316; /* Orange for light mode */
-    color: white;
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
     border: 2px solid transparent;
   }
 
   .dark .btn-glow {
-    background-color: #22c55e; /* Green for dark mode */
+    background-color: hsl(var(--accent));
   }
 
   .btn-glow:hover {
@@ -241,15 +241,15 @@
   }
   
   .light .btn-glow:hover {
-    box-shadow: 0 0 15px #f97316;
-    color: #f97316;
-    border-color: #f97316;
+    box-shadow: 0 0 15px hsl(var(--accent));
+    color: hsl(var(--accent));
+    border-color: hsl(var(--accent));
   }
 
   .dark .btn-glow:hover {
-    box-shadow: 0 0 15px #22c55e;
-    color: #22c55e;
-    border-color: #22c55e;
+    box-shadow: 0 0 15px hsl(var(--accent));
+    color: hsl(var(--accent));
+    border-color: hsl(var(--accent));
   }
 }
 
@@ -278,3 +278,4 @@
     
 
     
+

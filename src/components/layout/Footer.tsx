@@ -24,46 +24,52 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#FFF9F0] dark:bg-[#1E1E1E] text-foreground border-t border-accent/50 dark:border-primary/30">
-      <div className="container pt-10 pb-8 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 text-center md:text-left">
+    <footer className="bg-footer-light dark:bg-footer-dark text-foreground border-t border-accent/20 dark:border-primary/20">
+      <div className="container pt-16 pb-8 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
           
-          <div className="flex flex-col items-center md:items-start">
+          <div className="flex flex-col items-center md:items-start md:col-span-1">
             <Logo />
-            <p className="mt-4 text-sm italic text-[#5C5C5C] dark:text-[#CFCFCF] max-w-xs">
+            <p className="mt-4 text-sm italic text-muted-foreground/80 max-w-xs">
               Your next adventure starts here, under the open sky.
             </p>
           </div>
 
-          <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider text-[#4A2E0F] dark:text-[#FFF5E6] mb-4">Navigate</h3>
+          <div className="md:col-span-1">
+            <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Navigate</h3>
             <ul className="space-y-3">
               {navLinks.map(({ href, label, icon: Icon }) => (
                 <li key={href}>
-                  <Link href={href} className="flex items-center justify-center md:justify-start gap-2 text-sm text-[#6B6B6B] dark:text-[#A6A6A6] hover:text-accent dark:hover:text-primary hover:underline transition-colors duration-200">
-                    <Icon className="w-4 h-4" />
-                    <span>{label}</span>
+                  <Link href={href} className="group flex items-center justify-center md:justify-start gap-2.5 text-muted-foreground hover:text-accent dark:hover:text-primary transition-all duration-300 transform hover:scale-105">
+                    <Icon className="w-4 h-4 text-accent/80 dark:text-primary/80 group-hover:text-accent dark:group-hover:text-primary transition-colors" />
+                    <span className="relative">
+                      {label}
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent dark:bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider text-[#4A2E0F] dark:text-[#FFF5E6] mb-4">Legal & Social</h3>
+          <div className="md:col-span-1">
+            <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Legal & Social</h3>
             <ul className="space-y-3">
               {legalLinks.map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="flex items-center justify-center md:justify-start gap-2 text-sm text-[#6B6B6B] dark:text-[#A6A6A6] hover:text-accent dark:hover:text-primary hover:underline transition-colors duration-200">
-                    {label}
+                  <Link href={href} className="group flex items-center justify-center md:justify-start gap-2.5 text-muted-foreground hover:text-accent dark:hover:text-primary transition-all duration-300 transform hover:scale-105">
+                     <span className="relative">
+                      {label}
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent dark:bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
-            <div className="flex justify-center md:justify-start gap-4 mt-6">
+            <div className="flex justify-center md:justify-start gap-5 mt-6">
               {socialLinks.map(({ href, label, icon: Icon }) => (
                 <Link key={label} href={href} aria-label={label}>
-                  <Icon className="w-6 h-6 text-[#6B6B6B] dark:text-[#A6A6A6] hover:text-accent dark:hover:text-primary transition-all duration-200 hover:scale-110" />
+                  <Icon className="w-6 h-6 text-muted-foreground/70 hover:text-accent dark:hover:text-primary transition-all duration-300 hover:scale-125 hover:drop-shadow-[0_0_5px_hsl(var(--accent))] dark:hover:drop-shadow-[0_0_5px_hsl(var(--primary))]" />
                 </Link>
               ))}
             </div>
@@ -71,9 +77,9 @@ export function Footer() {
 
         </div>
       </div>
-      <div className="bg-[#FFF3E0] dark:bg-[#141414] py-4 px-4">
+      <div className="py-6 border-t border-border/50">
         <div className="container text-center">
-            <p className="text-sm text-[#5C5C5C] dark:text-[#BDBDBD] transition-opacity hover:opacity-80">
+            <p className="text-sm text-muted-foreground transition-all duration-300 hover:text-glow">
                 &copy; {new Date().getFullYear()} Wind & Sunset Camp. All rights reserved.
             </p>
         </div>
@@ -83,3 +89,4 @@ export function Footer() {
 }
 
     
+
