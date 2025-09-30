@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { Menu, User } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -19,12 +19,6 @@ export function Header() {
         </div>
         <div className="flex flex-1 items-center justify-end gap-2">
           <ThemeToggle />
-          <Button asChild variant="ghost" size="icon" className="hidden md:flex">
-            <Link href="/login">
-              <User />
-              <span className="sr-only">Login</span>
-            </Link>
-          </Button>
           <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
             <Link href="/booking">Book Now</Link>
           </Button>
