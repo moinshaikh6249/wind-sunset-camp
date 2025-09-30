@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Shield } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +20,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -58,17 +59,17 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-16 md:py-24">
-      <div className="w-full max-w-md">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col items-center text-center">
-              <Shield className="h-12 w-12 text-primary mb-4" />
-              <CardTitle className="text-3xl font-headline text-gradient">Admin Login</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+       <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            <Shield className="h-12 w-12 text-primary mx-auto" />
+            <h1 className="text-3xl font-bold text-gradient font-headline">Admin Login</h1>
+            <p className="text-balance text-muted-foreground">
+              Enter your credentials to access the admin dashboard.
+            </p>
+          </div>
+           <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
@@ -101,9 +102,30 @@ export default function AdminLoginPage() {
                 </Button>
               </form>
             </Form>
-          </CardContent>
-        </Card>
+        </div>
       </div>
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
+         <Image
+            src="https://images.unsplash.com/photo-1586953208448-b95a14da445f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwbGFubmluZyUyMGNhbXBpbmd8ZW58MHx8fHwxNzU5MDk0ODUxfDA&ixlib=rb-4.1.0&q=80&w=1080"
+            alt="Person planning a trip on a laptop"
+            fill
+            className="object-cover"
+            data-ai-hint="planning camping"
+          />
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-20">
+            <Link href="/" className="flex items-center text-2xl font-headline font-bold">
+              Wind & Sunset Camp
+            </Link>
+          </div>
+           <div className="relative z-20 mt-auto">
+            <p className="text-lg">
+              "The best-laid plans of mice and men often go awry. But with a good admin panel, they don't have to."
+            </p>
+          </div>
+      </div>
+     
     </div>
   );
 }
+

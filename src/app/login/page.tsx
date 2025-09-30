@@ -7,6 +7,7 @@ import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -31,6 +33,9 @@ const formSchema = z.object({
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const loginImage = PlaceHolderImages.find(img => img.id === 'gallery-3');
+  const loginImageUrl = loginImage?.imageUrl || "https://images.unsplash.com/photo-1475483768296-6163e08872a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU4OTg4NDk2fDA&ixlib=rb-4.1.0&q=80&w=1080";
+  const loginImageHint = loginImage?.imageHint || "campfire friends";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,18 +63,37 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-14rem)] py-12">
-      <div className="mx-auto w-full max-w-sm">
-        <Card>
-            <CardHeader className="text-center">
-                 <div className="flex flex-col items-center">
-                    <User className="h-12 w-12 text-primary mb-4" />
-                    <CardTitle className="text-3xl font-headline text-gradient">User Login</CardTitle>
-                    <CardDescription className="mt-2 text-muted-foreground">Enter your credentials to access your account.</CardDescription>
-                </div>
-            </CardHeader>
-            <CardContent>
-            <Form {...form}>
+    <div className="w-full lg:grid lg:min-h-[calc(100vh-8rem)] lg:grid-cols-2 xl:min-h-[calc(100vh-8rem)]">
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
+         <Image
+            src={loginImageUrl}
+            alt="People around a campfire at night"
+            fill
+            className="object-cover"
+            data-ai-hint={loginImageHint}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-20">
+            <Link href="/" className="flex items-center text-2xl font-headline font-bold">
+              Wind & Sunset Camp
+            </Link>
+          </div>
+           <div className="relative z-20 mt-auto">
+            <p className="text-lg">
+              "The wilderness holds answers to questions we have not yet learned to ask."
+            </p>
+            <footer className="text-sm">- Nancy Newhall</footer>
+          </div>
+      </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+           <div className="grid gap-2 text-center">
+             <h1 className="text-3xl font-bold text-gradient font-headline">User Login</h1>
+             <p className="text-balance text-muted-foreground">
+              Enter your credentials to access your account.
+            </p>
+          </div>
+          <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
                 <FormField
                   control={form.control}
@@ -102,16 +126,13 @@ export default function LoginPage() {
                 </Button>
               </form>
             </Form>
-            </CardContent>
-            <CardFooter className="flex-col items-center">
-             <div className="mt-4 text-center text-sm">
-                Don't have an account?{" "}
-                <Link href="/signup" className="font-semibold text-primary hover:underline">
-                    Sign up
-                </Link>
-            </div>
-            </CardFooter>
-        </Card>
+            <div className="mt-4 text-center text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="font-semibold text-primary hover:underline">
+                  Sign up
+              </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
