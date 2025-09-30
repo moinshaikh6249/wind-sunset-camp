@@ -51,7 +51,7 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Please check your email and password.",
+        description: error.message,
         variant: "destructive",
       });
     }
