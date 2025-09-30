@@ -45,7 +45,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white/10 transition-all duration-200 transform hover:scale-105 woody-texture text-shadow-engraved"
+              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/contact">Contact Us</Link>
             </Button>
