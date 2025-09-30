@@ -112,9 +112,16 @@
     background-color: #55C528;
   }
   .text-custom-green {
+    color: hsl(var(--foreground));
+  }
+  .dark .text-custom-green {
     color: #5DD62C;
   }
   .text-custom-green:hover {
+    color: hsl(var(--foreground));
+    opacity: 0.8;
+  }
+  .dark .text-custom-green:hover {
     color: #55C528;
   }
   .text-3d {
