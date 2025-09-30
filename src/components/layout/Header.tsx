@@ -17,7 +17,7 @@ export function Header() {
           <SidebarTrigger className="hidden md:flex" />
           <Logo />
         </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 flex-1">
           <ThemeToggle />
           <Button asChild className="hidden md:flex bg-custom-green text-black dark:text-white shadow-md dark:shadow-none transition-transform duration-200 transform hover:scale-105 dark:hover:shadow-lg dark:hover:shadow-accent/40">
             <Link href="/booking">Book Now</Link>
