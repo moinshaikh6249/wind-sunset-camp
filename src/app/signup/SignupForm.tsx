@@ -55,7 +55,7 @@ export function SignupForm() {
   }
 
   return (
-    <Card>
+    <Card className="card-glow">
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
