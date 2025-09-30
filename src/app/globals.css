@@ -89,7 +89,7 @@
     text-shadow: 0 0 8px hsl(var(--primary)), 0 0 16px hsl(var(--primary));
   }
   .text-glow-white {
-    text-shadow: 0 0 8px #fff, 0 0 16px #fff;
+    text-shadow: 0 0 8px hsl(var(--accent)), 0 0 16px hsl(var(--accent));
   }
   .icon-glow {
     filter: drop-shadow(0 0 5px hsl(var(--accent)));
