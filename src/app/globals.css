@@ -116,7 +116,7 @@
       2px 2px 0px hsla(var(--foreground), 0.2);
   }
   .btn-glow-on-active:active {
-    box-shadow: 0 0 15px hsl(var(--accent));
+    box-shadow: 0 0 15px #5DD62C;
   }
 }
 
