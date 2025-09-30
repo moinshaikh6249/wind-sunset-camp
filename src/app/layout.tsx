@@ -45,9 +45,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider>
-            <AppSidebar />
-            <div className="flex flex-col min-h-screen">
-              <main className="flex-grow bg-background">{children}</main>
+            <div className="flex">
+              <AppSidebar />
+              <div className="flex flex-col min-h-screen w-full">
+                <Header />
+                <main className="flex-grow bg-background">{children}</main>
+                <Footer />
+              </div>
             </div>
           </SidebarProvider>
           <Toaster />
@@ -56,4 +60,3 @@ export default function RootLayout({
     </html>
   );
 }
-
