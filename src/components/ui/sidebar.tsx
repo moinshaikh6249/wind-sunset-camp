@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -175,7 +176,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, open, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, open, openMobile, setOpenMobile, setOpen } = useSidebar()
 
     if (collapsible === "none") {
       return (
@@ -214,7 +215,7 @@ const Sidebar = React.forwardRef<
 
     return (
       <>
-      <div className={cn("fixed inset-0 z-40 bg-black/50 transition-opacity", (open && !isMobile) ? 'opacity-100' : 'opacity-0 pointer-events-none')} onClick={() => setOpenMobile(false)} />
+      <div className={cn("fixed inset-0 z-40 bg-black/50 transition-opacity", (open && !isMobile) ? 'opacity-100 md:hidden' : 'opacity-0 pointer-events-none')} onClick={() => setOpen(false)} />
       <div
         ref={ref}
         className="group peer hidden md:block text-sidebar-foreground"
