@@ -9,22 +9,17 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function Home() {
   const featuredCamps = upcomingCamps.slice(0, 3);
-  const heroImage = PlaceHolderImages.find(img => img.id === 'gallery-3');
-  const heroImageUrl = "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYW1waW5nJTIwdGVudCUyMHN1bnNldHxlbnwwfHx8fDE3NTkwNTYyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080"
-  const heroImageLightUrl = "https://images.unsplash.com/photo-1537565266759-3424d3c1454c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
   return (
     <div className="flex flex-col">
       <section 
         className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white"
       >
-      <div 
-        className="absolute inset-0 bg-cover bg-center light:hero-light-bg"
-        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYW1waW5nJTIwdGVudCUyMHN1bnNldHxlbnwwfHx8fDE3NTkwNTYyMTh8MA&ixlib=rb-4.1.0&q=80&w=1080")' }}
-        data-ai-hint="camping tent sunset"
-      >
-        <div className="dark:hidden absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageLightUrl}')`}}></div>
-      </div>
+        <div 
+          className="absolute inset-0 hero-background"
+          data-ai-hint="camping tent sunset"
+        >
+        </div>
         <div className="relative z-10 p-4 sm:p-6 max-w-4xl mx-auto">
           <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white drop-shadow-lg">
             Adventure Under the Open Sky

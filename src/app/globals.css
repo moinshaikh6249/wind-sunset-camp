@@ -150,6 +150,15 @@
   .dark .card-glow-green:hover {
     box-shadow: 0 0 15px 5px rgba(93, 214, 44, 0.45);
   }
+  .hero-background {
+    background-size: cover;
+    background-position: center;
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/light-hero.png');
+  }
+
+  .dark .hero-background {
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/dark-hero.png');
+  }
 }
 
 @layer components {
