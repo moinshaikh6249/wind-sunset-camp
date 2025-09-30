@@ -27,19 +27,19 @@
     {
       "id": "gallery-1",
       "description": "A serene mountain lake reflecting the sunrise.",
-      "imageUrl": "https://images.unsplash.com/photo-1438382458652-54431bf59e01?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtb3VudGFpbiUyMGxha2V8ZW58MHx8fHwxNzU5MDUzODcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1530173660394-4047e55984d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb3VudGFpbiUyMGxha2V8ZW58MHx8fHwxNzU5MTQ5Nzc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "mountain lake"
     },
     {
       "id": "gallery-2",
       "description": "Hikers celebrating on a mountain summit.",
-      "imageUrl": "https://images.unsplash.com/photo-1639938794001-bcc9e3770fd4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMHN1bW1pdHxlbnwwfHx8fDE3NTkwMTk0MDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1534685785745-60a2cea0ec34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtb3VudGFpbiUyMHN1bW1pdHxlbnwwfHx8fDE3NTkxNDgxMDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "mountain summit"
     },
     {
       "id": "gallery-3",
       "description": "A cozy campfire with friends sharing stories.",
-      "imageUrl": "https://images.unsplash.com/photo-1475483768296-6163e08872a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU4OTg4NDk2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1661758211116-388aae0197f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU5MDk2Njg1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "campfire friends"
     },
     {
@@ -75,7 +75,7 @@
     {
       "id": "gallery-9",
       "description": "A group of tents pitched by a rugged coastline.",
-      "imageUrl": "https://images.unsplash.com/photo-1630084879730-bbcd06b0778e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjb2FzdGFsJTIwY2FtcGluZ3xlbnwwfHx8fDE3NTkwNTYyNDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1630084879730-bbcd06b0778e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y29hc3RhbCUyMGNhbXBpbmd8ZW58MHx8fHwxNzU5MjE5OTE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "coastal camping"
     }
   ]
