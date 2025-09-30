@@ -24,12 +24,6 @@ export function MobileNav() {
         <div className="flex flex-col h-full">
         <div className="flex items-center justify-between pb-4 border-b">
           <Logo />
-          <SheetClose asChild>
-             <Button variant="ghost" size="icon">
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close Menu</span>
-            </Button>
-          </SheetClose>
         </div>
         <nav className="flex flex-col gap-6 text-lg font-medium mt-8">
           {navLinks.map(({ href, label }) => (
