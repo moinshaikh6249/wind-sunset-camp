@@ -25,7 +25,7 @@ export function Header() {
               <span className="sr-only">User Login</span>
             </Link>
           </Button>
-          <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
+          <Button asChild className="hidden md:flex bg-custom-green text-white transition-transform duration-200 transform hover:scale-105 dark:hover:shadow-lg dark:hover:shadow-accent/40">
             <Link href="/booking">Book Now</Link>
           </Button>
           <Sheet>
