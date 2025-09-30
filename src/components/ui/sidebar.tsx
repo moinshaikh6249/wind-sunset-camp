@@ -122,7 +122,7 @@ const SidebarProvider = React.forwardRef<
         state,
         open,
         setOpen,
-        isMobile,
+        isMobile: isMobile ?? false,
         openMobile,
         setOpenMobile,
         toggleSidebar,
@@ -177,6 +177,15 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, open, openMobile, setOpenMobile, setOpen } = useSidebar()
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return null;
+    }
 
     if (collapsible === "none") {
       return (
