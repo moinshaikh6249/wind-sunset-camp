@@ -12,9 +12,9 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Logo } from "@/components/Logo";
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
+import { SidebarLogo } from "./SidebarLogo";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -29,7 +29,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Logo />
+        <SidebarLogo />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
