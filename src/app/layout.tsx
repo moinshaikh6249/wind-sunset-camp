@@ -56,4 +56,5 @@ export default function RootLayout({
 export const metadata: Metadata = {
   title: "Wind & Sunset Camp",
   description: "Your next adventure awaits at Wind & Sunset Camp.",
+  viewport: "width=device-width, initial-scale=1",
 };

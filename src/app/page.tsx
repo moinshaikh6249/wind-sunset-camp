@@ -16,10 +16,17 @@ export default function Home() {
     <div className="flex flex-col">
       <section 
         className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white bg-cover bg-center"
-        style={{ backgroundImage: `url('${heroImageUrl}')` }}
       >
+      <Image 
+        src={heroImageUrl}
+        alt="Hero background image of a campfire"
+        fill
+        className="object-cover"
+        priority
+        data-ai-hint="campfire friends"
+      />
         <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 p-6 max-w-4xl mx-auto">
+        <div className="relative z-10 p-4 sm:p-6 max-w-4xl mx-auto">
           <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white drop-shadow-lg">
             Adventure Under the Open Sky
           </h1>
@@ -105,7 +112,7 @@ export default function Home() {
 
       <section className="py-16 md:py-24 bg-card">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <h2 className="font-headline text-3xl md:text-4xl text-foreground">
               Upcoming Camps
             </h2>
@@ -133,6 +140,7 @@ export default function Home() {
                       fill
                       className="object-cover"
                       data-ai-hint={camp.image.imageHint}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
                 )}
