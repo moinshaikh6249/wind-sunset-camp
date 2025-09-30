@@ -13,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
 
 const navLinks = [
@@ -49,6 +49,19 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Link href="/login">
+              <SidebarMenuButton
+                isActive={pathname === "/login"}
+                tooltip={{ children: "Login" }}
+              >
+                <User />
+                <span>Login</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <Button asChild className="transition-transform duration-200 transform hover:scale-105">
           <Link href="/booking">Book Now</Link>
         </Button>
