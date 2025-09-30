@@ -273,9 +273,37 @@
   .group-hover\:.scale-110:hover {
       transform: scale(1.1);
   }
+  .animate-flicker {
+    animation: flicker 2s infinite;
+  }
+  .animate-text-glow {
+      animation: text-glow-pulse 2s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+  }
+
+  @keyframes text-glow-pulse {
+    from {
+        text-shadow: var(--heading-shadow);
+    }
+    to {
+        text-shadow: 0 0 10px hsla(var(--heading-color), 0.7), var(--heading-shadow);
+    }
+  }
+
+  .dark .animate-text-glow {
+      animation: dark-text-glow-pulse 2s infinite alternate;
+  }
+  
+  @keyframes dark-text-glow-pulse {
+    from {
+        text-shadow: var(--heading-shadow);
+    }
+    to {
+        text-shadow: 0 0 10px hsla(var(--heading-color), 0.9), var(--heading-shadow);
+    }
+  }
 }
-
-    
-
-    
-
