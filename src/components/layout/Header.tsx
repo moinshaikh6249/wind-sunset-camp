@@ -7,21 +7,20 @@ import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
-import { DesktopNav } from "./DesktopNav";
+import { SidebarTrigger } from "../ui/sidebar";
 
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Logo />
-        <DesktopNav />
+        <div className="flex items-center gap-4">
+          <SidebarTrigger className="hidden md:flex" />
+          <Logo />
+        </div>
         <div className="flex flex-1 items-center justify-end gap-2">
           <ThemeToggle />
           <Button asChild className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
             <Link href="/booking">Book Now</Link>
-          </Button>
-          <Button asChild variant="ghost" className="hidden md:flex">
-             <Link href="/contact">Contact Us</Link>
           </Button>
           <Sheet>
             <SheetTrigger asChild className="md:hidden">

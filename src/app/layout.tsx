@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Poppins, Pacifico } from 'next/font/google';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 
 export const metadata: Metadata = {
   title: "Wind & Sunset Camp",
@@ -41,11 +43,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow bg-background">{children}</main>
-            <Footer />
-          </div>
+          <SidebarProvider>
+            <AppSidebar />
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow bg-background">{children}</main>
+              <Footer />
+            </div>
+          </SidebarProvider>
           <Toaster />
         </ThemeProvider>
       </body>
