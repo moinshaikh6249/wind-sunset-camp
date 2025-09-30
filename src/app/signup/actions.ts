@@ -6,6 +6,7 @@ import { z } from "zod";
 const formSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
+  mobileNumber: z.string().min(10),
   password: z.string().min(8),
 });
 
