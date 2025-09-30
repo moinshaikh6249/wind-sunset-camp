@@ -1,18 +1,12 @@
 
 import type { Metadata } from "next";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Poppins, Pacifico } from 'next/font/google';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-
-export const metadata: Metadata = {
-  title: "Wind & Sunset Camp",
-  description: "Your next adventure awaits at Wind & Sunset Camp.",
-};
+import { AppContent } from "./AppContent";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -47,11 +41,9 @@ export default function RootLayout({
           <SidebarProvider>
             <div className="flex">
               <AppSidebar />
-              <div className="flex flex-col min-h-screen w-full">
-                <Header />
-                <main className="flex-grow bg-background">{children}</main>
-                <Footer />
-              </div>
+              <AppContent>
+                {children}
+              </AppContent>
             </div>
           </SidebarProvider>
           <Toaster />
@@ -60,3 +52,8 @@ export default function RootLayout({
     </html>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Wind & Sunset Camp",
+  description: "Your next adventure awaits at Wind & Sunset Camp.",
+};
