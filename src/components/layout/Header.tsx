@@ -19,9 +19,6 @@ export function Header() {
         </div>
         <div className="flex items-center justify-end gap-2 flex-1">
           <ThemeToggle />
-          <Button asChild className="hidden md:flex bg-custom-green text-black dark:text-white shadow-md dark:shadow-none transition-transform duration-200 transform hover:scale-105 dark:hover:shadow-lg dark:hover:shadow-accent/40">
-            <Link href="/booking">Book Now</Link>
-          </Button>
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
