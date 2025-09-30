@@ -39,7 +39,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider>
-            <div className="flex">
+            <div className="flex flex-1">
               <AppSidebar />
               <AppContent>
                 {children}
