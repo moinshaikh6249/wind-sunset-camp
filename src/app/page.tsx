@@ -16,7 +16,7 @@ export default function Home() {
     <div className="flex flex-col">
       <section 
         className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white bg-cover bg-center"
-        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1476610182048-b716b8518a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdW5zZXQlMjBsYWtlfGVufDB8fHx8MTc1OTA1NjIxMHww&ixlib=rb-4.1.0&q=80&w=1080')` }}
+        style={{ backgroundImage: `url('${heroImageUrl}')` }}
       >
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 p-6 max-w-4xl mx-auto">
@@ -30,7 +30,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="woody-texture text-shadow-engraved transition-transform duration-200 transform hover:scale-105"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105 woody-texture text-shadow-engraved"
             >
               <Link href="/camps">View Camps</Link>
             </Button>
@@ -38,7 +38,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="secondary"
-              className="woody-texture text-shadow-engraved transition-transform duration-200 transform hover:scale-105"
+              className="transition-transform duration-200 transform hover:scale-105 woody-texture text-shadow-engraved"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
@@ -120,11 +120,11 @@ export default function Home() {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex flex-wrap gap-8 justify-center">
             {featuredCamps.map((camp) => (
               <Card
                 key={camp.id}
-                className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1 bg-background"
+                className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1 bg-background w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
               >
                 {camp.image && (
                   <div className="relative h-48 w-full">
