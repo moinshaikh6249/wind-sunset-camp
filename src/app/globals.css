@@ -222,25 +222,32 @@
   .dark .bg-footer-dark {
     background-image: linear-gradient(to bottom, #1E1E1E, #16241E);
   }
-  .btn-glow {
-    @apply text-white transition-transform duration-300 transform hover:scale-105;
-    background-color: #f97316;
+ .btn-glow {
+    @apply text-white font-bold transition-all duration-300;
+    @apply focus:outline-none focus:ring-4;
+    background-color: #f97316; /* Orange for light mode */
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius);
   }
 
   .dark .btn-glow {
-    background-color: #22c55e;
+    background-color: #22c55e; /* Green for dark mode */
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
-  .btn-glow:hover {
-    box-shadow: 0 0 15px var(--tw-shadow-color);
+  .btn-glow:hover, .btn-glow:focus-visible {
+    @apply transform scale-105;
+    box-shadow:
+      0 0 20px 2px var(--glow-color), /* Outer glow */
+      inset 0 0 0 1px rgba(255, 255, 255, 0.4); /* Inner border */
   }
 
-  .light .btn-glow:hover {
-    --tw-shadow-color: #f97316;
+  .light .btn-glow {
+    --glow-color: #FFB07A; /* Softer orange for light mode glow */
   }
 
-  .dark .btn-glow:hover {
-    --tw-shadow-color: #22c55e;
+  .dark .btn-glow {
+    --glow-color: #A6F7B6; /* Lighter green for dark mode glow */
   }
 }
 
@@ -265,3 +272,5 @@
       transform: scale(1.1);
   }
 }
+
+    
