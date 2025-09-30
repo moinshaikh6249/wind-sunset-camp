@@ -61,7 +61,7 @@ export default function CampsPage() {
                     {camp.description}
                   </p>
                   <div className="mt-auto">
-                    <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105">
+                    <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground btn-glow">
                       <Link href={`/booking?camp=${encodeURIComponent(camp.name)}`}>Book This Camp</Link>
                     </Button>
                   </div>

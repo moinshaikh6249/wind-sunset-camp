@@ -186,7 +186,7 @@ function BookingFormComponent() {
             />
 
             <div className="space-y-4">
-              <Button type="button" variant="outline" className="w-full transition-transform duration-200 transform hover:scale-105" onClick={handleSuggestion} disabled={isSuggesting}>
+              <Button type="button" variant="outline" className="w-full btn-glow" onClick={handleSuggestion} disabled={isSuggesting}>
                 {isSuggesting ? (
                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -194,7 +194,7 @@ function BookingFormComponent() {
                 )}
                 Suggest Form Completion
               </Button>
-              <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-transform duration-200 transform hover:scale-105" disabled={form.formState.isSubmitting}>
+              <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground btn-glow" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Submitting..." : "Submit Booking"}
               </Button>
             </div>

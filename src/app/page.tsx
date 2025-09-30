@@ -31,14 +31,14 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-custom-green text-white transition-transform duration-200 transform hover:scale-105 border border-white dark:hover:shadow-lg dark:hover:shadow-accent/40"
+              className="bg-custom-green text-white border border-white btn-glow"
             >
               <Link href="/camps">View Camps</Link>
             </Button>
             <Button
               asChild
               size="lg"
-              className="bg-custom-green text-white transition-transform duration-200 transform hover:scale-105 border border-white dark:hover:shadow-lg dark:hover:shadow-accent/40"
+              className="bg-custom-green text-white border border-white btn-glow"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
@@ -46,7 +46,7 @@ export default function Home() {
               asChild
               size="lg"
               variant="outline"
-              className="bg-custom-green text-white transition-transform duration-200 transform hover:scale-105 border-white dark:hover:shadow-lg dark:hover:shadow-accent/40"
+              className="bg-custom-green text-white border-white btn-glow"
             >
               <Link href="/contact">Contact Us</Link>
             </Button>
@@ -145,7 +145,7 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground mb-4 flex-grow">
                     {camp.description}
                   </p>
-                  <Button asChild className="w-full mt-auto bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-200 transform hover:scale-105">
+                  <Button asChild className="w-full mt-auto bg-primary hover:bg-primary/90 text-primary-foreground btn-glow">
                     <Link href={`/camps#${camp.id}`}>Learn More</Link>
                   </Button>
                 </CardContent>
