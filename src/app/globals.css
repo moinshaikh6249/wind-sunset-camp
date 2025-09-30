@@ -104,6 +104,12 @@
   .bg-custom-green:hover {
     background-color: #55C528;
   }
+  .text-custom-green {
+    color: #5DD62C;
+  }
+  .text-custom-green:hover {
+    color: #55C528;
+  }
   .text-3d {
     text-shadow:
       1px 1px 0px hsla(var(--foreground), 0.5),

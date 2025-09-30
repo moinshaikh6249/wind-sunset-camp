@@ -112,7 +112,7 @@ export default function Home() {
             <Button
               asChild
               variant="link"
-              className="text-accent hover:text-accent/80 font-bold transition-transform duration-200 transform hover:scale-105"
+              className="text-custom-green font-bold transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/camps">
                 View All <ArrowRight className="ml-2 h-4 w-4" />
