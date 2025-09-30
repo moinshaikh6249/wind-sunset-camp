@@ -41,7 +41,7 @@
   }
 
   .dark {
-    --background: 30 3% 10%; /* #1A1A19 */
+    --background: 26 8% 8%; /* #1A1A19 */
     --foreground: 78 82% 93%; /* #F6FCDF */
     --card: 30 3% 15%;
     --card-foreground: 78 82% 93%;
@@ -97,6 +97,12 @@
   }
   .bg-green-gradient {
     @apply bg-gradient-to-r from-green-500 to-green-700;
+  }
+  .bg-custom-green {
+    background-color: #5DD62C;
+  }
+  .bg-custom-green:hover {
+    background-color: #55C528;
   }
   .text-3d {
     text-shadow:
