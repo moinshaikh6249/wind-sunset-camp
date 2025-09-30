@@ -16,7 +16,7 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-16 md:py-24">
         <section className="text-center max-w-4xl mx-auto mb-20">
           <div className="story-card bg-card/80 dark:bg-card/70 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-lg transition-all duration-300 hover-glow">
-            <h1 className="font-headline text-4xl md:text-6xl text-primary mb-4 text-gradient">
+            <h1 className="font-headline text-4xl md:text-6xl mb-4 text-heading-color heading-shadow heading-underline">
               Our Story
             </h1>
             <div className="divider-icon my-4" />

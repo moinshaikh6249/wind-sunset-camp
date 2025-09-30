@@ -39,6 +39,10 @@
     --sidebar-accent-foreground: 147 65% 23%; /* Dark Green for light theme */
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
+
+    --heading-color: 22 100% 63%; /* #FF8C42 */
+    --heading-accent-color: 33 100% 84%; /* #FFD6A5 */
+    --heading-shadow: 1px 1px 3px hsla(0, 0%, 0%, 0.1);
   }
 
   .dark {
@@ -75,6 +79,10 @@
     --sidebar-accent-foreground: 0 0% 100%; /* White */
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
+
+    --heading-color: 122 39% 72%; /* #A5D6A7 */
+    --heading-accent-color: 122 40% 57%; /* #66BB6A */
+    --heading-shadow: 0 0 8px hsla(122, 40%, 57%, 0.7);
   }
 }
 
@@ -188,6 +196,26 @@
     box-shadow: 0 0 20px 5px hsla(var(--accent) / 0.3);
   }
 
+  .text-heading-color {
+    color: hsl(var(--heading-color));
+  }
+  .heading-shadow {
+    text-shadow: var(--heading-shadow);
+  }
+  .heading-underline {
+      @apply relative;
+  }
+  .heading-underline::after {
+      content: '';
+      position: absolute;
+      bottom: -0.25em;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 3px;
+      border-radius: 99px;
+      background-color: hsl(var(--heading-accent-color));
+  }
 }
 
 @layer components {
