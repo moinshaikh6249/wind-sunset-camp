@@ -38,7 +38,7 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2 className="font-headline text-3xl md:text-5xl text-primary text-center mb-12 text-gradient">
+          <h2 className="font-headline text-3xl md:text-5xl text-center mb-12 text-heading-color heading-shadow heading-underline">
             Meet the Team
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
@@ -57,7 +57,7 @@ export default function AboutPage() {
                       data-ai-hint={member.image.imageHint}
                     />
                   </div>
-                  <CardTitle className="font-headline text-2xl text-gradient">
+                  <CardTitle className="font-headline text-2xl text-heading-color">
                     {member.name}
                   </CardTitle>
                   <div className="flex items-center gap-2 mt-1">
