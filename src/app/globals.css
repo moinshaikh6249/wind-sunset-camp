@@ -97,6 +97,11 @@
   .bg-green-gradient {
     @apply bg-gradient-to-r from-green-500 to-green-700;
   }
+  .text-3d {
+    text-shadow:
+      1px 1px 0px hsla(var(--foreground), 0.5),
+      2px 2px 0px hsla(var(--foreground), 0.2);
+  }
 }
 
 @layer components {

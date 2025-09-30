@@ -55,7 +55,7 @@ export default function Home() {
 
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="font-headline text-3xl md:text-4xl text-primary mb-4">
+          <h2 className="font-headline text-3xl md:text-4xl text-foreground text-3d mb-4">
             An Adventure for Everyone
           </h2>
           <p className="max-w-3xl mx-auto text-muted-foreground mb-12">
