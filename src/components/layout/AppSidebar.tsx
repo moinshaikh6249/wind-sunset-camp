@@ -36,7 +36,7 @@ export function AppSidebar() {
       <SidebarHeader>
         
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="justify-center">
         <SidebarMenu>
           {navLinks.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
