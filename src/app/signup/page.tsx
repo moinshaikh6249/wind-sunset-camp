@@ -20,17 +20,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 const formSchema = z.object({
+  fullName: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  phone: z.string().optional(),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      fullName: "",
       email: "",
+      phone: "",
       password: "",
     },
   });
@@ -38,10 +42,10 @@ export default function LoginPage() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: "Login Successful",
-      description: "Welcome back!",
+      title: "Sign Up Successful",
+      description: "Welcome to Wind & Sunset Camp!",
     });
-    // Here you would typically handle the login logic, e.g., calling an API
+    // Here you would typically handle the signup logic, e.g., calling an API
   }
 
   return (
@@ -49,11 +53,24 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center text-3xl font-headline text-gradient">Login</CardTitle>
+            <CardTitle className="text-center text-3xl font-headline text-gradient">Sign Up</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Appleseed" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"
@@ -62,6 +79,19 @@ export default function LoginPage() {
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
                         <Input placeholder="you@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(123) 456-7890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -81,14 +111,14 @@ export default function LoginPage() {
                   )}
                 />
                 <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Logging in..." : "Login"}
+                  {form.formState.isSubmitting ? "Signing up..." : "Sign Up"}
                 </Button>
               </form>
             </Form>
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
-                Sign up
+              Already have an account?{' '}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Login
               </Link>
             </p>
           </CardContent>
