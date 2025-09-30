@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
+import { SidebarLogo } from "./SidebarLogo";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -34,7 +35,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        
+        <SidebarLogo />
       </SidebarHeader>
       <SidebarContent className="justify-center">
         <SidebarMenu>
@@ -61,5 +62,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    
