@@ -37,7 +37,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105 border border-white"
+              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105 border border-white dark:hover:shadow-lg dark:hover:shadow-accent/40"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
