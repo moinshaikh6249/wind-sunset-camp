@@ -16,7 +16,7 @@ export default function Home() {
     <div className="flex flex-col">
       <section 
         className="relative h-[70vh] md:h-[90vh] w-full flex items-center justify-center text-center text-white bg-cover bg-center"
-        style={{ backgroundImage: `url('${heroImageUrl}')` }}
+        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1476610182048-b716b8518a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzdW5zZXQlMjBsYWtlfGVufDB8fHx8MTc1OTA1NjIxMHww&ixlib=rb-4.1.0&q=80&w=1080')` }}
       >
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 p-6 max-w-4xl mx-auto">
