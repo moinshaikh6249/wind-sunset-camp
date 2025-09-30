@@ -76,7 +76,7 @@ export default function Home() {
                 outdoors.
               </p>
             </div>
-            <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm transition-transform duration-300 transform hover-translate-y-2">
+            <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm transition-transform duration-300 transform hover:-translate-y-2">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Sun className="w-8 h-8 text-accent" />
               </div>
