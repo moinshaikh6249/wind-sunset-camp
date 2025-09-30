@@ -223,16 +223,24 @@
     background-image: linear-gradient(to bottom, #1E1E1E, #16241E);
   }
   .btn-glow {
-    @apply bg-accent text-accent-foreground transition-transform duration-200 transform hover:scale-105;
+    @apply text-white transition-transform duration-300 transform hover:scale-105;
     background-color: #f97316;
-    color: white;
   }
+
   .dark .btn-glow {
-      background-color: #22c55e;
+    background-color: #22c55e;
   }
+
   .btn-glow:hover {
-    @apply bg-accent/90;
-    box-shadow: 0 0 15px hsl(var(--accent));
+    box-shadow: 0 0 15px var(--tw-shadow-color);
+  }
+
+  .light .btn-glow:hover {
+    --tw-shadow-color: #f97316;
+  }
+
+  .dark .btn-glow:hover {
+    --tw-shadow-color: #22c55e;
   }
 }
 
@@ -257,9 +265,3 @@
       transform: scale(1.1);
   }
 }
-
-    
-
-    
-
-
