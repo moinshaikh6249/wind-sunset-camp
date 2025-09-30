@@ -49,7 +49,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <Button asChild>
+        <Button asChild className="transition-transform duration-200 transform hover:scale-105">
           <Link href="/booking">Book Now</Link>
         </Button>
       </SidebarFooter>
