@@ -124,6 +124,18 @@
   .dark .card-glow {
     box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.1);
   }
+  .card-glow-green {
+    box-shadow: 0 0 8px 2px rgba(93, 214, 44, 0.4);
+  }
+  .card-glow-green:hover {
+    box-shadow: 0 0 15px 5px rgba(93, 214, 44, 0.6);
+  }
+  .dark .card-glow-green {
+    box-shadow: 0 0 8px 2px rgba(93, 214, 44, 0.3);
+  }
+  .dark .card-glow-green:hover {
+    box-shadow: 0 0 15px 5px rgba(93, 214, 44, 0.5);
+  }
 }
 
 @layer components {
