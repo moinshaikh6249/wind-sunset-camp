@@ -33,10 +33,10 @@
 
     --sidebar-background: 40 100% 97%; /* #FFF9F0 */
     --sidebar-foreground: 0 0% 17%; /* #2C2C2C */
-    --sidebar-primary: 141 29% 91%;
-    --sidebar-primary-foreground: 24 38% 28%;
-    --sidebar-accent: 140 82% 85%; /* #BBF7D0 */
-    --sidebar-accent-foreground: 147 65% 23%; /* Dark Green for light theme */
+    --sidebar-primary: 28 100% 90%; /* #FFE6CC */
+    --sidebar-primary-foreground: 22 100% 63%; /* #FF8C42 */
+    --sidebar-accent: 33 100% 84%; /* #FFD6A5 */
+    --sidebar-accent-foreground: 22 100% 63%;
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
 
@@ -73,10 +73,10 @@
 
     --sidebar-background: 0 0% 12%; /* #1E1E1E */
     --sidebar-foreground: 0 0% 92%; /* #EAEAEA */
-    --sidebar-primary: 97 48% 22%;
-    --sidebar-primary-foreground: 78 82% 93%;
-    --sidebar-accent: 148 65% 30%; /* #15803D */
-    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 121 61% 25%; /* #2E7D32 */
+    --sidebar-primary-foreground: 0 0% 92%; /* #EAEAEA */
+    --sidebar-accent: 121 61% 30%; /* Brighter green */
+    --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
 
@@ -239,3 +239,5 @@
       transform: scale(1.1);
   }
 }
+
+    
