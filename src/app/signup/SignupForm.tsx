@@ -123,7 +123,7 @@ export function SignupForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-custom-green hover:bg-custom-green/90 btn-glow-on-active dark:hover:shadow-lg dark:hover:shadow-accent/40 transition-shadow duration-300"
+              className="w-full bg-custom-green hover:bg-custom-green/90 dark:btn-glow-on-active dark:hover:shadow-lg dark:hover:shadow-accent/40 transition-shadow duration-300"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? "Signing up..." : "Sign Up"}

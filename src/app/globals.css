@@ -99,9 +99,16 @@
     @apply bg-gradient-to-r from-green-500 to-green-700;
   }
   .bg-custom-green {
-    background-color: #5DD62C;
+    background-color: #fda481;
+    color: white;
   }
   .bg-custom-green:hover {
+    background-color: rgba(253, 164, 129, 0.8);
+  }
+  .dark .bg-custom-green {
+    background-color: #5DD62C;
+  }
+  .dark .bg-custom-green:hover {
     background-color: #55C528;
   }
   .text-custom-green {
