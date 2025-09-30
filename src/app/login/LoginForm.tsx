@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { submitLoginForm } from "./actions";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -26,6 +27,7 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,8 +43,7 @@ export function LoginForm() {
         title: "Logged In Successfully!",
         description: "Welcome back!",
       });
-      form.reset();
-      // Potentially redirect user: router.push('/dashboard');
+      router.push("/");
     } else {
       toast({
         title: "Login Failed",
