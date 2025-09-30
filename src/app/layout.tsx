@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
@@ -46,9 +47,7 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <div className="flex flex-col min-h-screen">
-              <Header />
               <main className="flex-grow bg-background">{children}</main>
-              <Footer />
             </div>
           </SidebarProvider>
           <Toaster />
@@ -57,3 +56,4 @@ export default function RootLayout({
     </html>
   );
 }
+

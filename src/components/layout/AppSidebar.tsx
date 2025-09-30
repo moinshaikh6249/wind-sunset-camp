@@ -26,6 +26,12 @@ const navLinks = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const isAdminPage = pathname.startsWith('/admin');
+
+  if (isAdminPage) {
+    return null; // The admin layout will have its own sidebar
+  }
+
   return (
     <Sidebar>
       <SidebarHeader>

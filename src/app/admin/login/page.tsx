@@ -4,6 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield } from "lucide-react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -26,6 +30,7 @@ const formSchema = z.object({
 
 export default function AdminLoginPage() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,17 +40,25 @@ export default function AdminLoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Admin Login attempt:", values);
-    toast({
-      title: "Admin Login Successful",
-      description: "Welcome, administrator!",
-    });
-    // Here you would typically handle the admin login logic
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Admin Login Successful",
+        description: "Welcome, administrator!",
+      });
+      router.push("/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   }
 
   return (
-    <div className="container mx-auto flex min-h-[calc(100vh-14rem)] items-center justify-center px-4 py-16 md:py-24">
+    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-16 md:py-24">
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
