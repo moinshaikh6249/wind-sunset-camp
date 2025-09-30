@@ -137,7 +137,7 @@ export default function Home() {
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="font-headline text-primary">{camp.name}</CardTitle>
+                  <CardTitle className="font-headline text-foreground">{camp.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col">
                   <p className="text-sm text-muted-foreground mb-4 flex-grow">
