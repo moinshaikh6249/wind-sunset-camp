@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Info, GalleryVertical, Tent, Mail, PenSquare } from "lucide-react";
+import { Info, GalleryVertical, Tent, Mail, PenSquare, Facebook, Instagram, Twitter } from "lucide-react";
 
 const navLinks = [
     { href: "/about", label: "About Us", icon: Info },
@@ -16,9 +16,15 @@ const legalLinks = [
     { href: "#", label: "Terms of Service" },
 ]
 
+const socialLinks = [
+  { href: "#", label: "Facebook", icon: Facebook },
+  { href: "#", label: "Instagram", icon: Instagram },
+  { href: "#", label: "Twitter", icon: Twitter },
+];
+
 export function Footer() {
   return (
-    <footer className="bg-footer-light dark:bg-footer-dark text-foreground border-t border-accent dark:border-primary">
+    <footer className="bg-[#FFF9F0] dark:bg-[#1E1E1E] text-foreground border-t border-accent dark:border-primary">
       <div className="container pt-10 pb-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 text-center md:text-left">
           
@@ -44,7 +50,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider text-[#4A2E0F] dark:text-[#FFF5E6] mb-4">Legal</h3>
+            <h3 className="font-bold text-sm uppercase tracking-wider text-[#4A2E0F] dark:text-[#FFF5E6] mb-4">Legal & Social</h3>
             <ul className="space-y-3">
               {legalLinks.map(({ href, label }) => (
                 <li key={label}>
@@ -54,13 +60,20 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+            <div className="flex justify-center md:justify-start gap-4 mt-6">
+              {socialLinks.map(({ href, label, icon: Icon }) => (
+                <Link key={label} href={href} aria-label={label}>
+                  <Icon className="w-6 h-6 text-[#6B6B6B] dark:text-[#A6A6A6] hover:text-[#FF7F32] dark:hover:text-green-400 transition-all duration-200 hover:scale-110" />
+                </Link>
+              ))}
+            </div>
           </div>
 
         </div>
       </div>
       <div className="bg-[#FFF3E0] dark:bg-[#141414] py-4 px-4">
         <div className="container text-center">
-            <p className="text-sm text-[#5C5C5C] dark:text-[#BDBDBD]">
+            <p className="text-sm text-[#5C5C5C] dark:text-[#BDBDBD] transition-opacity hover:opacity-80">
                 &copy; {new Date().getFullYear()} Wind & Sunset Camp. All rights reserved.
             </p>
         </div>
