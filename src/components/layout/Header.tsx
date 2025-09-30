@@ -17,7 +17,7 @@ export function Header() {
           <SidebarTrigger className="hidden md:flex" />
           <Logo />
         </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           <ThemeToggle />
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
