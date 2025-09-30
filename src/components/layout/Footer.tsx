@@ -22,7 +22,7 @@ export function Footer() {
           </div>
           <div className="flex flex-wrap gap-8">
             <div>
-              <h3 className="font-semibold text-primary mb-2">Navigate</h3>
+              <h3 className="font-semibold text-foreground mb-2">Navigate</h3>
               <ul className="space-y-2">
                 {navLinks.map(({ href, label }) => (
                   <li key={href}>
@@ -34,7 +34,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-primary mb-2">Legal</h3>
+              <h3 className="font-semibold text-foreground mb-2">Legal</h3>
               <ul className="space-y-2">
                 <li>
                   <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
