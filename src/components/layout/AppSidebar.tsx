@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
@@ -27,6 +28,12 @@ const navLinks = [
 export function AppSidebar() {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith('/admin');
+  const { setOpen, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    setOpen(false);
+    setOpenMobile(false);
+  };
 
   if (isAdminPage) {
     return null; // The admin layout will have its own sidebar
@@ -41,7 +48,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {navLinks.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
-              <Link href={href}>
+              <Link href={href} onClick={handleLinkClick}>
                 <SidebarMenuButton
                   isActive={pathname === href}
                   tooltip={{ children: label }}
