@@ -37,8 +37,7 @@ export default function Home() {
             <Button
               asChild
               size="lg"
-              variant="secondary"
-              className="transition-transform duration-200 transform hover:scale-105 woody-texture text-shadow-engraved"
+              className="bg-green-gradient text-white transition-transform duration-200 transform hover:scale-105"
             >
               <Link href="/booking">Book Now</Link>
             </Button>
