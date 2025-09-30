@@ -15,7 +15,6 @@ const navLinks = [
     { href: "/gallery", label: "Gallery" },
     { href: "/camps", label: "Upcoming Camps" },
     { href: "/contact", label: "Contact" },
-    { href: "/login", label: "Login" },
   ];
 
 export function MobileNav() {
