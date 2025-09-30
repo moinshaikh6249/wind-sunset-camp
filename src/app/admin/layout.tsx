@@ -9,7 +9,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Image, Settings, Tent, Users, LogOut } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from "@/components/ui/sidebar";
-import { SidebarLogo } from "@/components/layout/SidebarLogo";
 
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -51,7 +50,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex">
         <Sidebar>
             <SidebarHeader>
-                <SidebarLogo />
+                
             </SidebarHeader>
             <SidebarContent>
                 <SidebarMenu>
