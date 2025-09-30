@@ -16,7 +16,7 @@ export default function GalleryPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {galleryImages.map((image) => (
-                <div key={image.id} className="relative aspect-[3/2] rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
+                <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
                     <Image
                     src={image.imageUrl}
                     alt={image.description}
