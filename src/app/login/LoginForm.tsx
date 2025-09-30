@@ -53,7 +53,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="card-glow bg-background/80 backdrop-blur-sm">
+    <Card className="card-glow bg-background/60 dark:bg-background/80 backdrop-blur-sm">
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
