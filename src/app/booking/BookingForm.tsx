@@ -186,7 +186,7 @@ function BookingFormComponent() {
             />
 
             <div className="space-y-4">
-              <Button type="button" variant="outline" className="w-full btn-glow" onClick={handleSuggestion} disabled={isSuggesting}>
+              <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isSuggesting}>
                 {isSuggesting ? (
                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -212,3 +212,5 @@ export function BookingForm() {
         </Suspense>
     )
 }
+
+    

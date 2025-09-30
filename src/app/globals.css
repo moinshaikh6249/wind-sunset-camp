@@ -226,28 +226,23 @@
     @apply text-white font-bold transition-all duration-300;
     @apply focus:outline-none focus:ring-4;
     background-color: #f97316; /* Orange for light mode */
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
     border-radius: var(--radius);
   }
 
   .dark .btn-glow {
     background-color: #22c55e; /* Green for dark mode */
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
-  .btn-glow:hover, .btn-glow:focus-visible {
+  .btn-glow:hover {
     @apply transform scale-105;
-    box-shadow:
-      0 0 20px 2px var(--glow-color), /* Outer glow */
-      inset 0 0 0 1px rgba(255, 255, 255, 0.4); /* Inner border */
+  }
+  
+  .light .btn-glow:hover {
+    box-shadow: 0 0 15px #f97316;
   }
 
-  .light .btn-glow {
-    --glow-color: #FFB07A; /* Softer orange for light mode glow */
-  }
-
-  .dark .btn-glow {
-    --glow-color: #A6F7B6; /* Lighter green for dark mode glow */
+  .dark .btn-glow:hover {
+    box-shadow: 0 0 15px #22c55e;
   }
 }
 
@@ -272,5 +267,7 @@
       transform: scale(1.1);
   }
 }
+
+    
 
     
