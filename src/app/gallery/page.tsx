@@ -4,17 +4,19 @@ import { galleryImages } from "@/lib/mock-data";
 
 export default function GalleryPage() {
   return (
-    <div className="bg-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-            <div className="text-center max-w-4xl mx-auto mb-12">
-                <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">Camp Gallery</h1>
-                <p className="text-lg text-muted-foreground">
+    <div className="bg-background woody-texture-background">
+        <div className="container mx-auto px-4 sm:px-8 py-12 md:py-16">
+            <div className="text-center max-w-4xl mx-auto mb-10">
+                <h1 className="font-headline text-4xl md:text-5xl text-heading-color heading-shadow heading-underline mb-6">
+                  Camp Gallery
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 A glimpse into the adventures and serene moments at Wind & Sunset Camp.
                 </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {galleryImages.map((image, index) => (
-                <div key={image.id} className="relative aspect-[3/2] rounded-lg overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {galleryImages.map((image) => (
+                <div key={image.id} className="relative aspect-[3/2] rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
                     <Image
                     src={image.imageUrl}
                     alt={image.description}
