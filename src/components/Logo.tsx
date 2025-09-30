@@ -9,7 +9,7 @@ export function Logo() {
       className="flex items-center gap-2 text-2xl font-headline font-bold text-foreground"
     >
       <Flame className="h-7 w-7 text-accent" />
-      <div className="text-glow-white text-white">
+      <div>
         <span>Wind & Sunset Camp</span>
       </div>
     </Link>
