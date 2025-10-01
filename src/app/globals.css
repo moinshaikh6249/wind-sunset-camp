@@ -248,9 +248,10 @@
   }
 
   .dark .btn-glow:hover {
-    --hover-accent: 15 88% 53%; /* Orange from light theme */
+    --hover-accent: 142 71% 47%; /* Green from dark theme */
+    background-color: hsl(0 0% 90%);
     box-shadow: 0 0 15px hsl(var(--hover-accent));
-    color: hsl(var(--hover-accent));
+    color: hsl(var(--foreground));
     border-color: hsl(var(--hover-accent));
   }
 }
