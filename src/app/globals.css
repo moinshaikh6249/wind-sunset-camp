@@ -241,15 +241,17 @@
   }
   
   .light .btn-glow:hover {
-    box-shadow: 0 0 15px hsl(var(--accent));
-    color: hsl(var(--accent));
-    border-color: hsl(var(--accent));
+    --hover-accent: 142 71% 47%; /* Green from dark theme */
+    box-shadow: 0 0 15px hsl(var(--hover-accent));
+    color: hsl(var(--hover-accent));
+    border-color: hsl(var(--hover-accent));
   }
 
   .dark .btn-glow:hover {
-    box-shadow: 0 0 15px hsl(var(--accent));
-    color: hsl(var(--accent));
-    border-color: hsl(var(--accent));
+    --hover-accent: 15 88% 53%; /* Orange from light theme */
+    box-shadow: 0 0 15px hsl(var(--hover-accent));
+    color: hsl(var(--hover-accent));
+    border-color: hsl(var(--hover-accent));
   }
 }
 
