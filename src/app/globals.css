@@ -217,10 +217,10 @@
       background-color: hsl(var(--heading-accent-color));
   }
   .bg-footer-light {
-    background-image: linear-gradient(to bottom, #FFF9F2, #FFEEDD);
+    background-image: linear-gradient(to bottom, hsl(40, 100%, 97%), hsl(33, 100%, 94%));
   }
   .dark .bg-footer-dark {
-    background-image: linear-gradient(to bottom, #1E1E1E, #16241E);
+    background-image: linear-gradient(to bottom, hsl(0, 0%, 12%), hsl(150, 25%, 10%));
   }
  .btn-glow {
     @apply font-bold transition-all duration-300;
@@ -241,14 +241,14 @@
   }
   
   .light .btn-glow:hover {
-    --hover-accent: 142 71% 47%; /* Green from dark theme */
+    --hover-accent: 15 88% 53%; /* Orange from light theme */
     box-shadow: 0 0 15px hsl(var(--hover-accent));
     color: hsl(var(--hover-accent));
     border-color: hsl(var(--hover-accent));
   }
 
   .dark .btn-glow:hover {
-    --hover-accent: 15 88% 53%; /* Orange from light theme */
+    --hover-accent: 142 71% 47%; /* Green from dark theme */
     box-shadow: 0 0 15px hsl(var(--hover-accent));
     color: hsl(var(--hover-accent));
     border-color: hsl(var(--hover-accent));
