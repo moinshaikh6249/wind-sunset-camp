@@ -251,7 +251,8 @@
     --hover-accent: 142 71% 47%; /* Green from dark theme */
     background-color: hsl(0 0% 90%);
     box-shadow: 0 0 15px hsl(var(--hover-accent));
-    color: hsl(var(--foreground));
+    color: hsl(var(--hover-accent));
+    text-shadow: 0 0 8px hsla(var(--hover-accent), 0.7);
     border-color: hsl(var(--hover-accent));
   }
 }
