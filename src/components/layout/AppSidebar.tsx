@@ -14,8 +14,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
+import { useUser } from "@/hooks/use-user";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -29,6 +30,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith('/admin');
   const { setOpen, setOpenMobile } = useSidebar();
+  const { user } = useUser();
 
   const handleLinkClick = () => {
     setOpen(false);
@@ -59,6 +61,17 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuItem>
           ))}
+            <SidebarMenuItem>
+              <Link href={user ? "/profile" : "/login"} onClick={handleLinkClick}>
+                <SidebarMenuButton
+                  isActive={pathname === (user ? "/profile" : "/login")}
+                  tooltip={{ children: user ? "Profile" : "Login" }}
+                >
+                  <User />
+                  <span>{user ? "Profile" : "Login"}</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
