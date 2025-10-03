@@ -145,10 +145,10 @@ export function AppSidebar() {
               <Link href="/dashboard" onClick={handleLinkClick}>
                 <SidebarMenuButton
                   isActive={pathname === "/dashboard"}
-                  tooltip={{ children: "Dashboard" }}
+                  tooltip={{ children: "User Dashboard" }}
                 >
                   <UserIcon />
-                  <span>Dashboard</span>
+                  <span>User Dashboard</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
