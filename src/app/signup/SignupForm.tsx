@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { submitSignupForm } from "./actions";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -28,6 +29,7 @@ const formSchema = z.object({
 
 export function SignupForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,10 +45,9 @@ export function SignupForm() {
     if (result.success) {
       toast({
         title: "Account Created!",
-        description: "You have successfully signed up. Please log in.",
+        description: "You have been successfully signed up and logged in.",
       });
-      form.reset();
-       // Potentially redirect user: router.push('/login');
+      router.push('/');
     } else {
       toast({
         title: "Signup Failed",
@@ -140,5 +141,3 @@ export function SignupForm() {
     </Card>
   );
 }
-
-    
