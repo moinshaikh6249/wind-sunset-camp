@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus } from 'lucide-react';
+import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users } from 'lucide-react';
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref, remove } from "firebase/database";
 import {
@@ -24,8 +24,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/firebase";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+import { upcomingCamps } from "@/lib/mock-data";
 
 
 const activityIcons: { [key: string]: React.ReactNode } = {
@@ -200,37 +209,75 @@ export default function DashboardPage() {
                   </div>
                 ) : bookings && bookings.length > 0 ? (
                   <ul className="space-y-4">
-                    {bookings.map(booking => (
-                      <li key={booking.id} className="flex items-center justify-between p-4 bg-background rounded-lg border">
-                        <div>
-                          <p className="font-semibold text-foreground">{booking.campName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {booking.numberOfPeople} person(s)
-                          </p>
-                        </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently cancel your booking for {booking.campName}. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleCancelBooking(booking.id)}>
-                                Yes, Cancel It
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </li>
-                    ))}
+                    {bookings.map(booking => {
+                      const campDetails = upcomingCamps.find(c => c.id === booking.campId);
+                      return (
+                      <Dialog key={booking.id}>
+                        <DialogTrigger asChild>
+                          <li className="flex items-center justify-between p-4 bg-background rounded-lg border cursor-pointer hover:bg-accent/10 transition-colors">
+                            <div>
+                              <p className="font-semibold text-foreground">{booking.campName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {booking.numberOfPeople} person(s)
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-5 w-5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently cancel your booking for {booking.campName}. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleCancelBooking(booking.id)}>
+                                      Yes, Cancel It
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </li>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle className="font-headline text-2xl text-primary">{booking.campName}</DialogTitle>
+                            <DialogDescription>
+                              Your booking details.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="flex items-center gap-4">
+                              <Users className="h-5 w-5 text-accent" />
+                              <span className="font-medium">{booking.numberOfPeople} Person(s)</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <CalendarPlus className="h-5 w-5 text-accent" />
+                              <span className="font-medium">Booked on: {format(new Date(booking.bookingDate), "PPP")}</span>
+                            </div>
+                            {campDetails && (
+                              <>
+                                <div className="flex items-center gap-4">
+                                  <Calendar className="h-5 w-5 text-accent" />
+                                  <span className="font-medium">Camp Dates: {campDetails.date}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <MapPin className="h-5 w-5 text-accent" />
+                                  <span className="font-medium">Location: {campDetails.location}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )})}
                   </ul>
                 ) : (
                   <div className="text-center py-12">
