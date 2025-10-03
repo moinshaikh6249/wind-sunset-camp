@@ -24,6 +24,11 @@
           "type": "string",
           "description": "The user's phone number."
         },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
         "history": {
           "type": "array",
           "description": "A log of the user's activities.",
@@ -126,3 +131,5 @@
     }
   }
 }
+
+    

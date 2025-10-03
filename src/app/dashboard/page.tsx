@@ -108,6 +108,7 @@ export default function DashboardPage() {
 
   const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
   const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+  const photoURL = userProfile?.photoURL || user.photoURL;
 
   return (
     <div className="bg-background woody-texture-background">
@@ -117,7 +118,7 @@ export default function DashboardPage() {
              <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
               <CardHeader className="text-center items-center">
                  <Avatar className="h-24 w-24 mb-4 text-4xl">
-                  <AvatarImage src={user.photoURL ?? undefined} alt={displayName ?? "User"} />
+                  <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
                   <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
                 </Avatar>
                 <CardTitle className="font-headline text-3xl text-heading-color">{displayName || "User Profile"}</CardTitle>
@@ -247,3 +248,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

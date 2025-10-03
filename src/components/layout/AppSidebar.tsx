@@ -86,13 +86,14 @@ function UserProfileSection() {
 
   const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
   const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+  const photoURL = userProfile?.photoURL || user.photoURL;
 
 
   return (
     <div className="p-2 space-y-3">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Avatar className="h-10 w-10 text-xl">
-            <AvatarImage src={user.photoURL ?? undefined} alt={displayName ?? "User"} />
+            <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
             <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col truncate">
@@ -166,3 +167,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+    
