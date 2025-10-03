@@ -25,12 +25,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/firebase";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -52,7 +54,6 @@ export default function DashboardPage() {
   }, [user, isUserLoading, router]);
 
   const handleLogout = async () => {
-    const auth = (await import('@/firebase')).auth;
     try {
       await signOut(auth);
       toast({

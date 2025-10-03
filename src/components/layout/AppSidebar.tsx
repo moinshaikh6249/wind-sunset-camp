@@ -19,7 +19,7 @@ import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut } fro
 import { SidebarLogo } from "./SidebarLogo";
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { useDoc } from "@/firebase/firestore/use-doc";
-import { doc, deleteDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { signOut } from "firebase/auth";
@@ -48,7 +48,7 @@ function UserProfileSection() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   const handleLogout = async () => {
-    const auth = (await import('@/firebase')).auth;
+    const auth = (await import('@/firebase')).useAuth();
     try {
       await signOut(auth);
       toast({
@@ -110,7 +110,6 @@ function UserProfileSection() {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const isAdminPage = pathname.startsWith('/admin');
   const { setOpen, setOpenMobile } = useSidebar();
   const { user } = useUser();
 
@@ -118,10 +117,6 @@ export function AppSidebar() {
     setOpen(false);
     setOpenMobile(false);
   };
-
-  if (isAdminPage) {
-    return null; // The admin layout will have its own sidebar
-  }
 
   return (
     <Sidebar>

@@ -4,9 +4,28 @@
 import { z } from "zod";
 import { suggestBookingFormCompletion, SuggestBookingFormCompletionInput } from '@/ai/flows/booking-form-completion-suggester';
 import { upcomingCamps } from '@/lib/mock-data';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, Auth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeAdminApp } from '@/lib/firebase-admin';
+import { headers } from 'next/headers';
+import { DecodedIdToken } from "firebase-admin/auth";
+
+// This is a helper function to get the user from the session cookie.
+// It is a placeholder and should be replaced with a proper session management solution.
+async function getUser(auth: Auth): Promise<DecodedIdToken | null> {
+    const sessionCookie = headers().get('__session')?.valueOf();
+    if (!sessionCookie) {
+        return null;
+    }
+
+    try {
+        const decodedIdToken = await auth.verifySessionCookie(sessionCookie);
+        return decodedIdToken;
+    } catch (error) {
+        return null;
+    }
+}
+
 
 export async function getCompletionSuggestions(
   partialForm: Record<string, string>
@@ -46,11 +65,7 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
   try {
     const { app } = await initializeAdminApp();
     const auth = getAuth(app);
-    // This is a placeholder for getting the current user. In a real app, you'd get this from the session.
-    // For this example, we'll assume a hardcoded user for demonstration.
-    // In a real app you would get the user from the session cookie.
-    // This is a placeholder.
-    const user = { uid: "NEEDS-A-REAL-USER-ID" }; 
+    const user = await getUser(auth);
 
     if (!user) {
       throw new Error("User not authenticated");
@@ -83,12 +98,14 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
 export async function cancelBooking(bookingId: string) {
   try {
     const { app } = await initializeAdminApp();
-    const firestore = getFirestore(app);
-    const user = { uid: "NEEDS-A-REAL-USER-ID" }; // Placeholder
+    const auth = getAuth(app);
+    const user = await getUser(auth);
 
     if (!user) {
       throw new Error("User not authenticated");
     }
+
+    const firestore = getFirestore(app);
 
     await firestore.collection('users').doc(user.uid).collection('bookings').doc(bookingId).delete();
     

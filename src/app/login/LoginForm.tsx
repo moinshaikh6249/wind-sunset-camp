@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { submitLoginForm } from "./actions";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -28,6 +29,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const auth = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,17 +39,31 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const result = await submitLoginForm(values);
-    if (result.success) {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: "Logged In Successfully!",
         description: "Welcome back!",
       });
-      router.push("/");
-    } else {
+      router.push("/dashboard");
+    } catch (error: any) {
+      let errorMessage = "An unexpected error occurred. Please try again later.";
+      switch (error.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid email or password.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many login attempts. Please try again later.';
+          break;
+      }
       toast({
         title: "Login Failed",
-        description: result.error,
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -107,5 +123,3 @@ export function LoginForm() {
     </Card>
   );
 }
-
-    
