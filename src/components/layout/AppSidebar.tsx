@@ -12,11 +12,19 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   useSidebar,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc } from "@/firebase/firestore/use-doc";
+import { doc, deleteDoc } from "firebase/firestore";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
+import { signOut } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -25,6 +33,80 @@ const navLinks = [
   { href: "/camps", label: "Upcoming Camps", icon: Tent },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
+
+function UserProfileSection() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+  const handleLogout = async () => {
+    const auth = (await import('@/firebase')).auth;
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        title: "Logout Failed",
+        description: "An error occurred while logging out.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isUserLoading || isProfileLoading) {
+    return (
+      <div className="p-2 space-y-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="p-2">
+        <Button asChild className="w-full">
+          <Link href="/login">Login</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+
+
+  return (
+    <div className="p-2 space-y-3">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 text-xl">
+            <AvatarImage src={user.photoURL ?? undefined} alt={displayName ?? "User"} />
+            <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col truncate">
+            <span className="font-semibold text-sm truncate">{displayName}</span>
+            <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+          </div>
+        </Link>
+      <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </Button>
+    </div>
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -46,7 +128,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarLogo />
       </SidebarHeader>
-      <SidebarContent className="justify-center">
+      <SidebarContent className="flex flex-col justify-between">
         <SidebarMenu>
           {navLinks.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
@@ -61,7 +143,25 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuItem>
           ))}
+            {user && (
+            <SidebarMenuItem>
+              <Link href="/dashboard" onClick={handleLinkClick}>
+                <SidebarMenuButton
+                  isActive={pathname === "/dashboard"}
+                  tooltip={{ children: "Dashboard" }}
+                >
+                  <UserIcon />
+                  <span>Dashboard</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
+
+        <div className="mt-auto">
+          <SidebarSeparator />
+          <UserProfileSection />
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <Button asChild className="btn-glow">
