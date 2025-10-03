@@ -16,7 +16,6 @@ const navLinks = [
     { href: "/gallery", label: "Gallery" },
     { href: "/camps", label: "Upcoming Camps" },
     { href: "/contact", label: "Contact" },
-    { href: "/profile", label: "Profile", authenticated: true },
   ];
 
 export function MobileNav() {
@@ -29,8 +28,7 @@ export function MobileNav() {
           <Logo />
         </div>
         <nav className="flex flex-col gap-6 text-lg font-medium mt-8">
-          {navLinks.map(({ href, label, authenticated }) => {
-            if (authenticated && !user) return null;
+          {navLinks.map(({ href, label }) => {
             return (
             <SheetClose asChild key={href}>
                 <Link
