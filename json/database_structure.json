@@ -20,6 +20,18 @@
           "numberOfPeople": 1,
           "userId": "USER_AUTHENTICATION_ID"
         }
+      },
+      "history": {
+        "-Nq...": {
+          "type": "signup",
+          "description": "Account created",
+          "timestamp": "2024-07-20T12:25:00.123Z"
+        },
+        "-Nq...": {
+          "type": "booking",
+          "description": "Booked Summer Adventure Camp",
+          "timestamp": "2024-07-20T12:30:00.123Z"
+        }
       }
     }
   }

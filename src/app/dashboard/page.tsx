@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, LogOut, Tent, Trash2 } from 'lucide-react';
+import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus } from 'lucide-react';
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref, remove } from "firebase/database";
 import {
@@ -25,6 +25,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/firebase";
+import { formatDistanceToNow } from "date-fns";
+
+
+const activityIcons: { [key: string]: React.ReactNode } = {
+  'signup': <UserPlus className="h-5 w-5 text-green-500" />,
+  'booking': <CalendarPlus className="h-5 w-5 text-blue-500" />,
+};
+
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -41,6 +49,8 @@ export default function DashboardPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
   const bookings = userProfile?.bookings ? Object.entries(userProfile.bookings).map(([id, booking]) => ({ id, ...booking as any })) : [];
+  const history = userProfile?.history ? Object.values(userProfile.history).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];
+
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -103,7 +113,7 @@ export default function DashboardPage() {
     <div className="bg-background woody-texture-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-8">
              <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
               <CardHeader className="text-center items-center">
                  <Avatar className="h-24 w-24 mb-4 text-4xl">
@@ -141,6 +151,35 @@ export default function DashboardPage() {
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
                 </Button>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
+              <CardHeader>
+                <CardTitle className="font-headline text-3xl text-heading-color flex items-center gap-2">
+                  <History className="h-7 w-7" /> Activity Log
+                </CardTitle>
+                <CardDescription>Recent activities on your account.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {history.length > 0 ? (
+                  <ul className="space-y-4">
+                    {history.map((activity: any, index: number) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <div className="mt-1">
+                            {activityIcons[activity.type] || <History className="h-5 w-5 text-muted-foreground" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{activity.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">No recent activity.</p>
+                )}
               </CardContent>
             </Card>
           </div>

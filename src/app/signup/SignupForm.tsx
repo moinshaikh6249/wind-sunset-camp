@@ -20,7 +20,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, useDatabase } from "@/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { ref, set, push } from "firebase/database";
 
 
 const formSchema = z.object({
@@ -66,6 +66,14 @@ export function SignupForm() {
 
       const userRef = ref(database, `users/${user.uid}`);
       await set(userRef, userProfile);
+      
+      const historyRef = ref(database, `users/${user.uid}/history`);
+      const newHistoryRef = push(historyRef);
+      await set(newHistoryRef, {
+        type: 'signup',
+        description: 'Account created',
+        timestamp: new Date().toISOString(),
+      });
 
       toast({
         title: "Account Created!",

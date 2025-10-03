@@ -9,7 +9,7 @@ import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { DecodedIdToken } from "firebase-admin/auth";
-import { set, ref } from "firebase/database";
+
 
 // This is a helper function to get the user from the session cookie.
 async function getUser(auth: Auth): Promise<DecodedIdToken | null> {
@@ -56,50 +56,6 @@ export async function getCompletionSuggestions(
   }
 }
 
-const bookingFormSchema = z.object({
-  campId: z.string(),
-  numberOfPeople: z.number(),
-  fullName: z.string(),
-  email: z.string(),
-});
-
-export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
-  try {
-    const { app } = await initializeAdminApp();
-    const auth = getAdminAuth(app);
-    const user = await auth.getUserByEmail(values.email);
-
-
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const camp = upcomingCamps.find(c => c.id === values.campId);
-    if (!camp) {
-      throw new Error("Selected camp not found.");
-    }
-    
-    const db = getDatabase(app);
-    
-    const bookingData = {
-      userId: user.uid,
-      campId: values.campId,
-      campName: camp.name,
-      numberOfPeople: values.numberOfPeople,
-      bookingDate: new Date().toISOString(),
-    };
-
-    const bookingsRef = ref(db, `users/${user.uid}/bookings`);
-    const newBookingRef = ref(bookingsRef, bookingData.bookingDate);
-    await set(newBookingRef, bookingData);
-
-    return { success: true };
-  } catch (error: any) {
-    console.error("Booking submission error:", error);
-    return { success: false, error: error.message || "An unexpected error occurred." };
-  }
-}
-
 export async function cancelBooking(bookingId: string) {
   try {
     const { app } = await initializeAdminApp();
@@ -112,7 +68,8 @@ export async function cancelBooking(bookingId: string) {
 
     const db = getDatabase(app);
 
-    await db.ref(`users/${user.uid}/bookings/${bookingId}`).remove();
+    const dbRef = db.ref(`users/${user.uid}/bookings/${bookingId}`);
+    await dbRef.remove();
     
     return { success: true };
   } catch (error: any) {

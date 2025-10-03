@@ -7,8 +7,10 @@ import { z } from "zod";
 import React, { useEffect, useState, useTransition, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle, Wand2 } from "lucide-react";
-import { useUser } from "@/firebase";
+import { useUser, useDatabase } from "@/firebase";
 import { useRouter } from "next/navigation";
+import { ref, push, set } from "firebase/database";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { upcomingCamps } from "@/lib/mock-data";
-import { getCompletionSuggestions, submitBooking } from "./actions";
+import { getCompletionSuggestions } from "./actions";
 import { Card, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
@@ -61,6 +63,7 @@ function BookingFormComponent() {
   const initialCamp = searchParams.get("camp") || "";
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const database = useDatabase();
 
   const [isSuggesting, startSuggestionTransition] = useTransition();
 
@@ -113,19 +116,44 @@ function BookingFormComponent() {
       });
       return;
     }
-  
-    const result = await submitBooking(values);
-  
-    if (result.success) {
+
+    try {
+      const camp = upcomingCamps.find(c => c.id === values.campId);
+      if (!camp) {
+        throw new Error("Selected camp not found.");
+      }
+      
+      const bookingDate = new Date().toISOString();
+      
+      const bookingData = {
+        userId: user.uid,
+        campId: values.campId,
+        campName: camp.name,
+        numberOfPeople: values.numberOfPeople,
+        bookingDate: bookingDate,
+      };
+
+      const bookingRef = ref(database, `users/${user.uid}/bookings/${bookingDate}`);
+      await set(bookingRef, bookingData);
+
+      const historyRef = ref(database, `users/${user.uid}/history`);
+      const newHistoryRef = push(historyRef);
+      await set(newHistoryRef, {
+        type: 'booking',
+        description: `Booked ${camp.name}`,
+        timestamp: new Date().toISOString(),
+      });
+
       toast({
         title: "Booking Submitted!",
-        description: `We've received your booking for ${upcomingCamps.find(c => c.id === values.campId)?.name}.`,
+        description: `We've received your booking for ${camp.name}.`,
       });
       router.push('/dashboard');
-    } else {
+    } catch (error: any) {
+      console.error("Booking submission error:", error);
       toast({
         title: "Booking Failed",
-        description: result.error || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
     }
