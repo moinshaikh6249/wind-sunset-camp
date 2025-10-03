@@ -123,18 +123,20 @@ function BookingFormComponent() {
         throw new Error("Selected camp not found.");
       }
       
-      const bookingDate = new Date().toISOString();
-      
       const bookingData = {
         userId: user.uid,
         campId: values.campId,
         campName: camp.name,
         numberOfPeople: values.numberOfPeople,
-        bookingDate: bookingDate,
+        bookingDate: new Date().toISOString(),
       };
 
-      const bookingRef = ref(database, `users/${user.uid}/bookings/${bookingDate}`);
-      await set(bookingRef, bookingData);
+      // Get a reference to the user's bookings list
+      const bookingsRef = ref(database, `users/${user.uid}/bookings`);
+      // Create a new child with a unique key
+      const newBookingRef = push(bookingsRef);
+      // Set the data for the new booking
+      await set(newBookingRef, bookingData);
 
       const historyRef = ref(database, `users/${user.uid}/history`);
       const newHistoryRef = push(historyRef);
