@@ -2,8 +2,8 @@
 "use server";
 
 import { z } from "zod";
-import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { initializeFirebase } from "@/firebase";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -12,6 +12,7 @@ const formSchema = z.object({
 
 export async function submitLoginForm(values: z.infer<typeof formSchema>) {
   try {
+    const { auth } = initializeFirebase();
     await signInWithEmailAndPassword(auth, values.email, values.password);
     return { success: true };
   } catch (error: any) {
@@ -22,8 +23,11 @@ export async function submitLoginForm(values: z.infer<typeof formSchema>) {
         case 'auth/invalid-credential':
             errorMessage = 'Invalid email or password.';
             break;
+        case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
         default:
-            errorMessage = error.message;
+            errorMessage = "An unexpected error occurred. Please try again later.";
             break;
     }
     return { success: false, error: errorMessage };

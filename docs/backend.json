@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -6,10 +7,6 @@
       "type": "object",
       "description": "Represents a user profile for the Sunset Camp application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
-        },
         "firstName": {
           "type": "string",
           "description": "The user's first name."
@@ -26,57 +23,25 @@
         "phone": {
           "type": "string",
           "description": "The user's phone number."
-        },
-        "address": {
-          "type": "string",
-          "description": "The user's address."
-        },
-        "city": {
-          "type": "string",
-          "description": "The user's city."
-        },
-        "state": {
-          "type": "string",
-          "description": "The user's state."
-        },
-        "zip": {
-          "type": "string",
-          "description": "The user's zip code."
         }
       },
       "required": [
-        "id",
         "firstName",
-        "lastName",
         "email"
       ]
     }
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}/profile",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores user profile information. Access is restricted to the user identified by {userId}. This path ensures path-based ownership and simplifies security rules.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user, matching the Firebase Authentication UID."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to store user profile information securely and efficiently.  It leverages path-based ownership for user data. This approach is simple, robust, and debuggable because access control is directly tied to the document's location within the database. Each user has a dedicated subcollection to store their profile data. This structure ensures that only the authenticated user can access their own profile information.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in security rules. Authorization is solely based on the authenticated user's UID (`request.auth.uid`) and the path structure.  There is no reliance on parent document data for access control. Because the profile data is segregated per user, there is no need for complex filtering or data segregation within a single collection. This inherent segregation also directly supports the required QAPs (Rules Are Not Filters) by ensuring that list operations are always scoped to a specific user's data, preventing unauthorized access to other user's profiles."
+    ""/users/{userId}"": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile information. The document ID is the user's Firebase Auth UID."
+    }
   }
 }

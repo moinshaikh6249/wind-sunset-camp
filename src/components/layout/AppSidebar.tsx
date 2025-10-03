@@ -16,7 +16,7 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/firebase";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },

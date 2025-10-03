@@ -10,10 +10,10 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { SidebarTrigger } from "../ui/sidebar";
-import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/firebase";
 
 export function Header() {
-  const { user, loading } = useUser();
+  const { user, isUserLoading } = useUser();
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -23,7 +23,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <ThemeToggle />
-          {!loading && (
+          {!isUserLoading && (
              <Button asChild variant="ghost" size="icon">
                 <Link href={user ? "/profile" : "/login"}>
                     <User />

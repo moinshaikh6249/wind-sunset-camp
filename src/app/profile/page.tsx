@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useUser } from "@/hooks/use-user";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,22 +9,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut } from 'lucide-react';
+import { useDoc } from "@/firebase/firestore/use-doc";
+import { doc } from "firebase/firestore";
 
 export default function ProfilePage() {
-  const { user, loading } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, isUserLoading, router]);
 
   const handleLogout = async () => {
+    const auth = (await import('@/firebase')).auth;
     try {
       await signOut(auth);
       toast({
@@ -40,8 +50,10 @@ export default function ProfilePage() {
       });
     }
   };
+  
+  const isLoading = isUserLoading || isProfileLoading;
 
-  if (loading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-2xl mx-auto">
@@ -67,7 +79,8 @@ export default function ProfilePage() {
     );
   }
 
-  const userInitial = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}`.trim() : user.displayName;
 
   return (
     <div className="bg-background">
@@ -76,10 +89,10 @@ export default function ProfilePage() {
           <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
             <CardHeader className="text-center items-center">
                <Avatar className="h-24 w-24 mb-4 text-4xl">
-                <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
+                <AvatarImage src={user.photoURL ?? undefined} alt={displayName ?? "User"} />
                 <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
               </Avatar>
-              <CardTitle className="font-headline text-3xl text-heading-color">{user.displayName || "User Profile"}</CardTitle>
+              <CardTitle className="font-headline text-3xl text-heading-color">{displayName || "User Profile"}</CardTitle>
               <CardDescription>Welcome back to your adventure hub!</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -88,7 +101,7 @@ export default function ProfilePage() {
                   <User className="h-5 w-5 text-accent" />
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Full Name</span>
-                    <span className="font-medium">{user.displayName || "Not set"}</span>
+                    <span className="font-medium">{displayName || "Not set"}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
@@ -102,7 +115,7 @@ export default function ProfilePage() {
                   <Phone className="h-5 w-5 text-accent" />
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Phone Number</span>
-                    <span className="font-medium">{user.phoneNumber || "Not provided"}</span>
+                    <span className="font-medium">{userProfile?.phone || "Not provided"}</span>
                   </div>
                 </div>
               </div>

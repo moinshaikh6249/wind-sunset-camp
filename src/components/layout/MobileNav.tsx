@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/firebase";
 
 const navLinks = [
     { href: "/", label: "Home" },

@@ -2,8 +2,9 @@
 "use server";
 
 import { z } from "zod";
-import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { initializeFirebase } from "@/firebase";
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -14,24 +15,36 @@ const formSchema = z.object({
 
 export async function submitSignupForm(values: z.infer<typeof formSchema>) {
   try {
+    const { auth, firestore } = initializeFirebase();
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     
-    // After creating the user, update their profile
-    if (userCredential.user) {
-      await updateProfile(userCredential.user, {
+    const user = userCredential.user;
+    if (user) {
+      await updateProfile(user, {
         displayName: values.name,
-        // Note: phoneNumber cannot be directly set here. It requires a more complex verification flow.
-        // We can store it in Firestore if needed.
       });
+
+      const nameParts = values.name.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      const userProfile = {
+        firstName,
+        lastName,
+        email: values.email,
+        phone: values.mobileNumber,
+      };
+
+      await setDoc(doc(firestore, "users", user.uid), userProfile);
     }
 
     return { success: true };
   } catch (error: any) {
     let errorMessage = "An unexpected error occurred.";
     if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'An account with this email already exists.';
+      errorMessage = 'An account with this email already exists.';
     } else {
-        errorMessage = error.message;
+      errorMessage = "An unexpected error occurred during sign up.";
     }
     return { success: false, error: errorMessage };
   }
