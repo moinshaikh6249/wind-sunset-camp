@@ -2,10 +2,9 @@
 "use server";
 
 import { z } from "zod";
-import { getAuth } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { ref, set } from "firebase/database";
 import { getSdks, initializeFirebase } from "@/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -15,11 +14,7 @@ const formSchema = z.object({
 });
 
 export async function submitSignupForm(values: z.infer<typeof formSchema>) {
-  // We are not using the Firebase Admin SDK here because we want the user
-  // to be authenticated on the client-side after signing up.
-  // The client-side SDK handles this automatically.
-  // We initialize the app here to be able to use the client SDK on the server.
-  const { auth, firestore } = initializeFirebase();
+  const { auth, database } = initializeFirebase();
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -36,8 +31,7 @@ export async function submitSignupForm(values: z.infer<typeof formSchema>) {
       phone: values.mobileNumber,
     };
     
-    // We are using the user's UID as the document ID in the 'users' collection.
-    await setDoc(doc(firestore, "users", user.uid), userProfile);
+    await set(ref(database, "users/" + user.uid), userProfile);
     
     return { success: true, userId: user.uid };
   } catch (error: any) {

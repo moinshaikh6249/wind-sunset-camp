@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut, Tent, Trash2 } from 'lucide-react';
-import { useDoc } from "@/firebase/firestore/use-doc";
-import { useCollection } from "@/firebase/firestore/use-collection";
-import { doc, collection, deleteDoc } from "firebase/firestore";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { ref, remove } from "firebase/database";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,21 +30,17 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const firestore = useFirestore();
+  const database = useDatabase();
   const auth = useAuth();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
+    return ref(database, `users/${user.uid}`);
+  }, [database, user]);
 
-  const bookingsRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return collection(firestore, 'users', user.uid, 'bookings');
-  }, [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
-  const { data: bookings, isLoading: areBookingsLoading } = useCollection(bookingsRef);
+  const bookings = userProfile?.bookings ? Object.entries(userProfile.bookings).map(([id, booking]) => ({ id, ...booking as any })) : [];
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -73,7 +68,8 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(firestore, 'users', user.uid, 'bookings', bookingId));
+      const bookingRef = ref(database, `users/${user.uid}/bookings/${bookingId}`);
+      await remove(bookingRef);
       toast({
         title: "Booking Canceled",
         description: "Your booking has been successfully canceled.",
@@ -157,7 +153,7 @@ export default function DashboardPage() {
                 <CardDescription>Here are all your upcoming adventures. Manage your bookings here.</CardDescription>
               </CardHeader>
               <CardContent>
-                {areBookingsLoading ? (
+                {isLoading ? (
                   <div className="space-y-4">
                     <Skeleton className="h-16 w-full" />
                     <Skeleton className="h-16 w-full" />

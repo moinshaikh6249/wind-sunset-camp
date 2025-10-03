@@ -1,5 +1,5 @@
 
-import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, App } from 'firebase-admin/app';
 import 'server-only';
 
 async function initializeAdminApp() {
@@ -25,7 +25,8 @@ async function initializeAdminApp() {
                 expires_in: 3600,
                 access_token: token,
             }),
-        }
+        },
+        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
     });
 
     return { app };

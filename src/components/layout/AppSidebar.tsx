@@ -17,9 +17,9 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
-import { useDoc } from "@/firebase/firestore/use-doc";
-import { doc } from "firebase/firestore";
+import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { ref } from "firebase/database";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { signOut } from "firebase/auth";
@@ -36,16 +36,16 @@ const navLinks = [
 
 function UserProfileSection() {
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const database = useDatabase();
   const { toast } = useToast();
   const router = useRouter();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
+    return ref(database, `users/${user.uid}`);
+  }, [database, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
   const handleLogout = async () => {
     const auth = (await import('@/firebase')).useAuth();
@@ -65,7 +65,7 @@ function UserProfileSection() {
     }
   };
 
-  if (isUserLoading || isProfileLoading) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
         <Skeleton className="h-10 w-full" />

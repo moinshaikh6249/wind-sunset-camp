@@ -4,14 +4,13 @@
 import { z } from "zod";
 import { suggestBookingFormCompletion, SuggestBookingFormCompletionInput } from '@/ai/flows/booking-form-completion-suggester';
 import { upcomingCamps } from '@/lib/mock-data';
-import { getAuth, Auth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth as getAdminAuth, Auth } from 'firebase-admin/auth';
+import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { DecodedIdToken } from "firebase-admin/auth";
 
 // This is a helper function to get the user from the session cookie.
-// It is a placeholder and should be replaced with a proper session management solution.
 async function getUser(auth: Auth): Promise<DecodedIdToken | null> {
     const sessionCookie = headers().get('__session')?.valueOf();
     if (!sessionCookie) {
@@ -64,7 +63,7 @@ const bookingFormSchema = z.object({
 export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
   try {
     const { app } = await initializeAdminApp();
-    const auth = getAuth(app);
+    const auth = getAdminAuth(app);
     const user = await getUser(auth);
 
     if (!user) {
@@ -76,7 +75,7 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
       throw new Error("Selected camp not found.");
     }
     
-    const firestore = getFirestore(app);
+    const db = getDatabase(app);
     
     const bookingData = {
       userId: user.uid,
@@ -86,7 +85,9 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
       bookingDate: new Date().toISOString(),
     };
 
-    await firestore.collection('users').doc(user.uid).collection('bookings').add(bookingData);
+    const bookingsRef = db.ref(`users/${user.uid}/bookings`);
+    const newBookingRef = bookingsRef.push();
+    await newBookingRef.set(bookingData);
 
     return { success: true };
   } catch (error: any) {
@@ -98,16 +99,16 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
 export async function cancelBooking(bookingId: string) {
   try {
     const { app } = await initializeAdminApp();
-    const auth = getAuth(app);
+    const auth = getAdminAuth(app);
     const user = await getUser(auth);
 
     if (!user) {
       throw new Error("User not authenticated");
     }
 
-    const firestore = getFirestore(app);
+    const db = getDatabase(app);
 
-    await firestore.collection('users').doc(user.uid).collection('bookings').doc(bookingId).delete();
+    await db.ref(`users/${user.uid}/bookings/${bookingId}`).remove();
     
     return { success: true };
   } catch (error: any) {
