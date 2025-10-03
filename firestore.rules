@@ -1,0 +1,70 @@
+/**
+ * @file Firebase Security Rules for Sunset Camp User Profiles
+ *
+ * @core_philosophy This ruleset enforces a strict user-ownership model for accessing user profile data.
+ *   Each user can only read and write their own profile information.
+ * @data_structure All user profile data is stored under `/users/{userId}/profile`.
+ * @key_security_decisions
+ *   - User listing is disallowed to protect user privacy.
+ *   - All write operations require a valid, authenticated user.
+ *   - Authorization is based solely on the authenticated user's UID and the path.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user profile data, enforcing strict user ownership.
+     *   Only the authenticated user can read, create, update, or delete their own profile.
+     * @path /users/{userId}/profile
+     * @allow (create) - An authenticated user with UID 'user123' can create their profile at /users/user123/profile. The profile data must include 'id': 'user123'.
+     * @allow (get, update, delete) - An authenticated user with UID 'user123' can get, update, or delete their profile at /users/user123/profile.
+     * @deny (create) - An authenticated user with UID 'user123' cannot create a profile at /users/user456/profile.
+     * @deny (get, update, delete) - An authenticated user with UID 'user123' cannot get, update, or delete a profile at /users/user456/profile.
+     * @principle Enforces path-based ownership and validates data consistency.
+     */
+    match /users/{userId}/profile {
+      // Allow read access to the user's own profile.
+      allow get: if isSignedIn() && isOwner(userId);
+      // Only allow listing if the authenticated user is the owner.
+      allow list: if false; // Listing profiles is forbidden for privacy.
+
+      // Allow creating a profile if the user is signed in and the userId matches.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+
+      // Allow updating a profile if the user is signed in, the userId matches, and the profile exists.
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow deleting a profile if the user is signed in, the userId matches, and the profile exists.
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource.
+     * @param {string} userId The user ID from the path.
+     * @return {bool} True if the authenticated user's UID matches the userId, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource and it exists.
+     * @param {string} userId The user ID from the path.
+     * @return {bool} True if the authenticated user's UID matches the userId and resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+  }
+}
