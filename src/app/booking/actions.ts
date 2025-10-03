@@ -9,6 +9,7 @@ import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { DecodedIdToken } from "firebase-admin/auth";
+import { set, ref } from "firebase/database";
 
 // This is a helper function to get the user from the session cookie.
 async function getUser(auth: Auth): Promise<DecodedIdToken | null> {
@@ -58,13 +59,16 @@ export async function getCompletionSuggestions(
 const bookingFormSchema = z.object({
   campId: z.string(),
   numberOfPeople: z.number(),
+  fullName: z.string(),
+  email: z.string(),
 });
 
 export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
   try {
     const { app } = await initializeAdminApp();
     const auth = getAdminAuth(app);
-    const user = await getUser(auth);
+    const user = await auth.getUserByEmail(values.email);
+
 
     if (!user) {
       throw new Error("User not authenticated");
@@ -85,9 +89,9 @@ export async function submitBooking(values: z.infer<typeof bookingFormSchema>) {
       bookingDate: new Date().toISOString(),
     };
 
-    const bookingsRef = db.ref(`users/${user.uid}/bookings`);
-    const newBookingRef = bookingsRef.push();
-    await newBookingRef.set(bookingData);
+    const bookingsRef = ref(db, `users/${user.uid}/bookings`);
+    const newBookingRef = ref(bookingsRef, bookingData.bookingDate);
+    await set(newBookingRef, bookingData);
 
     return { success: true };
   } catch (error: any) {
