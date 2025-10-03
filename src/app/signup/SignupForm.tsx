@@ -64,51 +64,66 @@ export function SignupForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      // 1. Create user and update their Auth display name immediately
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
-
-      let photoURL = "";
-      if (values.profilePicture) {
-        const file = values.profilePicture;
-        const filePath = `profile-pictures/${user.uid}/${file.name}`;
-        const fileRef = storageRef(storage, filePath);
-        const uploadResult = await uploadBytes(fileRef, file);
-        photoURL = await getDownloadURL(uploadResult.ref);
-      }
-      
-      await updateProfile(user, { 
-        displayName: values.name,
-        photoURL: photoURL,
-       });
+      await updateProfile(user, { displayName: values.name });
 
       const nameParts = values.name.trim().split(/\s+/);
       const firstName = nameParts[0] || '';
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
       
+      // 2. Create the initial user profile in the database without the photoURL
       const userProfile = {
         firstName,
         lastName,
         email: values.email,
         phone: values.mobileNumber,
-        photoURL,
+        photoURL: "", // Start with an empty photoURL
       };
 
       const userRef = dbRef(database, `users/${user.uid}`);
       await set(userRef, userProfile);
-      
-      const historyRef = dbRef(database, `users/${user.uid}/history`);
-      await set(dbRef(database, `users/${user.uid}/history/${Date.now()}`), {
+
+      // 3. Create the history entry
+      const historyRef = dbRef(database, `users/${user.uid}/history/${Date.now()}`);
+      await set(historyRef, {
         type: 'signup',
         description: 'Account created',
         timestamp: new Date().toISOString(),
       });
-
+      
+      // 4. Navigate immediately to the dashboard
       toast({
         title: "Account Created!",
-        description: "You have been successfully signed up and logged in.",
+        description: "Welcome! Redirecting you to the dashboard...",
       });
-
       router.push('/dashboard');
+      
+      // 5. Handle profile picture upload in the background (non-blocking)
+      if (values.profilePicture) {
+        const file = values.profilePicture;
+        const filePath = `profile-pictures/${user.uid}/${file.name}`;
+        const fileRef = storageRef(storage, filePath);
+        
+        // This part runs in the background. We don't await it.
+        uploadBytes(fileRef, file)
+          .then(uploadResult => getDownloadURL(uploadResult.ref))
+          .then(photoURL => {
+            // Once the URL is ready, update Auth and Database in the background
+            updateProfile(user, { photoURL });
+            set(userRef, { ...userProfile, photoURL });
+          })
+          .catch(error => {
+            console.error("Background profile picture upload failed:", error);
+            // Optionally, show a non-blocking toast to inform the user
+            toast({
+              title: "Profile Picture Upload Failed",
+              description: "There was an issue uploading your picture. You can try again from your dashboard.",
+              variant: "destructive"
+            });
+          });
+      }
 
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred during sign up.";
@@ -248,4 +263,3 @@ export function SignupForm() {
   );
 }
 
-    
