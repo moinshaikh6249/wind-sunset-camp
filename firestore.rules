@@ -1,70 +1,117 @@
 /**
- * @file Firebase Security Rules for Sunset Camp User Profiles
+ * @fileoverview Firestore Security Rules for Sunset Camp application.
  *
- * @core_philosophy This ruleset enforces a strict user-ownership model for accessing user profile data.
- *   Each user can only read and write their own profile information.
- * @data_structure All user profile data is stored under `/users/{userId}/profile`.
- * @key_security_decisions
- *   - User listing is disallowed to protect user privacy.
- *   - All write operations require a valid, authenticated user.
- *   - Authorization is based solely on the authenticated user's UID and the path.
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model, meaning users can only
+ * access their own profile data and bookings.  It prioritizes security by
+ * explicitly denying potentially unsafe operations like listing all users.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information. The {userId} MUST match
+ *   the Firebase Auth UID.
+ * - /users/{userId}/bookings/{bookingId}: Stores booking information for each user.
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own profile data and bookings.
+ * - Listing all users is explicitly denied.
+ *
+ * Denormalization for Authorization:
+ *   The `userId` field within the `/users/{userId}/bookings/{bookingId}` subcollection
+ *   MUST match the `userId` in the path to allow write access to the booking. This
+ *   is enforced on creation, and immutability is enforced on updates.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages user profile data, enforcing strict user ownership.
-     *   Only the authenticated user can read, create, update, or delete their own profile.
-     * @path /users/{userId}/profile
-     * @allow (create) - An authenticated user with UID 'user123' can create their profile at /users/user123/profile. The profile data must include 'id': 'user123'.
-     * @allow (get, update, delete) - An authenticated user with UID 'user123' can get, update, or delete their profile at /users/user123/profile.
-     * @deny (create) - An authenticated user with UID 'user123' cannot create a profile at /users/user456/profile.
-     * @deny (get, update, delete) - An authenticated user with UID 'user123' cannot get, update, or delete a profile at /users/user456/profile.
-     * @principle Enforces path-based ownership and validates data consistency.
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}
+     * @allow (get) Authenticated user can read their own profile.
+     *   Example: User with UID 'user123' reading /users/user123
+     * @allow (create) Authenticated user can create their own profile, where the userID in the path matches the user ID in the data.
+     *   Example: User with UID 'user123' creating /users/user123
+     * @allow (update) Authenticated user can update their own profile, if the user ID in the path matches the user ID in the data.
+     *   Example: User with UID 'user123' updating /users/user123
+     * @allow (delete) Authenticated user can delete their own profile, if the user ID in the path matches the user ID in the data.
+     *   Example: User with UID 'user123' deleting /users/user123
+     * @deny (get) Authenticated user cannot read other user profiles.
+     *   Example: User with UID 'user123' reading /users/otherUser
+     * @deny (list) Listing all users is not allowed.
+     * @deny (create) Unauthenticated user cannot create a profile.
+     * @deny (update) Authenticated user cannot update other user profiles.
+     * @deny (delete) Authenticated user cannot delete other user profiles.
+     * @principle Enforces document ownership, restricting access to the authenticated user's own profile.
      */
-    match /users/{userId}/profile {
-      // Allow read access to the user's own profile.
-      allow get: if isSignedIn() && isOwner(userId);
-      // Only allow listing if the authenticated user is the owner.
-      allow list: if false; // Listing profiles is forbidden for privacy.
+    match /users/{userId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-      // Allow creating a profile if the user is signed in and the userId matches.
+      // Helper function to check if the user is the owner of the document
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Helper function to check if the user is an existing owner of the document
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false; // Listing all users is not permitted
+
       allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-
-      // Allow updating a profile if the user is signed in, the userId matches, and the profile exists.
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-
-      // Allow deleting a profile if the user is signed in, the userId matches, and the profile exists.
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
-
-    // --- Helper Functions ---
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is authenticated, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @param {string} userId The user ID from the path.
-     * @return {bool} True if the authenticated user's UID matches the userId, false otherwise.
+     * @description Controls access to booking documents within a user's profile.
+     * @path /users/{userId}/bookings/{bookingId}
+     * @allow (get) Authenticated user can read their own bookings.
+     *   Example: User 'user123' reading /users/user123/bookings/booking456
+     * @allow (create) Authenticated user can create bookings under their own profile,
+     *   and the 'userId' field in the booking data must match the 'userId' in the path.
+     *   Example: User 'user123' creating /users/user123/bookings/booking456 with data { userId: 'user123', ... }
+     * @allow (update) Authenticated user can update their own bookings, where the userID in the path matches the user ID in the data.
+     *   Example: User with UID 'user123' updating /users/user123/bookings/booking456
+     * @allow (delete) Authenticated user can delete their own bookings.
+     *   Example: User 'user123' deleting /users/user123/bookings/booking456
+     * @deny (get) Authenticated user cannot read bookings of other users.
+     *   Example: User 'user123' attempting to read /users/otherUser/bookings/booking789
+     * @deny (list) Authenticated user can read their own bookings.
+     *   Example: User 'user123' listing /users/otherUser/bookings
+     * @deny (create) Authenticated user cannot create bookings under other user profiles.
+     *   Example: User 'user123' attempting to create /users/otherUser/bookings/booking456
+     * @deny (update) Authenticated user cannot update bookings of other users.
+     *   Example: User 'user123' attempting to update /users/otherUser/bookings/booking789
+     * @deny (delete) Authenticated user cannot delete bookings of other users.
+     *   Example: User 'user123' attempting to delete /users/otherUser/bookings/booking789
+     * @principle Enforces strict ownership for bookings, ensuring users can only manage bookings associated with their profile.
      */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
+    match /users/{userId}/bookings/{bookingId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-    /**
-     * @description Checks if the authenticated user is the owner of the resource and it exists.
-     * @param {string} userId The user ID from the path.
-     * @return {bool} True if the authenticated user's UID matches the userId and resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      // Helper function to check if the user is the owner of the booking
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Helper function to check if the user is an existing owner of the document
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
