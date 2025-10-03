@@ -125,8 +125,9 @@ export default function DashboardPage() {
       }
 
       // Update Realtime Database
-      const userRef = dbRef(database, `users/${user.uid}`);
-      await update(userRef, { photoURL });
+      if(userProfileRef) {
+        await update(userProfileRef, { photoURL });
+      }
 
       toast({
         title: "Profile Picture Updated",
@@ -356,5 +357,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
