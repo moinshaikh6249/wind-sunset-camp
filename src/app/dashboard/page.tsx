@@ -120,7 +120,9 @@ export default function DashboardPage() {
       const photoURL = await getDownloadURL(uploadResult.ref);
 
       // Update Firebase Auth profile
-      await updateProfile(user, { photoURL });
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { photoURL });
+      }
 
       // Update Realtime Database
       const userRef = dbRef(database, `users/${user.uid}`);
@@ -354,5 +356,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

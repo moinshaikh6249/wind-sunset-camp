@@ -62,9 +62,9 @@ function UserProfileSection() {
         );
     }
     
-    const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
     const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
     const photoURL = userProfile?.photoURL || user.photoURL;
+    const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
 
     return (
         <div className="space-y-4">
@@ -129,3 +129,5 @@ export function MobileNav() {
         </div>
     )
 }
+
+    
