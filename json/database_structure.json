@@ -1,0 +1,26 @@
+{
+  "users": {
+    "USER_AUTHENTICATION_ID": {
+      "email": "jane@example.com",
+      "firstName": "Jane",
+      "lastName": "Appleseed",
+      "phone": "123-456-7890",
+      "bookings": {
+        "2024-07-20T12:30:00.123Z": {
+          "bookingDate": "2024-07-20T12:30:00.123Z",
+          "campId": "summer-adventure-2024",
+          "campName": "Summer Adventure Camp",
+          "numberOfPeople": 2,
+          "userId": "USER_AUTHENTICATION_ID"
+        },
+        "2024-08-10T18:00:00.456Z": {
+          "bookingDate": "2024-08-10T18:00:00.456Z",
+          "campId": "mountain-explorer-2024",
+          "campName": "Mountain Explorer",
+          "numberOfPeople": 1,
+          "userId": "USER_AUTHENTICATION_ID"
+        }
+      }
+    }
+  }
+}
