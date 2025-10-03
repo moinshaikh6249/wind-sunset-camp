@@ -19,6 +19,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { submitSignupForm } from "./actions";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -30,6 +33,8 @@ const formSchema = z.object({
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const auth = useAuth();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,11 +48,22 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const result = await submitSignupForm(values);
     if (result.success) {
-      toast({
-        title: "Account Created!",
-        description: "You have been successfully signed up and logged in.",
-      });
-      router.push('/');
+       // Also sign the user in on the client after successful server-side creation
+      try {
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        toast({
+          title: "Account Created!",
+          description: "You have been successfully signed up and logged in.",
+        });
+        router.push('/dashboard');
+      } catch (clientError) {
+         toast({
+          title: "Login after signup failed",
+          description: "Your account was created, but we couldn't log you in. Please log in manually.",
+          variant: "destructive"
+        });
+        router.push('/login');
+      }
     } else {
       toast({
         title: "Signup Failed",
