@@ -1,18 +1,19 @@
 
 "use client";
 
-import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { useUser, useDatabase, useMemoFirebase, useStorage } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { signOut } from "firebase/auth";
+import { signOut, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users } from 'lucide-react';
+import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle } from 'lucide-react';
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
-import { ref, remove } from "firebase/database";
+import { ref as dbRef, remove, update } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,11 +49,15 @@ export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const database = useDatabase();
+  const storage = useStorage();
   const auth = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
-    return ref(database, `users/${user.uid}`);
+    return dbRef(database, `users/${user.uid}`);
   }, [database, user]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
@@ -87,7 +92,7 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!user) return;
     try {
-      const bookingRef = ref(database, `users/${user.uid}/bookings/${bookingId}`);
+      const bookingRef = dbRef(database, `users/${user.uid}/bookings/${bookingId}`);
       await remove(bookingRef);
       toast({
         title: "Booking Canceled",
@@ -99,6 +104,41 @@ export default function DashboardPage() {
         description: "Could not cancel booking. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+
+    try {
+      const filePath = `profile-pictures/${user.uid}/${file.name}`;
+      const fileRef = storageRef(storage, filePath);
+      const uploadResult = await uploadBytes(fileRef, file);
+      const photoURL = await getDownloadURL(uploadResult.ref);
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { photoURL });
+
+      // Update Realtime Database
+      const userRef = dbRef(database, `users/${user.uid}`);
+      await update(userRef, { photoURL });
+
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your new picture has been saved.",
+      });
+    } catch (error: any) {
+      console.error("Profile picture update error:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Could not update your profile picture.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -126,10 +166,29 @@ export default function DashboardPage() {
           <div className="lg:col-span-1 space-y-8">
              <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
               <CardHeader className="text-center items-center">
-                 <Avatar className="h-24 w-24 mb-4 text-4xl">
-                  <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
-                </Avatar>
+                 <div className="relative group">
+                    <Avatar className="h-24 w-24 mb-4 text-4xl">
+                      <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
+                    </Avatar>
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer mb-4"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {isUploading ? (
+                        <LoaderCircle className="h-8 w-8 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-8 w-8 text-white" />
+                      )}
+                    </div>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/png, image/jpeg, image/gif"
+                      onChange={handleProfilePictureChange} 
+                    />
+                 </div>
                 <CardTitle className="font-headline text-3xl text-heading-color">{displayName || "User Profile"}</CardTitle>
                 <CardDescription>Welcome back to your adventure hub!</CardDescription>
               </CardHeader>
@@ -295,3 +354,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
