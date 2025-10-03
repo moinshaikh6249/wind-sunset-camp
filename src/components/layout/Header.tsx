@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -10,8 +10,10 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { SidebarTrigger } from "../ui/sidebar";
+import { useUser } from "@/hooks/use-user";
 
 export function Header() {
+  const { user, loading } = useUser();
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -21,6 +23,14 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <ThemeToggle />
+          {!loading && (
+             <Button asChild variant="ghost" size="icon">
+                <Link href={user ? "/profile" : "/login"}>
+                    <User />
+                    <span className="sr-only">{user ? "Profile" : "Login"}</span>
+                </Link>
+            </Button>
+          )}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
