@@ -2,9 +2,9 @@
 "use server";
 
 import { z } from "zod";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { ref, set } from "firebase/database";
-import { getSdks, initializeFirebase } from "@/firebase";
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { getDatabase } from 'firebase-admin/database';
+import { initializeAdminApp } from '@/lib/firebase-admin';
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -14,12 +14,17 @@ const formSchema = z.object({
 });
 
 export async function submitSignupForm(values: z.infer<typeof formSchema>) {
-  const { auth, database } = initializeFirebase();
-
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-    const user = userCredential.user;
+    const { app } = await initializeAdminApp();
+    const auth = getAdminAuth(app);
+    const db = getDatabase(app);
 
+    const userRecord = await auth.createUser({
+      email: values.email,
+      password: values.password,
+      displayName: values.name,
+    });
+    
     const nameParts = values.name.trim().split(/\s+/);
     const firstName = nameParts[0] || '';
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
@@ -31,13 +36,13 @@ export async function submitSignupForm(values: z.infer<typeof formSchema>) {
       phone: values.mobileNumber,
     };
     
-    await set(ref(database, "users/" + user.uid), userProfile);
+    await set(ref(db, "users/" + userRecord.uid), userProfile);
     
-    return { success: true, userId: user.uid };
+    return { success: true, userId: userRecord.uid };
   } catch (error: any) {
     console.error("Signup Error:", error);
     let errorMessage = "An unexpected error occurred during sign up.";
-    if (error.code === 'auth/email-already-in-use') {
+    if (error.code === 'auth/email-already-exists') {
       errorMessage = 'An account with this email already exists.';
     } else if (error.message) {
         errorMessage = error.message;
