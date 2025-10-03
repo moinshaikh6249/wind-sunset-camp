@@ -1,5 +1,5 @@
 
-import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, App, applicationDefault } from 'firebase-admin/app';
 import 'server-only';
 
 async function initializeAdminApp() {
@@ -14,25 +14,9 @@ async function initializeAdminApp() {
         throw new Error("Missing NEXT_PUBLIC_FIREBASE_PROJECT_ID");
     }
 
-    let credential;
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        // Production or local with service account file
-        credential = cert(JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS));
-    } else {
-        // Workstation or environment with implicit credentials
-        const response = await fetch('http://localhost:15000/gcloud-auth/print-access-token');
-        const { token } = await response.json();
-        credential = {
-            getAccessToken: () => ({
-                expires_in: 3600,
-                access_token: token,
-            }),
-        };
-    }
-    
     const app = initializeApp({
         projectId,
-        credential,
+        credential: applicationDefault(),
         databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
     });
 

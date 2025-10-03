@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
+import { ref, set } from "firebase-admin/database";
 
 const formSchema = z.object({
   name: z.string().min(2),
