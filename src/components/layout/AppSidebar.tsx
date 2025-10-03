@@ -85,9 +85,10 @@ function UserProfileSection() {
     );
   }
 
-  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : (user.displayName || 'User');
   const photoURL = userProfile?.photoURL || user.photoURL;
-  const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const userInitial = displayName.charAt(0).toUpperCase();
+
 
   return (
     <div className="p-2 space-y-3">

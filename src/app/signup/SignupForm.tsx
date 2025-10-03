@@ -112,7 +112,8 @@ export function SignupForm() {
           .then(photoURL => {
             // Once the URL is ready, update Auth and Database in the background
             updateProfile(user, { photoURL });
-            set(userRef, { ...userProfile, photoURL });
+            // Use set to update the entire object, ensuring the photoURL is included
+            set(dbRef(database, `users/${user.uid}`), { ...userProfile, photoURL });
           })
           .catch(error => {
             console.error("Background profile picture upload failed:", error);

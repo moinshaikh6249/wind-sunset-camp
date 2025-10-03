@@ -34,7 +34,7 @@ function UserProfileSection() {
         return ref(database, `users/${user.uid}`);
     }, [database, user]);
 
-    const { data: userProfile } = useDatabaseValue(userProfileRef);
+    const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
     const handleLogout = async () => {
         try {
@@ -52,7 +52,19 @@ function UserProfileSection() {
         }
     };
     
-    if (isUserLoading || !user) {
+    if (isUserLoading || (user && isProfileLoading)) {
+        return (
+             <div className="flex items-center gap-3 p-2">
+                <Avatar className="h-10 w-10 text-xl animate-pulse bg-muted"></Avatar>
+                <div className="flex flex-col truncate space-y-2">
+                    <div className="h-4 w-24 bg-muted rounded"></div>
+                    <div className="h-3 w-32 bg-muted rounded"></div>
+                </div>
+            </div>
+        );
+    }
+    
+    if (!user) {
         return (
             <SheetClose asChild>
                 <Button asChild className="w-full">
@@ -62,9 +74,9 @@ function UserProfileSection() {
         );
     }
     
-    const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+    const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : (user.displayName || 'User');
     const photoURL = userProfile?.photoURL || user.photoURL;
-    const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+    const userInitial = displayName.charAt(0).toUpperCase();
 
     return (
         <div className="space-y-4">
