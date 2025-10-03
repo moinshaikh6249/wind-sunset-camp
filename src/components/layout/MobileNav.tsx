@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser } from "@/firebase";
+import { useUser, useDatabase, useMemoFirebase, useAuth } from "@/firebase";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { ref } from "firebase/database";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -21,27 +23,75 @@ const navLinks = [
     { href: "/contact", label: "Contact" },
   ];
 
+function UserProfileSection() {
+    const { user, isUserLoading } = useUser();
+    const database = useDatabase();
+    const auth = useAuth();
+    const { toast } = useToast();
+
+    const userProfileRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return ref(database, `users/${user.uid}`);
+    }, [database, user]);
+
+    const { data: userProfile } = useDatabaseValue(userProfileRef);
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            toast({
+                title: "Logged Out",
+                description: "You have been successfully logged out.",
+            });
+        } catch (error) {
+            toast({
+                title: "Logout Failed",
+                description: "An error occurred while logging out.",
+                variant: "destructive",
+            });
+        }
+    };
+    
+    if (isUserLoading || !user) {
+        return (
+            <SheetClose asChild>
+                <Button asChild className="w-full">
+                    <Link href="/login">Login / Sign Up</Link>
+                </Button>
+            </SheetClose>
+        );
+    }
+    
+    const userInitial = userProfile?.firstName ? userProfile.firstName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : 'U');
+    const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : user.displayName;
+    const photoURL = userProfile?.photoURL || user.photoURL;
+
+    return (
+        <div className="space-y-4">
+            <SheetClose asChild>
+                <Link href="/dashboard" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/10">
+                    <Avatar className="h-10 w-10 text-xl">
+                        <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
+                        <AvatarFallback>{userInitial}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col truncate">
+                        <span className="font-semibold text-sm truncate">{displayName}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                    </div>
+                </Link>
+            </SheetClose>
+            <SheetClose asChild>
+                <Button variant="outline" className="w-full" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Button>
+            </SheetClose>
+        </div>
+    );
+}
+
 export function MobileNav() {
     const pathname = usePathname();
-    const { user } = useUser();
-    const { toast } = useToast();
-    
-    const handleLogout = async () => {
-      const auth = (await import('@/firebase')).auth;
-      try {
-        await signOut(auth);
-        toast({
-          title: "Logged Out",
-          description: "You have been successfully logged out.",
-        });
-      } catch (error) {
-        toast({
-          title: "Logout Failed",
-          description: "An error occurred while logging out.",
-          variant: "destructive",
-        });
-      }
-    };
     
     return (
         <div className="flex flex-col h-full">
@@ -68,34 +118,7 @@ export function MobileNav() {
           
           <div className="mt-auto space-y-4">
             <div className="border-t pt-4">
-            {user ? (
-              <div className="space-y-4">
-                <SheetClose asChild>
-                  <Link href="/dashboard" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/10">
-                    <Avatar className="h-10 w-10 text-xl">
-                      <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
-                      <AvatarFallback>{user.displayName?.charAt(0) ?? user.email?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col truncate">
-                      <span className="font-semibold text-sm truncate">{user.displayName}</span>
-                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-                    </div>
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Button variant="outline" className="w-full" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Button>
-                </SheetClose>
-              </div>
-            ) : (
-              <SheetClose asChild>
-                <Button asChild className="w-full">
-                    <Link href="/login">Login / Sign Up</Link>
-                </Button>
-              </SheetClose>
-            )}
+                <UserProfileSection />
             </div>
             <SheetClose asChild>
                 <Button asChild size="lg" className="w-full btn-glow">

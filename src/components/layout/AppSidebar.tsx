@@ -25,6 +25,7 @@ import { Skeleton } from "../ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/firebase";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -39,6 +40,7 @@ function UserProfileSection() {
   const database = useDatabase();
   const { toast } = useToast();
   const router = useRouter();
+  const auth = useAuth();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -48,7 +50,6 @@ function UserProfileSection() {
   const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
   const handleLogout = async () => {
-    const auth = (await import('@/firebase')).useAuth();
     try {
       await signOut(auth);
       toast({
@@ -167,5 +168,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    
