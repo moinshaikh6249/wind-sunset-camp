@@ -5,7 +5,6 @@ import { z } from "zod";
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
-import { ref, set } from "firebase-admin/database";
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -37,7 +36,9 @@ export async function submitSignupForm(values: z.infer<typeof formSchema>) {
       phone: values.mobileNumber,
     };
     
-    await set(ref(db, "users/" + userRecord.uid), userProfile);
+    // Use the ref from 'firebase-admin/database'
+    const dbRef = db.ref(`users/${userRecord.uid}`);
+    await dbRef.set(userProfile);
     
     return { success: true, userId: userRecord.uid };
   } catch (error: any) {
@@ -45,6 +46,8 @@ export async function submitSignupForm(values: z.infer<typeof formSchema>) {
     let errorMessage = "An unexpected error occurred during sign up.";
     if (error.code === 'auth/email-already-exists') {
       errorMessage = 'An account with this email already exists.';
+    } else if (error.code === 'auth/invalid-password') {
+        errorMessage = 'Password is too weak. It must be at least 6 characters long.';
     } else if (error.message) {
         errorMessage = error.message;
     }
