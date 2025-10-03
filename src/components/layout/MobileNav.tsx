@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
+import { useUser } from "@/hooks/use-user";
 
 const navLinks = [
     { href: "/", label: "Home" },
@@ -15,10 +16,12 @@ const navLinks = [
     { href: "/gallery", label: "Gallery" },
     { href: "/camps", label: "Upcoming Camps" },
     { href: "/contact", label: "Contact" },
+    { href: "/profile", label: "Profile", authenticated: true },
   ];
 
 export function MobileNav() {
     const pathname = usePathname();
+    const { user } = useUser();
     
     return (
         <div className="flex flex-col h-full">
@@ -26,7 +29,9 @@ export function MobileNav() {
           <Logo />
         </div>
         <nav className="flex flex-col gap-6 text-lg font-medium mt-8">
-          {navLinks.map(({ href, label }) => (
+          {navLinks.map(({ href, label, authenticated }) => {
+            if (authenticated && !user) return null;
+            return (
             <SheetClose asChild key={href}>
                 <Link
                 href={href}
@@ -40,7 +45,8 @@ export function MobileNav() {
                 {label}
                 </Link>
             </SheetClose>
-          ))}
+            )
+          })}
         </nav>
         <SheetClose asChild>
             <Button asChild size="lg" className="mt-auto btn-glow">
@@ -50,5 +56,3 @@ export function MobileNav() {
       </div>
     )
 }
-
-    
