@@ -17,10 +17,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { submitSignupForm } from "./actions";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth, useDatabase } from "@/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { ref, set } from "firebase/database";
 
 
 const formSchema = z.object({
@@ -34,6 +34,7 @@ export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
+  const database = useDatabase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,28 +47,49 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const result = await submitSignupForm(values);
-    if (result.success) {
-       // Also sign the user in on the client after successful server-side creation
-      try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-          title: "Account Created!",
-          description: "You have been successfully signed up and logged in.",
-        });
-        router.push('/dashboard');
-      } catch (clientError) {
-         toast({
-          title: "Login after signup failed",
-          description: "Your account was created, but we couldn't log you in. Please log in manually.",
-          variant: "destructive"
-        });
-        router.push('/login');
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: values.name });
+
+      const nameParts = values.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      const userProfile = {
+        firstName,
+        lastName,
+        email: values.email,
+        phone: values.mobileNumber,
+      };
+
+      const userRef = ref(database, `users/${user.uid}`);
+      await set(userRef, userProfile);
+
+      toast({
+        title: "Account Created!",
+        description: "You have been successfully signed up and logged in.",
+      });
+
+      router.push('/dashboard');
+
+    } catch (error: any) {
+      let errorMessage = "An unexpected error occurred during sign up.";
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'An account with this email already exists.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password is too weak. It must be at least 6 characters long.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'The email address is not valid.';
+          break;
       }
-    } else {
       toast({
         title: "Signup Failed",
-        description: result.error,
+        description: errorMessage,
         variant: "destructive",
       });
     }
