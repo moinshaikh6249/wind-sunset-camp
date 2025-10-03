@@ -7,6 +7,8 @@ import { z } from "zod";
 import React, { useEffect, useState, useTransition, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle, Wand2 } from "lucide-react";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,13 +30,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { upcomingCamps } from "@/lib/mock-data";
-import { getCompletionSuggestions } from "./actions";
+import { getCompletionSuggestions, submitBooking } from "./actions";
 import { Card, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  campName: z.string({ required_error: "Please select a camp." }),
+  campId: z.string({ required_error: "Please select a camp." }),
   numberOfPeople: z.coerce.number().min(1, "At least one person must be attending."),
 });
 
@@ -57,6 +59,8 @@ function BookingFormComponent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const initialCamp = searchParams.get("camp") || "";
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
 
   const [isSuggesting, startSuggestionTransition] = useTransition();
 
@@ -65,52 +69,96 @@ function BookingFormComponent() {
     defaultValues: {
       fullName: "",
       email: "",
-      campName: initialCamp,
+      campId: initialCamp,
       numberOfPeople: 1,
     },
   });
 
-  const watchedCampName = form.watch("campName");
-  const debouncedCampName = useDebounce(watchedCampName, 500);
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      toast({
+        title: "Authentication Required",
+        description: "You need to be logged in to book a camp.",
+        variant: "destructive",
+      });
+      router.push('/login');
+    } else if (user) {
+      form.setValue('fullName', user.displayName || '');
+      form.setValue('email', user.email || '');
+    }
+  }, [user, isUserLoading, router, toast, form]);
+
+
+  const watchedCampId = form.watch("campId");
+  const debouncedCampId = useDebounce(watchedCampId, 500);
 
   useEffect(() => {
-    if (debouncedCampName) {
-      startSuggestionTransition(async () => {
-        const partialForm = { campName: debouncedCampName };
-        const suggestions = await getCompletionSuggestions(partialForm);
-        
-        // The AI might suggest other fields based on the camp name
-        // For this app, we're keeping it here for simple, but this is where you'd handle it.
-        // e.g., if (suggestions.startDate) form.setValue('startDate', suggestions.startDate);
-      });
+    if (debouncedCampId) {
+      const camp = upcomingCamps.find(c => c.id === debouncedCampId);
+      if (camp) {
+        startSuggestionTransition(async () => {
+            const partialForm = { campName: camp.name };
+            await getCompletionSuggestions(partialForm);
+        });
+      }
     }
-  }, [debouncedCampName, form]);
+  }, [debouncedCampId]);
 
   async function onSubmit(values: FormValues) {
-    console.log(values);
-    toast({
-      title: "Booking Submitted!",
-      description: `We've received your booking for ${values.campName}. Check your email for confirmation.`,
-    });
-    form.reset();
+    if (!user) {
+      toast({
+        title: "Not Logged In",
+        description: "You must be logged in to submit a booking.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    const result = await submitBooking(values);
+  
+    if (result.success) {
+      toast({
+        title: "Booking Submitted!",
+        description: `We've received your booking for ${upcomingCamps.find(c => c.id === values.campId)?.name}.`,
+      });
+      router.push('/dashboard');
+    } else {
+      toast({
+        title: "Booking Failed",
+        description: result.error || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   }
+  
 
   const handleSuggestion = () => {
     startSuggestionTransition(async () => {
         const partialForm: Record<string, string> = {};
         const currentValues = form.getValues();
-        if(currentValues.campName) partialForm.campName = currentValues.campName;
+
+        const camp = upcomingCamps.find(c => c.id === currentValues.campId);
+        if(camp) partialForm.campName = camp.name;
+
         if(currentValues.email) partialForm.email = currentValues.email;
         if(currentValues.fullName) partialForm.fullName = currentValues.fullName;
 
         const suggestions = await getCompletionSuggestions(partialForm);
 
         for (const [key, value] of Object.entries(suggestions)) {
-            if (key in form.getValues()) {
+            if (key in form.getValues() && key !== 'campId' && key !== 'campName') {
                 form.setValue(key as keyof FormValues, value as any);
             }
         }
     });
+  }
+
+  if (isUserLoading || !user) {
+    return (
+        <div className="flex justify-center items-center h-96">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (
@@ -125,7 +173,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Appleseed" {...field} />
+                    <Input placeholder="Jane Appleseed" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -138,7 +186,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="jane@example.com" {...field} />
+                    <Input placeholder="jane@example.com" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +194,7 @@ function BookingFormComponent() {
             />
             <FormField
               control={form.control}
-              name="campName"
+              name="campId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Which camp are you interested in?</FormLabel>
@@ -158,7 +206,7 @@ function BookingFormComponent() {
                     </FormControl>
                     <SelectContent>
                       {upcomingCamps.map((camp) => (
-                        <SelectItem key={camp.id} value={camp.name}>
+                        <SelectItem key={camp.id} value={camp.id}>
                           {camp.name}
                         </SelectItem>
                       ))}
@@ -192,7 +240,7 @@ function BookingFormComponent() {
                 ) : (
                     <Wand2 className="mr-2 h-4 w-4" />
                 )}
-                Suggest Form Completion
+                Suggest Details
               </Button>
               <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Submitting..." : "Submit Booking"}
@@ -212,5 +260,3 @@ export function BookingForm() {
         </Suspense>
     )
 }
-
-    

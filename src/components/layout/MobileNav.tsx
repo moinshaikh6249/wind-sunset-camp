@@ -47,15 +47,15 @@ export function MobileNav() {
           })}
           <SheetClose asChild>
             <Link
-              href={user ? "/profile" : "/login"}
+              href={user ? "/dashboard" : "/login"}
               className={cn(
                 "transition-colors hover:text-foreground/80",
-                pathname === (user ? "/profile" : "/login")
+                pathname === (user ? "/dashboard" : "/login")
                   ? "text-foreground"
                   : "text-foreground/60"
               )}
             >
-              {user ? "Profile" : "Login"}
+              {user ? "Dashboard" : "Login"}
             </Link>
           </SheetClose>
         </nav>

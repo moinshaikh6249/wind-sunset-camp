@@ -25,9 +25,9 @@ export function Header() {
           <ThemeToggle />
           {!isUserLoading && (
              <Button asChild variant="ghost" size="icon">
-                <Link href={user ? "/profile" : "/login"}>
+                <Link href={user ? "/dashboard" : "/login"}>
                     <User />
-                    <span className="sr-only">{user ? "Profile" : "Login"}</span>
+                    <span className="sr-only">{user ? "Dashboard" : "Login"}</span>
                 </Link>
             </Button>
           )}

@@ -29,6 +29,42 @@
         "firstName",
         "email"
       ]
+    },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a camp booking made by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who made the booking."
+        },
+        "campId": {
+          "type": "string",
+          "description": "The ID of the booked camp."
+        },
+        "campName": {
+          "type": "string",
+          "description": "The name of the booked camp."
+        },
+        "numberOfPeople": {
+          "type": "number",
+          "description": "The number of people in the booking."
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the booking was made."
+        }
+      },
+      "required": [
+        "userId",
+        "campId",
+        "campName",
+        "numberOfPeople",
+        "bookingDate"
+      ]
     }
   },
   "auth": {
@@ -37,11 +73,17 @@
     ]
   },
   "firestore": {
-    ""/users/{userId}"": {
+    "/users/{userId}": {
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores user profile information. The document ID is the user's Firebase Auth UID."
+    },
+    "/users/{userId}/bookings/{bookingId}": {
+      "schema": {
+        "$ref": "#/entities/Booking"
+      },
+      "description": "Stores the camp bookings for a specific user."
     }
   }
 }

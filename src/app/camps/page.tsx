@@ -62,7 +62,7 @@ export default function CampsPage() {
                   </p>
                   <div className="mt-auto">
                     <Button asChild className="w-full btn-glow">
-                      <Link href={`/booking?camp=${encodeURIComponent(camp.name)}`}>Book This Camp</Link>
+                      <Link href={`/booking?camp=${camp.id}`}>Book This Camp</Link>
                     </Button>
                   </div>
                 </CardContent>
@@ -74,5 +74,3 @@ export default function CampsPage() {
     </div>
   );
 }
-
-    
