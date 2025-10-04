@@ -66,11 +66,18 @@ function UserProfileSection() {
     
     if (!user) {
         return (
-            <SheetClose asChild>
-                <Button asChild className="w-full">
-                    <Link href="/login">Login / Sign Up</Link>
-                </Button>
-            </SheetClose>
+            <div className="space-y-2">
+                <SheetClose asChild>
+                    <Button asChild className="w-full">
+                        <Link href="/login">Login</Link>
+                    </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                     <Button asChild variant="outline" className="w-full">
+                        <Link href="/admin/login">Admin Login</Link>
+                    </Button>
+                </SheetClose>
+            </div>
         );
     }
     
