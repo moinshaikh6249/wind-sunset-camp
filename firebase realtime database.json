@@ -1,0 +1,70 @@
+
+{
+  "users": {
+    "2xweAt0JifePccSN4RmWBN8CSb43": {
+      "email": "abhishek@gmail.com",
+      "firstName": "Abhishek",
+      "history": {
+        "1759468966418": {
+          "description": "Account created",
+          "timestamp": "2025-10-03T05:22:46.418Z",
+          "type": "signup"
+        }
+      },
+      "lastName": "Sharma",
+      "phone": "8355855988",
+      "photoURL": ""
+    },
+    "5o1RmpE2MgZBEsgeKGQi4EL35KD2": {
+      "email": "abhishek@mail.com",
+      "firstName": "Abhishek",
+      "history": {
+        "-OacZFBB0ku2lUNTkBSr": {
+          "description": "Booked Summer Adventure Camp",
+          "timestamp": "2025-10-03T05:34:59.803Z",
+          "type": "booking"
+        },
+        "1759469593731": {
+          "description": "Account created",
+          "timestamp": "2025-10-03T05:33:13.731Z",
+          "type": "signup"
+        }
+      },
+      "lastName": "Sharma",
+      "phone": "8355855988",
+      "photoURL": ""
+    },
+    "K7OSHVgGtiVEv4COq9iWOd1SLpQ2": {
+      "bookings": {
+        "-OacRiiioy8xZ1gJMysU": {
+          "bookingDate": "2025-10-03T05:02:07.723Z",
+          "campId": "mountain-explorer-2024",
+          "campName": "Mountain Explorer",
+          "numberOfPeople": 1,
+          "userId": "K7OSHVgGtiVEv4COq9iWOd1SLpQ2"
+        }
+      },
+      "email": "abhi@mail.com",
+      "firstName": "Abhi",
+      "history": {
+        "-OacRimsQ7-oSveMivgO": {
+          "description": "Booked Mountain Explorer",
+          "timestamp": "2025-10-03T05:02:07.989Z",
+          "type": "booking"
+        }
+      },
+      "lastName": "",
+      "phone": "8355855988"
+    },
+    "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": {
+      "email": "i.am.racer.s@gmail.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "phone": "",
+      "photoURL": ""
+    }
+  },
+  "admins": {
+    "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": true
+  }
+}
