@@ -285,7 +285,9 @@ function BookingFormComponent() {
 
 export function BookingForm() {
     return (
-        <Suspense fallback={<div>Loading form...</div>}>
+        <Suspense fallback={<div className="flex justify-center items-center h-96">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+        </div>}>
             <BookingFormComponent />
         </Suspense>
     )
