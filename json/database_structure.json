@@ -34,5 +34,8 @@
         }
       }
     }
+  },
+  "admins": {
+    "ADMIN_USER_AUTHENTICATION_ID": true
   }
 }
