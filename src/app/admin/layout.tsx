@@ -2,7 +2,7 @@
 "use client";
 
 import { useUser } from "@/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 
@@ -13,10 +13,17 @@ export default function AdminLayout({
 }) {
   const { user, idTokenResult, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
 
   const isAdmin = idTokenResult?.claims?.isAdmin;
+  const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
+    // If we are on the login page, don't run any redirection logic.
+    if (isLoginPage) {
+      return;
+    }
+
     if (isUserLoading) {
       return; // Wait for user status to be determined
     }
@@ -28,8 +35,14 @@ export default function AdminLayout({
       // If user is not an admin, redirect them to the regular dashboard
       router.replace("/dashboard");
     }
-  }, [user, isUserLoading, isAdmin, router]);
+  }, [user, isUserLoading, isAdmin, router, isLoginPage]);
 
+  // If on the login page, just render the content.
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  // For all other admin pages, show loading or protect the content.
   if (isUserLoading || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center">
