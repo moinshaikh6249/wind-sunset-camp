@@ -15,7 +15,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
 import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
@@ -36,7 +36,8 @@ const navLinks = [
 ];
 
 function UserProfileSection() {
-  const { user, isUserLoading } = useUser();
+  const { user, idTokenResult, isUserLoading } = useUser();
+  const isAdmin = idTokenResult?.claims?.isAdmin;
   const database = useDatabase();
   const { toast } = useToast();
   const router = useRouter();
@@ -77,9 +78,12 @@ function UserProfileSection() {
   
   if (!user) {
     return (
-      <div className="p-2">
+      <div className="p-2 space-y-2">
         <Button asChild className="w-full">
           <Link href="/login">Login</Link>
+        </Button>
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/admin/login">Admin Login</Link>
         </Button>
       </div>
     );
@@ -102,6 +106,14 @@ function UserProfileSection() {
             <span className="text-xs text-muted-foreground truncate">{user.email}</span>
           </div>
         </Link>
+      {isAdmin && (
+         <Button asChild variant="secondary" size="sm" className="w-full">
+            <Link href="/admin/dashboard">
+              <Shield className="mr-2 h-4 w-4" />
+              Admin Dashboard
+            </Link>
+         </Button>
+      )}
       <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
         <LogOut className="mr-2 h-4 w-4" />
         Logout

@@ -108,7 +108,13 @@
   "auth": {
     "providers": [
       "password"
-    ]
+    ],
+    "customClaims": {
+      "isAdmin": {
+        "type": "boolean",
+        "description": "Determines if the user has administrative privileges."
+      }
+    }
   },
   "firestore": {
     "/users/{userId}": {
@@ -131,5 +137,3 @@
     }
   }
 }
-
-    
