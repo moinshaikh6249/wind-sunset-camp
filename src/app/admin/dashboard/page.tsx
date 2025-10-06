@@ -5,7 +5,7 @@ import { useUser, useDatabase, useMemoFirebase } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, CalendarCheck, Activity, UserPlus, LineChart, BarChart3 } from 'lucide-react';
+import { Users, CalendarCheck, Activity, UserPlus, LineChart, BarChart3, UserCheck } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
 import { OverviewChart } from '@/components/admin/OverviewChart';
 import { RecentActivity, type Activity as ActivityType } from '@/components/admin/RecentActivity';
@@ -42,6 +42,7 @@ export default function AdminDashboardPage() {
       return {
         totalUsers: 0,
         activeBookings: 0,
+        activeUsers: 0,
         newSignups24h: 0,
         signupChartData: [],
         bookingsChartData: [],
@@ -53,6 +54,7 @@ export default function AdminDashboardPage() {
     const totalUsers = usersArray.length;
     
     let activeBookings = 0;
+    let activeUsers = 0;
     const now = new Date();
     const twentyFourHoursAgo = subDays(now, 1);
     let newSignups24h = 0;
@@ -71,7 +73,12 @@ export default function AdminDashboardPage() {
 
     for (const [uid, userData] of usersArray) {
       if (userData.bookings) {
-        activeBookings += Object.keys(userData.bookings).length;
+        const bookingCount = Object.keys(userData.bookings).length;
+        if (bookingCount > 0) {
+            activeUsers++;
+            activeBookings += bookingCount;
+        }
+
         Object.values(userData.bookings).forEach(booking => {
             const month = getMonth(new Date(booking.bookingDate));
             if (bookingCounts[month]) {
@@ -121,6 +128,7 @@ export default function AdminDashboardPage() {
     return {
       totalUsers,
       activeBookings,
+      activeUsers,
       newSignups24h,
       signupChartData: signupCounts,
       bookingsChartData: bookingCounts,
@@ -138,7 +146,7 @@ export default function AdminDashboardPage() {
           Here&apos;s a quick overview of your camp&apos;s performance.
         </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Active Bookings"
           value={stats.activeBookings.toLocaleString()}
@@ -151,6 +159,13 @@ export default function AdminDashboardPage() {
           value={stats.totalUsers.toLocaleString()}
           icon={Users}
           description="Total registered users"
+          isLoading={isLoading}
+        />
+        <StatCard
+          title="Active Users"
+          value={stats.activeUsers.toLocaleString()}
+          icon={UserCheck}
+          description="Users with at least one booking"
           isLoading={isLoading}
         />
          <StatCard
