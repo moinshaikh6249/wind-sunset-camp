@@ -7,7 +7,7 @@ import { ref } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Pencil } from 'lucide-react';
-import { cancelBooking, approveBooking, updateBooking } from './actions';
+import { cancelBooking, approveBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { upcomingCamps } from '@/lib/mock-data';
 
@@ -48,19 +48,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 import type { BookingStatus, AggregatedBooking } from './types';
 
@@ -81,112 +68,6 @@ const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, 
       className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-300 dark:border-red-700",
     },
   };
-
-
-function ModifyBookingDialog({ booking, onUpdate }: { booking: AggregatedBooking, onUpdate: (data: Partial<AggregatedBooking>) => void }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isPending, startTransition] = useTransition();
-    const { user } = useUser();
-    const { toast } = useToast();
-
-    // Form state
-    const [campId, setCampId] = useState(booking.campId);
-    const [numberOfPeople, setNumberOfPeople] = useState(booking.numberOfPeople);
-    const [status, setStatus] = useState(booking.status);
-
-    const handleSaveChanges = async () => {
-        if (!user) return;
-        
-        startTransition(async () => {
-            const idToken = await user.getIdToken();
-            const campName = upcomingCamps.find(c => c.id === campId)?.name || booking.campName;
-            
-            const updatedData = {
-                campId,
-                campName,
-                numberOfPeople,
-                status,
-            };
-
-            const result = await updateBooking(idToken, booking.userId, booking.bookingId, updatedData);
-
-            if (result.success) {
-                toast({
-                    title: "Booking Updated",
-                    description: `The booking for ${booking.customerName} has been updated.`,
-                });
-                onUpdate(updatedData); // To optimistically update the UI
-                setIsOpen(false);
-            } else {
-                toast({
-                    title: "Update Failed",
-                    description: result.error || "An unexpected error occurred.",
-                    variant: "destructive",
-                });
-            }
-        });
-    }
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Modify
-                </DropdownMenuItem>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Modify Booking</DialogTitle>
-                    <DialogDescription>
-                        Edit the details for {booking.customerName}'s booking.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="camp" className="text-right">Camp</Label>
-                        <Select onValueChange={setCampId} defaultValue={campId}>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select a camp" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {upcomingCamps.map(camp => (
-                                    <SelectItem key={camp.id} value={camp.id}>{camp.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="guests" className="text-right">Guests</Label>
-                        <Input id="guests" type="number" value={numberOfPeople} onChange={(e) => setNumberOfPeople(Number(e.target.value))} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="status" className="text-right">Status</Label>
-                        <Select onValueChange={(val) => setStatus(val as BookingStatus)} defaultValue={status}>
-                            <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Approved">Approved</SelectItem>
-                                <SelectItem value="Canceled">Canceled</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={handleSaveChanges} disabled={isPending}>
-                        {isPending ? "Saving..." : "Save Changes"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
 
 function BookingTableRowSkeleton() {
     return (
@@ -305,14 +186,6 @@ export default function BookingsPage() {
     );
   };
 
-  const handleOptimisticUpdate = (bookingId: string, updatedData: Partial<AggregatedBooking>) => {
-    setBookings(currentBookings => 
-        currentBookings.map(b => 
-            b.bookingId === bookingId ? { ...b, ...updatedData } : b
-        )
-    );
-  };
-
   const handleExport = () => {
     if (bookings.length === 0) {
       toast({
@@ -375,17 +248,25 @@ export default function BookingsPage() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem 
-                    onSelect={() => startApproveTransition(() => handleApproveBooking(booking.userId, booking.bookingId, booking.campName))}
+                    onSelect={() => {
+                        startApproveTransition(async () => {
+                            await handleApproveBooking(booking.userId, booking.bookingId, booking.campName);
+                        });
+                    }}
                     disabled={booking.status === 'Approved' || isApprovePending}
                 >
                     {isApprovePending ? "Approving..." : "Approve"}
                 </DropdownMenuItem>
                 
-                <ModifyBookingDialog booking={booking} onUpdate={(updatedData) => handleOptimisticUpdate(booking.bookingId, updatedData)} />
-
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Cancel</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-destructive" 
+                    onSelect={(e) => e.preventDefault()}
+                    disabled={isCancelPending}
+                  >
+                    Cancel
+                  </DropdownMenuItem>
                 </AlertDialogTrigger>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -402,7 +283,11 @@ export default function BookingsPage() {
                 <AlertDialogCancel>Keep Booking</AlertDialogCancel>
                 <AlertDialogAction
                  className="bg-destructive hover:bg-destructive/90"
-                 onClick={() => startCancelTransition(() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName))}
+                 onClick={() => {
+                    startCancelTransition(async () => {
+                        await handleCancelBooking(booking.userId, booking.bookingId, booking.campName);
+                    });
+                 }}
                  disabled={isCancelPending}
                 >
                 {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
