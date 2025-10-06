@@ -246,15 +246,6 @@ export default function ReportsPage() {
                     </ResponsiveContainer>
                 </CardContent>
                 </Card>
-
-                <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><FileText className="text-muted-foreground"/>Content Engagement</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">Content analytics coming soon!</p>
-                    </CardContent>
-                </Card>
             </>
         )}
       </div>
