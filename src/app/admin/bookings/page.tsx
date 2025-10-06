@@ -4,11 +4,12 @@
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
-import { useMemo, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
-import { MoreHorizontal, CalendarSearch, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { cancelBooking, approveBooking } from './actions';
+import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Pencil } from 'lucide-react';
+import { cancelBooking, approveBooking, updateBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
+import { upcomingCamps } from '@/lib/mock-data';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,35 +48,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
+import type { BookingStatus, AggregatedBooking } from './types';
 
-type DbUser = {
-  firstName: string;
-  lastName?: string;
-  email: string;
-  bookings?: { [bookingId: string]: DbBooking };
-};
-
-type DbUsers = {
-  [uid: string]: DbUser;
-};
-
-type DbBooking = {
-  bookingDate: string;
-  campId: string;
-  campName: string;
-  numberOfPeople: number;
-  userId: string;
-  status?: 'Pending' | 'Approved' | 'Canceled';
-};
-
-type AggregatedBooking = DbBooking & {
-  bookingId: string;
-  customerName: string;
-  customerEmail: string;
-};
-
-const statusConfig = {
+const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, className: string }> = {
     Approved: {
       label: "Approved",
       icon: CheckCircle,
@@ -93,6 +82,112 @@ const statusConfig = {
     },
   };
 
+
+function ModifyBookingDialog({ booking, onUpdate }: { booking: AggregatedBooking, onUpdate: (data: Partial<AggregatedBooking>) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const { user } = useUser();
+    const { toast } = useToast();
+
+    // Form state
+    const [campId, setCampId] = useState(booking.campId);
+    const [numberOfPeople, setNumberOfPeople] = useState(booking.numberOfPeople);
+    const [status, setStatus] = useState(booking.status);
+
+    const handleSaveChanges = async () => {
+        if (!user) return;
+        
+        startTransition(async () => {
+            const idToken = await user.getIdToken();
+            const campName = upcomingCamps.find(c => c.id === campId)?.name || booking.campName;
+            
+            const updatedData = {
+                campId,
+                campName,
+                numberOfPeople,
+                status,
+            };
+
+            const result = await updateBooking(idToken, booking.userId, booking.bookingId, updatedData);
+
+            if (result.success) {
+                toast({
+                    title: "Booking Updated",
+                    description: `The booking for ${booking.customerName} has been updated.`,
+                });
+                onUpdate(updatedData); // To optimistically update the UI
+                setIsOpen(false);
+            } else {
+                toast({
+                    title: "Update Failed",
+                    description: result.error || "An unexpected error occurred.",
+                    variant: "destructive",
+                });
+            }
+        });
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Modify
+                </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Modify Booking</DialogTitle>
+                    <DialogDescription>
+                        Edit the details for {booking.customerName}'s booking.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="camp" className="text-right">Camp</Label>
+                        <Select onValueChange={setCampId} defaultValue={campId}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a camp" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {upcomingCamps.map(camp => (
+                                    <SelectItem key={camp.id} value={camp.id}>{camp.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="guests" className="text-right">Guests</Label>
+                        <Input id="guests" type="number" value={numberOfPeople} onChange={(e) => setNumberOfPeople(Number(e.target.value))} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">Status</Label>
+                        <Select onValueChange={(val) => setStatus(val as BookingStatus)} defaultValue={status}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Approved">Approved</SelectItem>
+                                <SelectItem value="Canceled">Canceled</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleSaveChanges} disabled={isPending}>
+                        {isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 function BookingTableRowSkeleton() {
     return (
         <TableRow>
@@ -105,7 +200,7 @@ function BookingTableRowSkeleton() {
             <TableCell>
                 <Skeleton className="h-4 w-[120px]" />
             </TableCell>
-             <TableCell>
+             <TableCell className="hidden md:table-cell">
                 <Skeleton className="h-4 w-[100px]" />
             </TableCell>
             <TableCell className="hidden md:table-cell">
@@ -125,25 +220,27 @@ export default function BookingsPage() {
   const database = useDatabase();
   const { user } = useUser();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
     return ref(database, 'users');
   }, [database]);
 
-  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+  const { data: usersData, isLoading } = useDatabaseValue(usersRef);
 
-  const bookings: AggregatedBooking[] = useMemo(() => {
+  const [bookings, setBookings] = useState<AggregatedBooking[]>([]);
+
+  useMemo(() => {
     if (!usersData) return [];
     
     const allBookings: AggregatedBooking[] = [];
     
-    Object.values(usersData).forEach(userEntry => {
+    Object.entries(usersData).forEach(([uid, userEntry]) => {
       if (userEntry.bookings) {
         Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]) => {
           allBookings.push({
             ...bookingData,
+            userId: uid,
             status: bookingData.status ?? 'Pending',
             bookingId,
             customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
@@ -155,47 +252,65 @@ export default function BookingsPage() {
 
     allBookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
     
-    return allBookings;
+    setBookings(allBookings);
   }, [usersData]);
 
-  const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
-    if (!user) return;
-    startTransition(async () => {
-      const idToken = await user.getIdToken();
-      const result = await cancelBooking(idToken, userId, bookingId);
+  const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
+    try {
+      const result = await action();
       if (result.success) {
         toast({
-          title: "Booking Canceled",
-          description: `Booking for ${campName} has been canceled.`,
+          title: successTitle,
+          description: successDescription,
         });
       } else {
         toast({
-          title: "Cancellation Failed",
+          title: errorTitle,
           description: result.error || "An unexpected error occurred.",
           variant: "destructive",
         });
       }
-    });
-  };
+    } catch (e: any) {
+       toast({
+          title: errorTitle,
+          description: e.message || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+    }
+  }
 
   const handleApproveBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startTransition(async () => {
-      const idToken = await user.getIdToken();
-      const result = await approveBooking(idToken, userId, bookingId);
-      if (result.success) {
-        toast({
-          title: "Booking Approved",
-          description: `Booking for ${campName} has been approved.`,
-        });
-      } else {
-        toast({
-          title: "Approval Failed",
-          description: result.error || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-    });
+    return handleAction(
+        async () => {
+            const idToken = await user.getIdToken();
+            return approveBooking(idToken, userId, bookingId);
+        },
+        "Booking Approved",
+        `Booking for ${campName} has been approved.`,
+        "Approval Failed"
+    );
+  };
+
+  const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
+    if (!user) return;
+    return handleAction(
+        async () => {
+            const idToken = await user.getIdToken();
+            return cancelBooking(idToken, userId, bookingId);
+        },
+        "Booking Canceled",
+        `Booking for ${campName} has been canceled.`,
+        "Cancellation Failed"
+    );
+  };
+
+  const handleOptimisticUpdate = (bookingId: string, updatedData: Partial<AggregatedBooking>) => {
+    setBookings(currentBookings => 
+        currentBookings.map(b => 
+            b.bookingId === bookingId ? { ...b, ...updatedData } : b
+        )
+    );
   };
 
   const handleExport = () => {
@@ -244,6 +359,60 @@ export default function BookingsPage() {
     });
   };
 
+  function ActionMenu({ booking }: { booking: AggregatedBooking }) {
+    const [isApprovePending, startApproveTransition] = useTransition();
+    const [isCancelPending, startCancelTransition] = useTransition();
+    
+    return (
+       <AlertDialog>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending}>
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Toggle menu</span>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem 
+                    onSelect={() => startApproveTransition(() => handleApproveBooking(booking.userId, booking.bookingId, booking.campName))}
+                    disabled={booking.status === 'Approved' || isApprovePending}
+                >
+                    {isApprovePending ? "Approving..." : "Approve"}
+                </DropdownMenuItem>
+                
+                <ModifyBookingDialog booking={booking} onUpdate={(updatedData) => handleOptimisticUpdate(booking.bookingId, updatedData)} />
+
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Cancel</DropdownMenuItem>
+                </AlertDialogTrigger>
+            </DropdownMenuContent>
+        </DropdownMenu>
+         <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently cancel the booking for 
+                    <span className="font-semibold"> {booking.customerName} </span>
+                     at <span className="font-semibold">{booking.campName}</span>.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                <AlertDialogAction
+                 className="bg-destructive hover:bg-destructive/90"
+                 onClick={() => startCancelTransition(() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName))}
+                 disabled={isCancelPending}
+                >
+                {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
   const renderTableBody = () => {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <BookingTableRowSkeleton key={i} />);
@@ -286,55 +455,11 @@ export default function BookingsPage() {
                 </Badge>
             </TableCell>
             <TableCell>
-              <AlertDialog>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isPending}>
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem 
-                        onSelect={() => handleApproveBooking(booking.userId, booking.bookingId, booking.campName)}
-                        disabled={status === 'Approved'}
-                    >
-                        Approve
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>Modify</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem className="text-destructive">Cancel</DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                 <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently cancel the booking for 
-                            <span className="font-semibold"> {booking.customerName} </span>
-                             at <span className="font-semibold">{booking.campName}</span>.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                        <AlertDialogAction
-                         className="bg-destructive hover:bg-destructive/90"
-                         onClick={() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName)}
-                         disabled={isPending}
-                        >
-                        {isPending ? "Canceling..." : "Yes, cancel booking"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                <ActionMenu booking={booking} />
             </TableCell>
         </TableRow>
     )});
   }
-
 
   return (
     <>
@@ -348,8 +473,7 @@ export default function BookingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarSearch className="h-5 w-5" />
+          <CardTitle>
             All Bookings
           </CardTitle>
           <CardDescription>
