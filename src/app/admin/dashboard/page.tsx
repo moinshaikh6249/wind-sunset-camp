@@ -1,17 +1,133 @@
 
 'use client';
 
-import { useUser } from '@/firebase';
+import { useUser, useDatabase, useMemoFirebase } from '@/firebase';
+import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { ref } from 'firebase/database';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Users, CalendarCheck, Activity, UserPlus, BarChart3, LineChart } from 'lucide-react';
+import { DollarSign, Users, CalendarCheck, Activity, UserPlus, LineChart, BarChart3 } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
 import { OverviewChart } from '@/components/admin/OverviewChart';
-import { RecentActivity } from '@/components/admin/RecentActivity';
+import { RecentActivity, type Activity as ActivityType } from '@/components/admin/RecentActivity';
 import { UserSignupChart } from '@/components/admin/UserSignupChart';
+import { useMemo } from 'react';
+import { subDays, format, isWithinInterval, startOfMonth, getMonth } from 'date-fns';
 
+type DbUser = {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  photoURL?: string;
+  history?: { [key: string]: { type: string; description: string; timestamp: string } };
+  bookings?: { [key: string]: { campName: string; bookingDate: string } };
+};
+
+type DbUsers = {
+  [uid: string]: DbUser;
+};
 
 export default function AdminDashboardPage() {
   const { user } = useUser();
+  const database = useDatabase();
+
+  const usersRef = useMemoFirebase(() => {
+    if (!database) return null;
+    return ref(database, 'users');
+  }, [database]);
+
+  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+
+  const stats = useMemo(() => {
+    if (!usersData) {
+      return {
+        totalUsers: 0,
+        activeBookings: 0,
+        newSignups24h: 0,
+        signupChartData: [],
+        bookingsChartData: [],
+        recentActivities: [],
+      };
+    }
+
+    const usersArray = Object.entries(usersData);
+    const totalUsers = usersArray.length;
+    
+    let activeBookings = 0;
+    const now = new Date();
+    const twentyFourHoursAgo = subDays(now, 1);
+    let newSignups24h = 0;
+    
+    const signupCounts = Array(7).fill(0).map((_, i) => ({
+      date: format(subDays(now, i), 'EEE'),
+      signups: 0,
+    })).reverse();
+
+    const bookingCounts = Array(12).fill(0).map((_, i) => ({
+      name: format(new Date(now.getFullYear(), i), 'MMM'),
+      total: 0,
+    }));
+
+    const recentActivities: ActivityType[] = [];
+
+    for (const [uid, userData] of usersArray) {
+      if (userData.bookings) {
+        activeBookings += Object.keys(userData.bookings).length;
+        Object.values(userData.bookings).forEach(booking => {
+            const month = getMonth(new Date(booking.bookingDate));
+            if (bookingCounts[month]) {
+                bookingCounts[month].total++;
+            }
+        });
+      }
+
+      if (userData.history) {
+        Object.values(userData.history).forEach(activity => {
+          const activityDate = new Date(activity.timestamp);
+          // Recent Activities
+          if(recentActivities.length < 5) {
+            recentActivities.push({
+              user: {
+                name: `${userData.firstName} ${userData.lastName || ''}`.trim(),
+                email: userData.email,
+                avatar: userData.photoURL,
+                fallback: (userData.firstName || 'U').charAt(0),
+              },
+              action: activity.type === 'signup' ? 'signed up' : `booked a camp`,
+              target: activity.type === 'booking' ? activity.description.replace('Booked ', '') : '',
+              timestamp: activity.timestamp,
+            });
+          }
+
+          // New Signups (24h)
+          if (activity.type === 'signup' && activityDate > twentyFourHoursAgo) {
+            newSignups24h++;
+          }
+          
+          // Signup Chart Data (Last 7 days)
+          for (let i = 0; i < 7; i++) {
+            const day = subDays(now, i);
+            if (format(activityDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') && activity.type === 'signup') {
+               const dayIndex = 6-i;
+               if(signupCounts[dayIndex]) signupCounts[dayIndex].signups++;
+            }
+          }
+        });
+      }
+    }
+
+    recentActivities.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+
+    return {
+      totalUsers,
+      activeBookings,
+      newSignups24h,
+      signupChartData: signupCounts,
+      bookingsChartData: bookingCounts,
+      recentActivities: recentActivities.slice(0,5),
+    };
+  }, [usersData]);
+
 
   const displayName = user?.displayName || user?.email || 'Admin';
 
@@ -28,24 +144,28 @@ export default function AdminDashboardPage() {
           value="$45,231.89"
           icon={DollarSign}
           description="+20.1% from last month"
+          isLoading={isLoading}
         />
         <StatCard
           title="Active Bookings"
-          value="+235"
+          value={stats.activeBookings.toLocaleString()}
           icon={CalendarCheck}
-          description="+180.1% from last month"
+          description="Total number of bookings"
+          isLoading={isLoading}
         />
         <StatCard
           title="Total Users"
-          value="+12,234"
+          value={stats.totalUsers.toLocaleString()}
           icon={Users}
-          description="+19% from last month"
+          description="Total registered users"
+          isLoading={isLoading}
         />
          <StatCard
           title="New Signups (24h)"
-          value="+57"
+          value={`+${stats.newSignups24h}`}
           icon={UserPlus}
-          description="+2 since last hour"
+          description="New users in the last 24 hours"
+          isLoading={isLoading}
         />
       </div>
 
@@ -58,7 +178,7 @@ export default function AdminDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <OverviewChart />
+            <OverviewChart data={stats.bookingsChartData} isLoading={isLoading} />
           </CardContent>
         </Card>
         <Card className="lg:col-span-3">
@@ -68,11 +188,11 @@ export default function AdminDashboardPage() {
                 User Signups
              </CardTitle>
             <CardDescription>
-              You had 57 new signups in the last 7 days.
+              New user signups in the last 7 days.
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <UserSignupChart />
+             <UserSignupChart data={stats.signupChartData} isLoading={isLoading} />
           </CardContent>
         </Card>
       </div>
@@ -89,10 +209,9 @@ export default function AdminDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentActivity />
+            <RecentActivity activities={stats.recentActivities} isLoading={isLoading} />
           </CardContent>
         </Card>
-        {/* Placeholder for more content */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Future Content</CardTitle>

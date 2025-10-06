@@ -1,22 +1,19 @@
 
 "use client"
 
-import { TrendingUp } from "lucide-react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { useTheme } from "next-themes";
 import { useMemo } from "react";
+import { Skeleton } from "../ui/skeleton";
 
-const data = [
-  { date: "Mon", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Tue", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Wed", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Thu", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Fri", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Sat", signups: Math.floor(Math.random() * 20) + 5 },
-  { date: "Sun", signups: Math.floor(Math.random() * 20) + 5 },
-]
 
-export function UserSignupChart() {
+interface UserSignupChartProps {
+  data: { date: string; signups: number }[];
+  isLoading: boolean;
+}
+
+
+export function UserSignupChart({ data, isLoading }: UserSignupChartProps) {
     const { theme } = useTheme();
     const [primaryColor, mutedColor] = useMemo(() => {
         if (typeof window === 'undefined') return ["#000000", "#999999"];
@@ -25,6 +22,10 @@ export function UserSignupChart() {
         const muted = `hsl(${styles.getPropertyValue("--muted-foreground")})`;
         return [primary, muted];
     }, [theme]);
+
+    if (isLoading) {
+      return <Skeleton className="h-[250px] w-full" />
+    }
     
   return (
     <div className="h-[250px]">

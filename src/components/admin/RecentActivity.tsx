@@ -2,73 +2,65 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Skeleton } from "../ui/skeleton";
+import { formatDistanceToNow } from "date-fns";
 
-const activities = [
-  {
-    name: "Olivia Martin",
-    email: "olivia.martin@email.com",
-    action: "created a new booking for",
-    target: "Mountain Explorer",
-    value: "+$250.00",
-    avatar: "/avatars/01.png",
-    fallback: "OM",
-  },
-  {
-    name: "Jackson Lee",
-    email: "jackson.lee@email.com",
-    action: "cancelled a booking for",
-    target: "Summer Adventure Camp",
-    value: "-$150.00",
-    avatar: "/avatars/02.png",
-    fallback: "JL",
-  },
-  {
-    name: "Isabella Nguyen",
-    email: "isabella.nguyen@email.com",
-    action: "signed up as a new user",
-    target: "",
-    value: "",
-    avatar: "/avatars/03.png",
-    fallback: "IN",
-  },
-  {
-    name: "William Kim",
-    email: "will@email.com",
-    action: "updated their profile",
-    target: "",
-    value: "",
-    avatar: "/avatars/04.png",
-    fallback: "WK",
-  },
-  {
-    name: "Sofia Davis",
-    email: "sofia.davis@email.com",
-    action: "created a new booking for",
-    target: "Coastal Survival",
-    value: "+$350.00",
-    avatar: "/avatars/05.png",
-    fallback: "SD",
-  },
-];
+export type Activity = {
+  user: {
+    name: string;
+    email: string;
+    avatar: string | undefined;
+    fallback: string;
+  };
+  action: string;
+  target: string;
+  timestamp: string;
+};
 
+interface RecentActivityProps {
+  activities: Activity[];
+  isLoading: boolean;
+}
 
-export function RecentActivity() {
+export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex items-center">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <div className="ml-4 space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  
+  if (activities.length === 0) {
+    return <p className="text-sm text-muted-foreground text-center py-4">No recent activities found.</p>;
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {activities.map((activity, index) => (
-        <div key={index} className="flex items-center">
+        <div key={index} className="flex items-start">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={activity.avatar} alt="Avatar" />
-            <AvatarFallback>{activity.fallback}</AvatarFallback>
+            <AvatarImage src={activity.user.avatar} alt="Avatar" />
+            <AvatarFallback>{activity.user.fallback}</AvatarFallback>
           </Avatar>
           <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{activity.name}
-              <span className="text-muted-foreground"> {activity.action} </span> 
+            <p className="text-sm font-medium leading-none">{activity.user.name}
+              <span className="text-muted-foreground font-normal"> {activity.action} </span> 
               {activity.target && <span className="font-semibold">{activity.target}</span>}
             </p>
-            <p className="text-sm text-muted-foreground">{activity.email}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+            </p>
           </div>
-          <div className="ml-auto font-medium">{activity.value}</div>
         </div>
       ))}
     </div>
