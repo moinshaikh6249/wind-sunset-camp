@@ -96,7 +96,7 @@ function UserProfileSection() {
 
   return (
     <div className="p-2 space-y-3">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-3">
           <Avatar className="h-10 w-10 text-xl">
             <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
             <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
@@ -125,7 +125,9 @@ function UserProfileSection() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpen, setOpenMobile } = useSidebar();
-  const { user } = useUser();
+  const { user, idTokenResult } = useUser();
+  const isAdmin = idTokenResult?.claims?.isAdmin;
+
 
   const handleLinkClick = () => {
     setOpen(false);
@@ -152,7 +154,7 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuItem>
           ))}
-            {user && (
+            {user && !isAdmin && (
             <SidebarMenuItem>
               <Link href="/dashboard" onClick={handleLinkClick}>
                 <SidebarMenuButton
