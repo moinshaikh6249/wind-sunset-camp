@@ -6,8 +6,8 @@ import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { DecodedIdToken } from 'firebase-admin/auth';
+import { revalidatePath } from 'next/cache';
 
-// This is a helper function to get the user from the session cookie.
 async function getAdminUser(): Promise<DecodedIdToken | null> {
     const authorization = headers().get('Authorization');
     if (authorization?.startsWith('Bearer ')) {
@@ -48,6 +48,7 @@ export async function deleteUser(uid: string): Promise<{ success: boolean; error
         const userRef = db.ref(`users/${uid}`);
         await userRef.remove();
         
+        revalidatePath('/admin/users');
         return { success: true };
     } catch (error: any) {
         console.error('Error deleting user:', error);

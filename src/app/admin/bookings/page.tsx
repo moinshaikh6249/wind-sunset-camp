@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useDatabase, useMemoFirebase } from '@/firebase';
+import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { useMemo, useTransition } from 'react';
@@ -8,6 +9,7 @@ import { format } from 'date-fns';
 import { MoreHorizontal, CalendarSearch, FileDown } from 'lucide-react';
 import { cancelBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
+import { adminFetch } from '@/lib/admin-fetch';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -102,6 +104,7 @@ function BookingTableRowSkeleton() {
 
 export default function BookingsPage() {
   const database = useDatabase();
+  const { user } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -130,15 +133,15 @@ export default function BookingsPage() {
       }
     });
 
-    // Sort by most recent booking date
     allBookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
     
     return allBookings;
   }, [usersData]);
 
   const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
+    if (!user) return;
     startTransition(async () => {
-      const result = await cancelBooking(userId, bookingId);
+      const result = await adminFetch(() => cancelBooking(userId, bookingId));
       if (result.success) {
         toast({
           title: "Booking Canceled",

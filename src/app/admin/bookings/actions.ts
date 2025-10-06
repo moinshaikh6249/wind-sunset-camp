@@ -6,8 +6,8 @@ import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 import { DecodedIdToken } from 'firebase-admin/auth';
+import { revalidatePath } from 'next/cache';
 
-// This is a helper function to get the user from the session cookie.
 async function getAdminUser(): Promise<DecodedIdToken | null> {
     const authorization = headers().get('Authorization');
     if (authorization?.startsWith('Bearer ')) {
@@ -40,12 +40,10 @@ export async function cancelBooking(userId: string, bookingId: string): Promise<
         const { app } = await initializeAdminApp();
         const db = getDatabase(app);
 
-        // Reference to the specific booking
         const bookingRef = db.ref(`users/${userId}/bookings/${bookingId}`);
-
-        // Remove the booking
         await bookingRef.remove();
         
+        revalidatePath('/admin/bookings');
         return { success: true };
     } catch (error: any) {
         console.error('Error canceling booking:', error);

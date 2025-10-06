@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useDatabase, useMemoFirebase } from '@/firebase';
+import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { useMemo, useTransition } from 'react';
@@ -8,6 +9,7 @@ import { format } from 'date-fns';
 import { MoreHorizontal, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { deleteUser } from './actions';
+import { adminFetch } from '@/lib/admin-fetch';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -92,6 +94,7 @@ function UserTableRowSkeleton() {
 
 export default function UsersPage() {
   const database = useDatabase();
+  const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -119,8 +122,9 @@ export default function UsersPage() {
   }, [usersData]);
 
   const handleDeleteUser = (uid: string, name: string) => {
+    if (!adminUser) return;
     startTransition(async () => {
-      const result = await deleteUser(uid);
+      const result = await adminFetch(() => deleteUser(uid));
       if (result.success) {
         toast({
           title: "User Deleted",
