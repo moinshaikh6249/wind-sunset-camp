@@ -36,6 +36,7 @@ export async function approveBooking(idToken: string, userId: string, bookingId:
         }
 
         const db = getDatabase(adminApp);
+        // Correctly target only the status field for update
         const bookingRef = db.ref(`users/${userId}/bookings/${bookingId}/status`);
         await bookingRef.set('Approved');
         
