@@ -157,10 +157,6 @@ export function AdminHeader() {
               />
             </div>
             
-            <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
-            </Button>
             <UserMenu />
         </header>
     )
