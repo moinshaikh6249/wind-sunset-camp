@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import type { BookingStatus, AggregatedBooking, DbUsers } from './types';
+import { useSearch } from '@/context/SearchProvider';
 
 const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, className: string }> = {
     Approved: {
@@ -100,6 +101,7 @@ export default function BookingsPage() {
   const database = useDatabase();
   const { user } = useUser();
   const { toast } = useToast();
+  const { searchQuery } = useSearch();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -132,6 +134,16 @@ export default function BookingsPage() {
     
     return allBookings;
   }, [usersData]);
+
+  const filteredBookings = useMemo(() => {
+    if (!searchQuery) return bookings;
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return bookings.filter(booking => 
+        booking.customerName.toLowerCase().includes(lowercasedQuery) ||
+        booking.customerEmail.toLowerCase().includes(lowercasedQuery) ||
+        booking.campName.toLowerCase().includes(lowercasedQuery)
+    );
+  }, [bookings, searchQuery]);
 
   const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
     try {
@@ -169,18 +181,12 @@ export default function BookingsPage() {
     const onCancel = () => {
         if (!user || !database) return;
         startCancelTransition(async () => {
-            const bookingPath = `users/${booking.userId}/bookings/${booking.bookingId}/status`;
-            const historyPath = `users/${booking.userId}/history`;
-            const newHistoryKey = push(ref(database, historyPath)).key;
-
-            if (!newHistoryKey) {
-                toast({ title: "Failed to generate history key", variant: "destructive" });
-                return;
-            }
-
             const updates: {[key: string]: any} = {};
-            updates[bookingPath] = 'Canceled';
-            updates[`${historyPath}/${newHistoryKey}`] = {
+            updates[`users/${booking.userId}/bookings/${booking.bookingId}/status`] = 'Canceled';
+            
+            const historyRef = ref(database, `users/${booking.userId}/history`);
+            const newHistoryRef = push(historyRef);
+            updates[newHistoryRef.key!] = {
                 type: 'booking',
                 description: `Booking for ${booking.campName} canceled by admin`,
                 timestamp: new Date().toISOString(),
@@ -250,7 +256,7 @@ export default function BookingsPage() {
   }
 
   const handleExport = () => {
-    if (bookings.length === 0) {
+    if (filteredBookings.length === 0) {
       toast({
         title: "No Data to Export",
         description: "There are no bookings to export.",
@@ -261,7 +267,7 @@ export default function BookingsPage() {
     const headers = ["Customer Name", "Email", "Camp Name", "Booked On", "Guests", "Status"];
     const csvRows = [
       headers.join(','),
-      ...bookings.map(booking => {
+      ...filteredBookings.map(booking => {
         const row = [
           `"${booking.customerName.replace(/"/g, '""')}"`,
           booking.customerEmail,
@@ -300,7 +306,7 @@ export default function BookingsPage() {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <BookingTableRowSkeleton key={i} />);
     }
-    if (bookings.length === 0) {
+    if (filteredBookings.length === 0) {
         return (
             <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
@@ -309,7 +315,7 @@ export default function BookingsPage() {
             </TableRow>
         );
     }
-    return bookings.map((booking) => {
+    return filteredBookings.map((booking) => {
         const currentStatusConfig = statusConfig[booking.status] || statusConfig.Pending;
         const Icon = currentStatusConfig.icon;
 

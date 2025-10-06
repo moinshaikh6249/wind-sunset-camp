@@ -8,6 +8,7 @@ import { LoaderCircle } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { SearchProvider } from "@/context/SearchProvider";
 
 export default function AdminLayout({
   children,
@@ -58,6 +59,7 @@ export default function AdminLayout({
   }
 
   return (
+    <SearchProvider>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <AdminSidebar />
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
@@ -67,5 +69,6 @@ export default function AdminLayout({
           </main>
         </div>
       </div>
+    </SearchProvider>
   );
 }

@@ -48,6 +48,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useSearch } from '@/context/SearchProvider';
 
 type DbUser = {
   uid: string;
@@ -95,6 +96,7 @@ export default function UsersPage() {
   const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const { searchQuery } = useSearch();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -118,6 +120,16 @@ export default function UsersPage() {
         } as DbUser & { name: string; joined: string };
     });
   }, [usersData]);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users;
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return users.filter(user => 
+      user.name.toLowerCase().includes(lowercasedQuery) ||
+      user.email.toLowerCase().includes(lowercasedQuery)
+    );
+  }, [users, searchQuery]);
+
 
   const handleDeleteUser = (uid: string, name: string) => {
     if (!adminUser) return;
@@ -143,7 +155,7 @@ export default function UsersPage() {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <UserTableRowSkeleton key={i} />);
     }
-    if (users.length === 0) {
+    if (filteredUsers.length === 0) {
         return (
             <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
@@ -152,7 +164,7 @@ export default function UsersPage() {
             </TableRow>
         );
     }
-    return users.map((user) => (
+    return filteredUsers.map((user) => (
         <TableRow key={user.uid}>
             <TableCell className="font-medium">
             <div className="flex items-center gap-3">

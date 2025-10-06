@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
+import { useSearch } from "@/context/SearchProvider";
 
 
 const navLinks = [
@@ -119,6 +120,7 @@ export function AdminHeader() {
     const pathname = usePathname();
     const pageName = pathname.split('/').pop();
     const capitalizedPageName = pageName ? pageName.charAt(0).toUpperCase() + pageName.slice(1) : 'Dashboard';
+    const { searchQuery, setSearchQuery } = useSearch();
 
     return (
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -150,6 +152,8 @@ export function AdminHeader() {
                 type="search"
                 placeholder="Search..."
                 className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             
