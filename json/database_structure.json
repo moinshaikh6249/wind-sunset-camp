@@ -1,3 +1,4 @@
+
 {
   "users": {
     "USER_AUTHENTICATION_ID": {
@@ -37,5 +38,27 @@
   },
   "admins": {
     "ADMIN_USER_AUTHENTICATION_ID": true
+  },
+  "camps": {
+    "summer-adventure-2024": {
+      "id": "summer-adventure-2024",
+      "name": "Summer Adventure Camp",
+      "date": "July 15-20, 2024",
+      "location": "Whispering Pines Forest",
+      "description": "A classic summer camp experience with hiking, bonfires, and lake swimming.",
+      "image": {
+        "id": "gallery-1",
+        "imageUrl": "https://images.unsplash.com/...",
+        "imageHint": "mountain lake"
+      }
+    }
+  },
+  "galleryImages": {
+    "gallery-1": {
+      "id": "gallery-1",
+      "description": "A serene mountain lake reflecting the sunrise.",
+      "imageUrl": "https://images.unsplash.com/...",
+      "imageHint": "mountain lake"
+    }
   }
 }
