@@ -3,9 +3,11 @@
 import { useDatabase, useMemoFirebase } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
-import { useMemo } from 'react';
+import { useMemo, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, CalendarSearch, FileDown } from 'lucide-react';
+import { cancelBooking } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -32,6 +35,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type DbUser = {
   firstName: string;
@@ -88,6 +102,8 @@ function BookingTableRowSkeleton() {
 
 export default function BookingsPage() {
   const database = useDatabase();
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -119,6 +135,24 @@ export default function BookingsPage() {
     
     return allBookings;
   }, [usersData]);
+
+  const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
+    startTransition(async () => {
+      const result = await cancelBooking(userId, bookingId);
+      if (result.success) {
+        toast({
+          title: "Booking Canceled",
+          description: `Booking for ${campName} has been canceled.`,
+        });
+      } else {
+        toast({
+          title: "Cancellation Failed",
+          description: result.error || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
 
   const renderTableBody = () => {
     if (isLoading) {
@@ -154,6 +188,7 @@ export default function BookingsPage() {
                 <Badge variant="outline">Confirmed</Badge>
             </TableCell>
             <TableCell>
+              <AlertDialog>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -165,9 +200,33 @@ export default function BookingsPage() {
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem>Approve</DropdownMenuItem>
                     <DropdownMenuItem>Modify</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Cancel</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem className="text-destructive">Cancel</DropdownMenuItem>
+                    </AlertDialogTrigger>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                 <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently cancel the booking for 
+                            <span className="font-semibold"> {booking.customerName} </span>
+                             at <span className="font-semibold">{booking.campName}</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                        <AlertDialogAction
+                         className="bg-destructive hover:bg-destructive/90"
+                         onClick={() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName)}
+                         disabled={isPending}
+                        >
+                        {isPending ? "Canceling..." : "Yes, cancel booking"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </TableCell>
         </TableRow>
     ));
