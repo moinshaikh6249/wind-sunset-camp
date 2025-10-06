@@ -66,5 +66,71 @@
   },
   "admins": {
     "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": true
-  }
-}
+  },
+  "camps": {
+    "summer-adventure-2024": {
+      "id": "summer-adventure-2024",
+      "name": "Summer Adventure Camp",
+      "date": "July 15-20, 2024",
+      "location": "Whispering Pines Forest",
+      "description": "A classic summer camp experience with hiking, bonfires, and lake swimming. Perfect for all ages.",
+      "image": {
+        "id": "gallery-1",
+        "imageUrl": "https://images.unsplash.com/photo-1530173660394-4047e55984d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb3VudGFpbiUyMGxha2V8ZW58MHx8fHwxNzU5MTQ5Nzc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        "imageHint": "mountain lake"
+      }
+    },
+    "mountain-explorer-2024": {
+      "id": "mountain-explorer-2024",
+      "name": "Mountain Explorer",
+      "date": "August 5-12, 2024",
+      "location": "Granite Peak National Park",
+      "description": "Challenge yourself with advanced rock climbing and high-altitude trekking. For experienced adventurers.",
+      "image": {
+        "id": "gallery-2",
+        "imageUrl": "https://images.unsplash.com/photo-1534685785745-60a2cea0ec34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtb3VudGFpbiUyMHN1bW1pdHxlbnwwfHx8fDE3NTkxNDgxMDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+        "imageHint": "mountain summit"
+      }
+    },
+    "coastal-survival-2024": {
+      "id": "coastal-survival-2024",
+      "name": "Coastal Survival Skills",
+      "date": "September 2-7, 2024",
+      "location": "Shipwreck Cove",
+      "description": "Learn to forage, fish, and build shelters on the beautiful but rugged coastline.",
+      "image": {
+        "id": "gallery-9",
+        "imageUrl": "https://images.unsplash.com/photo-1630084879730-bbcd06b0778e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y29hc3RhbCUyMGNhbXBpbmd8ZW58MHx8fHwxNzU5MjE5OTE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        "imageHint": "coastal camping"
+      }
+    },
+    "autumn-retreat-2024": {
+      "id": "autumn-retreat-2024",
+      "name": "Autumn Colors Retreat",
+      "date": "October 10-14, 2024",
+      "location": "Maple Valley",
+      "description": "A relaxing retreat focused on photography, yoga, and enjoying the stunning autumn foliage.",
+      "image": {
+        "id": "gallery-8",
+        "imageUrl": "https://images.unsplash.com/photo-1634252803091-a50d3111b329?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhdXR1bW4lMjB2YWxsZXl8ZW58MHx8fHwxNzU5MDU2MjQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        "imageHint": "autumn valley"
+      }
+    }
+  },
+  "galleryImages": {
+    "gallery-1": {
+      "id": "gallery-1",
+      "description": "A serene mountain lake reflecting the sunrise.",
+      "imageUrl": "https://images.unsplash.com/photo-1530173660394-4047e55984d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb3VudGFpbiUyMGxha2V8ZW58MHx8fHwxNzU5MTQ5Nzc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mountain lake"
+    },
+    "gallery-2": {
+      "id": "gallery-2",
+      "description": "Hikers celebrating on a mountain summit.",
+      "imageUrl": "https://images.unsplash.com/photo-1534685785745-60a2cea0ec34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtb3VudGFpbiUyMHN1bW1pdHxlbnwwfHx8fDE3NTkxNDgxMDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mountain summit"
+    },
+    "gallery-3": {
+      "id": "gallery-3",
+      "description": "A cozy campfire with friends sharing stories.",
+      "imageUrl": "https://images.unsplash.com/photo-1661758211116-388aae0197f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU5MDk2Njg1fDA&ixlib

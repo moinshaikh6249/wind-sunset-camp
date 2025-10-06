@@ -108,6 +108,55 @@
         "description",
         "timestamp"
       ]
+    },
+    "Camp": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Camp",
+      "type": "object",
+      "description": "Represents an upcoming camp.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/entities/Image"
+        }
+      },
+      "required": ["id", "name", "date", "location", "description", "image"]
+    },
+    "Image": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Image",
+      "type": "object",
+      "description": "Represents an image with metadata.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "imageHint": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "imageUrl", "imageHint"]
     }
   },
   "auth": {
@@ -139,6 +188,15 @@
         "$ref": "#/entities/UserActivity"
       },
       "description": "Stores a log of user activities."
-    }
-  }
-}
+    },
+    "/camps/{campId}": {
+      "schema": {
+        "$ref": "#/entities/Camp"
+      },
+      "description": "Stores details about upcoming camps."
+    },
+    "/galleryImages/{imageId}": {
+      "schema": {
+        "$ref": "#/entities/Image"
+      },
+      "description": "Stores images for the public
