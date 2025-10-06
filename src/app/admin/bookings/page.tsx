@@ -125,8 +125,7 @@ export default function BookingsPage() {
   const database = useDatabase();
   const { user } = useUser();
   const { toast } = useToast();
-  const [isCanceling, startCancelTransition] = useTransition();
-  const [isApproving, startApproveTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -145,6 +144,7 @@ export default function BookingsPage() {
         Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]) => {
           allBookings.push({
             ...bookingData,
+            status: bookingData.status ?? 'Pending',
             bookingId,
             customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
             customerEmail: userEntry.email,
@@ -160,45 +160,41 @@ export default function BookingsPage() {
 
   const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startCancelTransition(() => {
-      user.getIdToken().then(idToken => {
-        cancelBooking(idToken, userId, bookingId).then(result => {
-           if (result.success) {
-            toast({
-              title: "Booking Canceled",
-              description: `Booking for ${campName} has been canceled.`,
-            });
-          } else {
-            toast({
-              title: "Cancellation Failed",
-              description: result.error || "An unexpected error occurred.",
-              variant: "destructive",
-            });
-          }
+    startTransition(async () => {
+      const idToken = await user.getIdToken();
+      const result = await cancelBooking(idToken, userId, bookingId);
+      if (result.success) {
+        toast({
+          title: "Booking Canceled",
+          description: `Booking for ${campName} has been canceled.`,
         });
-      });
+      } else {
+        toast({
+          title: "Cancellation Failed",
+          description: result.error || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
     });
   };
 
   const handleApproveBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startApproveTransition(() => {
-      user.getIdToken().then(idToken => {
-        approveBooking(idToken, userId, bookingId).then(result => {
-           if (result.success) {
-            toast({
-              title: "Booking Approved",
-              description: `Booking for ${campName} has been approved.`,
-            });
-          } else {
-            toast({
-              title: "Approval Failed",
-              description: result.error || "An unexpected error occurred.",
-              variant: "destructive",
-            });
-          }
+    startTransition(async () => {
+      const idToken = await user.getIdToken();
+      const result = await approveBooking(idToken, userId, bookingId);
+      if (result.success) {
+        toast({
+          title: "Booking Approved",
+          description: `Booking for ${campName} has been approved.`,
         });
-      });
+      } else {
+        toast({
+          title: "Approval Failed",
+          description: result.error || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
     });
   };
 
@@ -293,7 +289,7 @@ export default function BookingsPage() {
               <AlertDialog>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isCanceling || isApproving}>
+                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isPending}>
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Toggle menu</span>
                     </Button>
@@ -327,9 +323,9 @@ export default function BookingsPage() {
                         <AlertDialogAction
                          className="bg-destructive hover:bg-destructive/90"
                          onClick={() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName)}
-                         disabled={isCanceling}
+                         disabled={isPending}
                         >
-                        {isCanceling ? "Canceling..." : "Yes, cancel booking"}
+                        {isPending ? "Canceling..." : "Yes, cancel booking"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
