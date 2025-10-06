@@ -3,11 +3,11 @@
 
 import { useDatabase, useMemoFirebase, useStorage, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref } from 'firebase/database';
+import { ref, remove } from 'firebase/database';
+import { ref as storageRef, deleteObject } from 'firebase/storage';
 import { useMemo, useState, useTransition } from 'react';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { deleteCamp } from './actions';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -96,7 +96,7 @@ function CampTableRowSkeleton() {
 
 export default function CampsPage() {
   const database = useDatabase();
-  const { user: adminUser } = useUser();
+  const storage = useStorage();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
@@ -112,10 +112,7 @@ export default function CampsPage() {
 
   const camps = useMemo(() => {
     if (!campsData) return [];
-    return Object.entries(campsData).map(([id, campData]) => ({
-      ...campData,
-      id,
-    }));
+    return Object.values(campsData);
   }, [campsData]);
 
   const filteredCamps = useMemo(() => {
@@ -129,11 +126,23 @@ export default function CampsPage() {
 
 
   const handleDeleteCamp = (camp: CampWithId) => {
-    if (!adminUser) return;
+    if (!database) return;
     startTransition(async () => {
       try {
-        const idToken = await adminUser.getIdToken();
-        await deleteCamp(idToken, camp.id, camp.image?.imageUrl);
+        const campDbRef = ref(database, `camps/${camp.id}`);
+        await remove(campDbRef);
+
+        if (camp.image?.imageUrl) {
+            try {
+                const imageStorageRef = storageRef(storage, camp.image.imageUrl);
+                await deleteObject(imageStorageRef);
+            } catch (storageError: any) {
+                // If the file doesn't exist in storage, we can ignore the error
+                if (storageError.code !== 'storage/object-not-found') {
+                     console.error(`Failed to delete image from storage: ${camp.image.imageUrl}`, storageError);
+                }
+            }
+        }
         
         toast({
           title: "Camp Deleted",
@@ -288,4 +297,3 @@ export default function CampsPage() {
     </>
   );
 }
-

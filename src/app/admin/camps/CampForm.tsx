@@ -4,8 +4,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useUser, useStorage } from "@/firebase";
+import { useUser, useStorage, useDatabase } from "@/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as dbRef, set } from "firebase/database";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
 import { LoaderCircle, Camera } from "lucide-react";
 import Image from "next/image";
-import { createOrUpdateCamp } from "./actions";
 
 const formSchema = z.object({
   name: z.string().min(3, "Camp name is required."),
@@ -51,6 +51,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const { toast } = useToast();
   const { user: adminUser } = useUser();
   const storage = useStorage();
+  const database = useDatabase();
   const [isPending, startTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(campToEdit?.image?.imageUrl || null);
   
@@ -93,10 +94,10 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   };
 
   function onSubmit(values: FormValues) {
-    if (!adminUser || !storage) {
+    if (!adminUser || !storage || !database) {
         toast({
             title: "Error",
-            description: "Admin user or storage service is not available.",
+            description: "Admin user, storage, or database service is not available.",
             variant: "destructive"
         });
         return;
@@ -104,11 +105,9 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
 
     startTransition(async () => {
       try {
-        const idToken = await adminUser.getIdToken();
         let imageUrl = campToEdit?.image?.imageUrl || "";
         let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
         
-        // Handle image upload if a new one is provided
         if (values.image instanceof File) {
           const file: File = values.image;
           const newImageRef = storageRef(storage, `camps/${Date.now()}-${file.name}`);
@@ -116,8 +115,10 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           imageUrl = await getDownloadURL(snapshot.ref);
         }
 
+        const campId = campToEdit?.id || `camp-${Date.now()}`;
+
         const campData = {
-          id: campToEdit?.id, // Will be undefined for new camps
+          id: campId,
           name: values.name,
           date: values.date,
           location: values.location,
@@ -129,7 +130,8 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           }
         };
 
-        await createOrUpdateCamp(idToken, campData);
+        const campRef = dbRef(database, `camps/${campId}`);
+        await set(campRef, campData);
 
         toast({
           title: campToEdit ? "Camp Updated" : "Camp Added",
@@ -139,7 +141,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       } catch (error: any) {
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred.",
+          description: error.message || "An unexpected error occurred. You might not have admin permissions.",
           variant: "destructive",
         });
       }
