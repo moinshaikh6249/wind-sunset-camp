@@ -4,15 +4,13 @@
 import { getAuth } from 'firebase-admin/auth';
 import { getDatabase } from 'firebase-admin/database';
 import { initializeAdminApp } from '@/lib/firebase-admin';
-import { headers } from 'next/headers';
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
 
-async function getAdminUser(): Promise<DecodedIdToken | null> {
-    const authorization = headers().get('Authorization');
-    if (authorization?.startsWith('Bearer ')) {
-      const idToken = authorization.split('Bearer ')[1];
-      try {
+async function getAdminUser(idToken: string): Promise<DecodedIdToken | null> {
+    if (!idToken) return null;
+      
+    try {
         const { app } = await initializeAdminApp();
         const auth = getAuth(app);
         const decodedToken = await auth.verifyIdToken(idToken);
@@ -25,13 +23,11 @@ async function getAdminUser(): Promise<DecodedIdToken | null> {
         console.error('Error verifying ID token:', error);
         return null;
       }
-    }
-    return null;
 }
 
 
-export async function deleteUser(uid: string): Promise<{ success: boolean; error?: string }> {
-    const adminUser = await getAdminUser();
+export async function deleteUser(idToken: string, uid: string): Promise<{ success: boolean; error?: string }> {
+    const adminUser = await getAdminUser(idToken);
     if (!adminUser) {
         return { success: false, error: 'Permission denied. You must be an administrator.' };
     }

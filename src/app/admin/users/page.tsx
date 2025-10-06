@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 import { MoreHorizontal, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { deleteUser } from './actions';
-import { adminFetch } from '@/lib/admin-fetch';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -124,7 +123,8 @@ export default function UsersPage() {
   const handleDeleteUser = (uid: string, name: string) => {
     if (!adminUser) return;
     startTransition(async () => {
-      const result = await adminFetch(() => deleteUser(uid));
+      const idToken = await adminUser.getIdToken();
+      const result = await deleteUser(idToken, uid);
       if (result.success) {
         toast({
           title: "User Deleted",
@@ -158,7 +158,7 @@ export default function UsersPage() {
             <TableCell className="font-medium">
             <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.photoURL} alt={user.name} />
+                    <AvatarImage src={user.photoURL ?? undefined} alt={user.name} />
                     <AvatarFallback>{(user.firstName || 'U').charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="grid gap-0.5">

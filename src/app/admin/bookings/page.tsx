@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 import { MoreHorizontal, CalendarSearch, FileDown } from 'lucide-react';
 import { cancelBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import { adminFetch } from '@/lib/admin-fetch';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -141,7 +140,8 @@ export default function BookingsPage() {
   const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
     startTransition(async () => {
-      const result = await adminFetch(() => cancelBooking(userId, bookingId));
+      const idToken = await user.getIdToken();
+      const result = await cancelBooking(idToken, userId, bookingId);
       if (result.success) {
         toast({
           title: "Booking Canceled",
