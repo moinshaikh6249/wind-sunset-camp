@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -6,11 +5,17 @@ import { getDatabase } from 'firebase-admin/database';
 import { revalidatePath } from 'next/cache';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 
-export async function approveBooking(idToken: string, userId: string, bookingId: string): Promise<void> {
+export async function approveBooking(idToken: string, userId: string, bookingId: string) {
+    if (!idToken) {
+        throw new Error('Authentication token is missing.');
+    }
+
     try {
         const adminApp = initializeAdminApp();
         const auth = getAuth(adminApp);
+        
         const decodedToken = await auth.verifyIdToken(idToken);
+        
         if (!decodedToken.isAdmin) {
             throw new Error('Permission denied. You must be an administrator.');
         }
@@ -20,13 +25,19 @@ export async function approveBooking(idToken: string, userId: string, bookingId:
         await bookingStatusRef.set('Approved');
         
         revalidatePath('/admin/bookings');
+
     } catch (error: any) {
         console.error('Error approving booking:', error);
+        // Re-throwing the error to be caught by the client-side handler
         throw new Error(error.message || 'An unexpected error occurred while approving.');
     }
 }
 
-export async function cancelBooking(idToken: string, userId: string, bookingId: string): Promise<void> {
+export async function cancelBooking(idToken: string, userId: string, bookingId: string) {
+    if (!idToken) {
+        throw new Error('Authentication token is missing.');
+    }
+    
     try {
         const adminApp = initializeAdminApp();
         const auth = getAuth(adminApp);
