@@ -65,7 +65,8 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
           title: "User Created Successfully",
           description: `An account for ${values.email} has been created.`,
         });
-        onUserAdded();
+        onUserAdded(); // This will close the dialog
+        form.reset();
       } catch (error: any) {
         toast({
           title: "Failed to Create User",
