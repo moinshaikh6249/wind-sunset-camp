@@ -93,7 +93,14 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   };
 
   function onSubmit(values: FormValues) {
-    if (!database) return;
+    if (!database || !storage) {
+        toast({
+            title: "Firebase not initialized",
+            description: "The database or storage service is not ready. Please try again.",
+            variant: "destructive"
+        });
+        return;
+    }
 
     startTransition(async () => {
       try {
@@ -115,8 +122,11 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         }
 
         const campData = {
-          ...values,
           id: campId,
+          name: values.name,
+          date: values.date,
+          location: values.location,
+          description: values.description,
           image: {
             id: imageId,
             imageUrl,
@@ -135,7 +145,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       } catch (error: any) {
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred. You may not have the required permissions.",
+          description: error.message || "An unexpected error occurred. Please check your permissions and try again.",
           variant: "destructive",
         });
       }
