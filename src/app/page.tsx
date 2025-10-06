@@ -1,14 +1,69 @@
 
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { upcomingCamps } from "@/lib/mock-data";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useDatabase, useMemoFirebase } from "@/firebase";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { ref, limitToFirst, query } from "firebase/database";
+import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+
+type Camp = {
+    id: string;
+    name: string;
+    date: string;
+    location: string;
+    description: string;
+    image: {
+        id: string;
+        imageUrl: string;
+        imageHint: string;
+    };
+};
+
+type DbCamps = {
+    [id: string]: Camp;
+}
+
+
+function FeaturedCampSkeleton() {
+    return (
+        <Card className="overflow-hidden shadow-lg flex flex-col w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]">
+             <Skeleton className="h-48 w-full" />
+             <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+             </CardHeader>
+             <CardContent className="flex-grow flex flex-col">
+                <div className="space-y-2 flex-grow">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                </div>
+                 <Skeleton className="h-10 w-full mt-4" />
+             </CardContent>
+        </Card>
+    )
+}
 
 export default function Home() {
-  const featuredCamps = upcomingCamps.slice(0, 3);
+  const database = useDatabase();
+  const campsRef = useMemoFirebase(() => {
+    if (!database) return null;
+    // Query to get the first 3 camps
+    return query(ref(database, 'camps'), limitToFirst(3));
+  }, [database]);
+
+  const { data: campsData, isLoading } = useDatabaseValue<DbCamps>(campsRef);
+
+  const featuredCamps = useMemo(() => {
+    if (!campsData) return [];
+    return Object.values(campsData);
+  }, [campsData]);
 
   return (
     <div className="flex flex-col">
@@ -120,7 +175,13 @@ export default function Home() {
             </Button>
           </div>
           <div className="flex flex-wrap gap-8 justify-center">
-            {featuredCamps.map((camp) => (
+            {isLoading ? (
+                <>
+                    <FeaturedCampSkeleton />
+                    <FeaturedCampSkeleton />
+                    <FeaturedCampSkeleton />
+                </>
+            ) : featuredCamps.map((camp) => (
               <Card
                 key={camp.id}
                 className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1 bg-background w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
@@ -156,5 +217,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

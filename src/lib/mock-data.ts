@@ -1,3 +1,4 @@
+
 import type { ImagePlaceholder } from './placeholder-images';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -31,39 +32,8 @@ export const teamMembers = [
   },
 ];
 
-export const upcomingCamps = [
-  {
-    id: 'summer-adventure-2024',
-    name: 'Summer Adventure Camp',
-    date: 'July 15-20, 2024',
-    location: 'Whispering Pines Forest',
-    description: 'A classic summer camp experience with hiking, bonfires, and lake swimming. Perfect for all ages.',
-    image: findImage('gallery-1'),
-  },
-  {
-    id: 'mountain-explorer-2024',
-    name: 'Mountain Explorer',
-    date: 'August 5-12, 2024',
-    location: 'Granite Peak National Park',
-    description: 'Challenge yourself with advanced rock climbing and high-altitude trekking. For experienced adventurers.',
-    image: findImage('gallery-2'),
-  },
-  {
-    id: 'coastal-survival-2024',
-    name: 'Coastal Survival Skills',
-    date: 'September 2-7, 2024',
-    location: 'Shipwreck Cove',
-    description: 'Learn to forage, fish, and build shelters on the beautiful but rugged coastline.',
-    image: findImage('gallery-9'),
-  },
-  {
-    id: 'autumn-retreat-2024',
-    name: 'Autumn Colors Retreat',
-    date: 'October 10-14, 2024',
-    location: 'Maple Valley',
-    description: 'A relaxing retreat focused on photography, yoga, and enjoying the stunning autumn foliage.',
-    image: findImage('gallery-8'),
-  },
-];
+// This data is now managed in the database.
+// This file is kept for the static team members data, but camps and gallery are no longer sourced from here.
+export const upcomingCamps = [];
 
-export const galleryImages = PlaceHolderImages.filter(img => img.id.startsWith('gallery-'));
+export const galleryImages = [];

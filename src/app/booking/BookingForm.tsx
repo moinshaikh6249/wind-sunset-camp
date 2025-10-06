@@ -4,12 +4,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import React, { useEffect, useState, useTransition, Suspense } from "react";
+import React, { useEffect, useState, useTransition, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle, Wand2 } from "lucide-react";
 import { useUser, useDatabase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { ref, push, set } from "firebase/database";
+import { ref, push, set, query } from "firebase/database";
 
 
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { upcomingCamps } from "@/lib/mock-data";
 import { getCompletionSuggestions } from "./actions";
 import { Card, CardContent } from "@/components/ui/card";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -43,6 +43,15 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type Camp = {
+    id: string;
+    name: string;
+};
+
+type DbCamps = {
+    [id: string]: Camp;
+}
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -66,6 +75,15 @@ function BookingFormComponent() {
   const database = useDatabase();
 
   const [isSuggesting, startSuggestionTransition] = useTransition();
+
+  const campsRef = useMemo(() => {
+    if (!database) return null;
+    return query(ref(database, 'camps'));
+  }, [database]);
+
+  const { data: campsData, isLoading: campsLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const upcomingCamps = useMemo(() => campsData ? Object.values(campsData) : [], [campsData]);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,10 +123,10 @@ function BookingFormComponent() {
         });
       }
     }
-  }, [debouncedCampId]);
+  }, [debouncedCampId, upcomingCamps]);
 
   async function onSubmit(values: FormValues) {
-    if (!user) {
+    if (!user || !database) {
       toast({
         title: "Not Logged In",
         description: "You must be logged in to submit a booking.",
@@ -174,7 +192,7 @@ function BookingFormComponent() {
         if(currentValues.email) partialForm.email = currentValues.email;
         if(currentValues.fullName) partialForm.fullName = currentValues.fullName;
 
-        const suggestions = await getCompletionSuggestions(partialForm);
+        const suggestions = await getCompletionSuggestions(partialForm, upcomingCamps);
 
         for (const [key, value] of Object.entries(suggestions)) {
             if (key in form.getValues() && key !== 'campId' && key !== 'campName') {
@@ -184,7 +202,7 @@ function BookingFormComponent() {
     });
   }
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || campsLoading) {
     return (
         <div className="flex justify-center items-center h-96">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />

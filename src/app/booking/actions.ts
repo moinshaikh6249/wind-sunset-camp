@@ -1,15 +1,22 @@
+
 'use server';
 
 import { suggestBookingFormCompletion } from '@/ai/flows/booking-form-completion-suggester';
-import { upcomingCamps } from '@/lib/mock-data';
+
+type Camp = {
+    id: string;
+    name: string;
+};
 
 /**
  * Gets AI-powered completion suggestions for the booking form.
  * @param partialForm - A record containing the fields already filled in the booking form.
+ * @param upcomingCamps - An array of available camps.
  * @returns A record containing suggested completions for the remaining fields.
  */
 export async function getCompletionSuggestions(
-  partialForm: Record<string, string>
+  partialForm: Record<string, string>,
+  upcomingCamps: Camp[]
 ): Promise<Record<string, string>> {
   try {
     const availableCamps = {

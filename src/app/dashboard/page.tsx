@@ -3,7 +3,7 @@
 
 import { useUser, useDatabase, useMemoFirebase, useStorage } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,7 @@ import { signOut, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
-import { ref as dbRef, remove, update } from "firebase/database";
+import { ref as dbRef, remove, update, query } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   AlertDialog,
@@ -35,10 +35,19 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/firebase";
 import { format, formatDistanceToNow } from "date-fns";
-import { upcomingCamps } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+type Camp = {
+    id: string;
+    name: string;
+    date: string;
+    location: string;
+};
+
+type DbCamps = {
+    [id: string]: Camp;
+}
 
 const activityIcons: { [key: string]: React.ReactNode } = {
   'signup': <UserPlus className="h-5 w-5 text-green-500" />,
@@ -79,8 +88,14 @@ export default function DashboardPage() {
     if (!user) return null;
     return dbRef(database, `users/${user.uid}`);
   }, [database, user]);
+  
+  const campsRef = useMemoFirebase(() => {
+      if (!database) return null;
+      return query(dbRef(database, 'camps'));
+  }, [database]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
+  const { data: campsData, isLoading: areCampsLoading } = useDatabaseValue<DbCamps>(campsRef);
 
   const bookings = userProfile?.bookings ? Object.entries(userProfile.bookings).map(([id, booking]) => ({ id, ...booking as any })) : [];
   const history = userProfile?.history ? Object.values(userProfile.history).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];
@@ -165,7 +180,7 @@ export default function DashboardPage() {
     }
   };
   
-  const isLoading = isUserLoading || isProfileLoading;
+  const isLoading = isUserLoading || isProfileLoading || areCampsLoading;
 
   if (isLoading || !user) {
     return (
@@ -292,7 +307,7 @@ export default function DashboardPage() {
                 ) : bookings && bookings.length > 0 ? (
                   <ul className="space-y-4">
                     {bookings.map(booking => {
-                      const campDetails = upcomingCamps.find(c => c.id === booking.campId);
+                      const campDetails = campsData ? campsData[booking.campId] : null;
                       const status = booking.status || 'Pending';
                       const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
                       const Icon = currentStatusConfig.icon;
