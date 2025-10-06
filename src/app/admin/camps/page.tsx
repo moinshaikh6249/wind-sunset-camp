@@ -3,11 +3,11 @@
 
 import { useDatabase, useMemoFirebase, useStorage, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref, remove, update, push } from 'firebase/database';
-import { ref as storageRef, deleteObject } from 'firebase/storage';
+import { ref } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { deleteCamp } from './actions';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -97,7 +96,6 @@ function CampTableRowSkeleton() {
 
 export default function CampsPage() {
   const database = useDatabase();
-  const storage = useStorage();
   const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -131,25 +129,11 @@ export default function CampsPage() {
 
 
   const handleDeleteCamp = (camp: CampWithId) => {
-    if (!adminUser || !database) return;
+    if (!adminUser) return;
     startTransition(async () => {
       try {
-        // Delete from Realtime Database
-        const campRef = ref(database, `camps/${camp.id}`);
-        await remove(campRef);
-        
-        // Delete image from Storage if it exists
-        if (camp.image.imageUrl) {
-            try {
-                const imageInStorageRef = storageRef(storage, camp.image.imageUrl);
-                await deleteObject(imageInStorageRef);
-            } catch (storageError: any) {
-                // If the file doesn't exist, we don't need to throw an error
-                if (storageError.code !== 'storage/object-not-found') {
-                    throw storageError;
-                }
-            }
-        }
+        const idToken = await adminUser.getIdToken();
+        await deleteCamp(idToken, camp.id, camp.image?.imageUrl);
         
         toast({
           title: "Camp Deleted",
@@ -222,7 +206,7 @@ export default function CampsPage() {
                         <DropdownMenuItem onSelect={() => handleEditCamp(camp)}>Edit</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onSelect={e => e.preventDefault()}>Delete</DropdownMenuItem>
                         </AlertDialogTrigger>
                     </DropdownMenuContent>
                 </DropdownMenu>

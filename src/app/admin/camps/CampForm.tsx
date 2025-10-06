@@ -4,8 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useDatabase, useStorage } from "@/firebase";
-import { ref as dbRef, set, push } from "firebase/database";
+import { useUser, useStorage } from "@/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
 import { LoaderCircle, Camera } from "lucide-react";
 import Image from "next/image";
+import { createOrUpdateCamp } from "./actions";
 
 const formSchema = z.object({
   name: z.string().min(3, "Camp name is required."),
@@ -49,7 +49,7 @@ type CampFormProps = {
 
 export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const { toast } = useToast();
-  const database = useDatabase();
+  const { user: adminUser } = useUser();
   const storage = useStorage();
   const [isPending, startTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(campToEdit?.image?.imageUrl || null);
@@ -93,10 +93,10 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   };
 
   function onSubmit(values: FormValues) {
-    if (!database || !storage) {
+    if (!adminUser || !storage) {
         toast({
-            title: "Firebase not initialized",
-            description: "The database or storage service is not ready. Please try again.",
+            title: "Error",
+            description: "Admin user or storage service is not available.",
             variant: "destructive"
         });
         return;
@@ -104,25 +104,20 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
 
     startTransition(async () => {
       try {
+        const idToken = await adminUser.getIdToken();
         let imageUrl = campToEdit?.image?.imageUrl || "";
-        let imageHint = campToEdit?.image?.imageHint || "camping";
         let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
-
-        if (values.image) {
+        
+        // Handle image upload if a new one is provided
+        if (values.image instanceof File) {
           const file: File = values.image;
           const newImageRef = storageRef(storage, `camps/${Date.now()}-${file.name}`);
           const snapshot = await uploadBytes(newImageRef, file);
           imageUrl = await getDownloadURL(snapshot.ref);
-          imageHint = "custom upload";
-        }
-
-        const campId = campToEdit?.id || push(dbRef(database, 'camps')).key;
-        if (!campId) {
-            throw new Error("Failed to generate a new camp ID.");
         }
 
         const campData = {
-          id: campId,
+          id: campToEdit?.id, // Will be undefined for new camps
           name: values.name,
           date: values.date,
           location: values.location,
@@ -130,12 +125,11 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           image: {
             id: imageId,
             imageUrl,
-            imageHint,
+            imageHint: 'custom upload',
           }
         };
 
-        // Use set() for both creating and updating for simplicity and reliability
-        await set(dbRef(database, `camps/${campId}`), campData);
+        await createOrUpdateCamp(idToken, campData);
 
         toast({
           title: campToEdit ? "Camp Updated" : "Camp Added",
@@ -145,7 +139,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       } catch (error: any) {
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred. Please check your permissions and try again.",
+          description: error.message || "An unexpected error occurred.",
           variant: "destructive",
         });
       }
@@ -204,7 +198,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         <FormField
           control={form.control}
           name="image"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
               <FormLabel>Camp Image</FormLabel>
               <FormControl>

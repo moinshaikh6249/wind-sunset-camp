@@ -4,10 +4,11 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Database } from 'firebase/database';
+import { Database, ref } from 'firebase/database';
 import { FirebaseStorage } from 'firebase/storage';
 import { Auth, User, onAuthStateChanged, IdTokenResult } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { useDatabaseValue } from './database/use-database-value';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -61,6 +62,13 @@ export interface UserHookResult {
   isUserLoading: boolean;
   userError: Error | null;
 }
+
+// Return type for useAdmin() hook
+export interface AdminHookResult {
+    isAdmin: boolean;
+    isAdminLoading: boolean;
+}
+
 
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -212,4 +220,27 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
 export const useUser = (): UserHookResult => {
   const { user, idTokenResult, isUserLoading, userError } = useFirebase();
   return { user, idTokenResult, isUserLoading, userError };
+};
+
+
+/**
+ * Hook to determine if the current user has admin privileges.
+ * It checks for the user's UID in the `/admins` path of the Realtime Database.
+ * This is more reliable than custom claims for immediate UI changes.
+ */
+export const useAdmin = (): AdminHookResult => {
+    const { user, isUserLoading } = useUser();
+    const database = useDatabase();
+
+    const adminRef = useMemoFirebase(() => {
+        if (!user || !database) return null;
+        return ref(database, `admins/${user.uid}`);
+    }, [database, user]);
+
+    const { data: adminData, isLoading: isAdminDataLoading } = useDatabaseValue<boolean>(adminRef);
+
+    const isAdmin = !!adminData;
+    const isAdminLoading = isUserLoading || (!!user && isAdminDataLoading);
+
+    return { isAdmin, isAdminLoading };
 };

@@ -17,7 +17,7 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { useUser, useDatabase, useMemoFirebase, useAdmin } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref } from "firebase/database";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -36,8 +36,8 @@ const navLinks = [
 ];
 
 function UserProfileSection() {
-  const { user, idTokenResult, isUserLoading } = useUser();
-  const isAdmin = idTokenResult?.claims?.isAdmin;
+  const { user, isUserLoading } = useUser();
+  const { isAdmin, isAdminLoading } = useAdmin();
   const database = useDatabase();
   const { toast } = useToast();
   const router = useRouter();
@@ -67,7 +67,7 @@ function UserProfileSection() {
     }
   };
 
-  if (isUserLoading || (user && isProfileLoading)) {
+  if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
         <Skeleton className="h-10 w-full" />
@@ -125,8 +125,8 @@ function UserProfileSection() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpen, setOpenMobile } = useSidebar();
-  const { user, idTokenResult } = useUser();
-  const isAdmin = idTokenResult?.claims?.isAdmin;
+  const { user } = useUser();
+  const { isAdmin } = useAdmin();
 
 
   const handleLinkClick = () => {

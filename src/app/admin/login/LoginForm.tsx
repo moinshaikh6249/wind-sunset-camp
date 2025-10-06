@@ -18,8 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/firebase";
+import { useAuth, useDatabase } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { ref, get } from "firebase/database";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -30,6 +31,8 @@ export function AdminLoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
+  const database = useDatabase();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,9 +44,13 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const user = userCredential.user;
       
-      if (idTokenResult.claims.isAdmin) {
+      // Check admin status from Realtime Database
+      const adminRef = ref(database, `admins/${user.uid}`);
+      const adminSnapshot = await get(adminRef);
+
+      if (adminSnapshot.exists()) {
         toast({
           title: "Admin Login Successful!",
           description: "Welcome back, administrator!",
