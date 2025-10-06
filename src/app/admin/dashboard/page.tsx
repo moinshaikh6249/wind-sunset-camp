@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
@@ -69,7 +70,7 @@ export default function AdminDashboardPage() {
             <CardDescription>
               You had 57 new signups in the last 7 days.
             </CardDescription>
-          </CardHeader.
+          </CardHeader>
           <CardContent>
              <UserSignupChart />
           </CardContent>
