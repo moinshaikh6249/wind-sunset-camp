@@ -160,41 +160,45 @@ export default function BookingsPage() {
 
   const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startCancelTransition(async () => {
-      const idToken = await user.getIdToken();
-      const result = await cancelBooking(idToken, userId, bookingId);
-      if (result.success) {
-        toast({
-          title: "Booking Canceled",
-          description: `Booking for ${campName} has been canceled.`,
+    startCancelTransition(() => {
+      user.getIdToken().then(idToken => {
+        cancelBooking(idToken, userId, bookingId).then(result => {
+           if (result.success) {
+            toast({
+              title: "Booking Canceled",
+              description: `Booking for ${campName} has been canceled.`,
+            });
+          } else {
+            toast({
+              title: "Cancellation Failed",
+              description: result.error || "An unexpected error occurred.",
+              variant: "destructive",
+            });
+          }
         });
-      } else {
-        toast({
-          title: "Cancellation Failed",
-          description: result.error || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
+      });
     });
   };
 
   const handleApproveBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startApproveTransition(async () => {
-      const idToken = await user.getIdToken();
-      const result = await approveBooking(idToken, userId, bookingId);
-      if (result.success) {
-        toast({
-          title: "Booking Approved",
-          description: `Booking for ${campName} has been approved.`,
+    startApproveTransition(() => {
+      user.getIdToken().then(idToken => {
+        approveBooking(idToken, userId, bookingId).then(result => {
+           if (result.success) {
+            toast({
+              title: "Booking Approved",
+              description: `Booking for ${campName} has been approved.`,
+            });
+          } else {
+            toast({
+              title: "Approval Failed",
+              description: result.error || "An unexpected error occurred.",
+              variant: "destructive",
+            });
+          }
         });
-      } else {
-        toast({
-          title: "Approval Failed",
-          description: result.error || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
+      });
     });
   };
 
