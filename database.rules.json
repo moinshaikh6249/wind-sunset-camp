@@ -15,11 +15,11 @@
     },
     "camps": {
       ".read": true,
-      ".write": "root.child('admins').child(auth.uid).exists()"
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
     },
     "galleryImages": {
        ".read": true,
-       ".write": "root.child('admins').child(auth.uid).exists()"
+       ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
     }
   }
 }

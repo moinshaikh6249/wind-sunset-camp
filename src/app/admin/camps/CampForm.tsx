@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useDatabase, useStorage } from "@/firebase";
-import { ref as dbRef, set, push, update } from "firebase/database";
+import { ref as dbRef, set, push } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,27 +99,33 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       try {
         let imageUrl = campToEdit?.image?.imageUrl || "";
         let imageHint = campToEdit?.image?.imageHint || "camping";
+        let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
 
         if (values.image) {
           const file: File = values.image;
           const newImageRef = storageRef(storage, `camps/${Date.now()}-${file.name}`);
           const snapshot = await uploadBytes(newImageRef, file);
           imageUrl = await getDownloadURL(snapshot.ref);
-          imageHint = "custom upload"
+          imageHint = "custom upload";
+        }
+
+        const campId = campToEdit?.id || push(dbRef(database, 'camps')).key;
+        if (!campId) {
+            throw new Error("Failed to generate a new camp ID.");
         }
 
         const campData = {
           ...values,
-          id: campToEdit?.id || push(dbRef(database, 'camps')).key,
+          id: campId,
           image: {
-            id: campToEdit?.image?.id || `img-${Date.now()}`,
+            id: imageId,
             imageUrl,
             imageHint,
           }
         };
 
-        const campRef = dbRef(database, `camps/${campData.id}`);
-        await set(campRef, campData);
+        // Use set() for both creating and updating for simplicity and reliability
+        await set(dbRef(database, `camps/${campId}`), campData);
 
         toast({
           title: campToEdit ? "Camp Updated" : "Camp Added",
@@ -129,7 +135,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       } catch (error: any) {
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred.",
+          description: error.message || "An unexpected error occurred. You may not have the required permissions.",
           variant: "destructive",
         });
       }
