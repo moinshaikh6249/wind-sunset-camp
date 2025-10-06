@@ -1,17 +1,13 @@
-
 {
   "rules": {
-    "admins": {
-      ".read": "auth != null",
-      "$uid": {
-        ".write": "auth != null && auth.uid === $uid"
-      }
-    },
     "users": {
       "$uid": {
         ".read": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()",
         ".write": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()"
       }
+    },
+    "admins": {
+      ".read": "auth != null"
     },
     "camps": {
       ".read": true,

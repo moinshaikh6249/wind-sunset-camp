@@ -8,7 +8,6 @@ import { useMemo, useTransition, useState } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { deleteUser } from './actions';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,6 +48,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useSearch } from '@/context/SearchProvider';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AddUserForm } from './AddUserForm';
+import { deleteUser } from './actions';
+
 
 type DbUser = {
   uid: string;
@@ -97,6 +107,7 @@ export default function UsersPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
+  const [dialogOpen, setDialogOpen] = useState(false);
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -202,7 +213,7 @@ export default function UsersPage() {
                     <DropdownMenuItem>Suspend</DropdownMenuItem>
                     <DropdownMenuSeparator />
                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
                     </AlertDialogTrigger>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -237,6 +248,23 @@ export default function UsersPage() {
     <>
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add User
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                 <DialogHeader>
+                    <DialogTitle>Add New User</DialogTitle>
+                    <DialogDescription>
+                        Create a new user account and add them to the database.
+                    </DialogDescription>
+                </DialogHeader>
+                <AddUserForm onUserAdded={() => setDialogOpen(false)} />
+            </DialogContent>
+         </Dialog>
       </div>
 
       <Card>
