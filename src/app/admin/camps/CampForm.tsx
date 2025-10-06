@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useUser, useStorage, useDatabase } from "@/firebase";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { ref as dbRef, set } from "firebase/database";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,10 +73,11 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         date: campToEdit.date,
         location: campToEdit.location,
         description: campToEdit.description,
+        image: undefined,
       });
       setImagePreview(campToEdit.image?.imageUrl);
     } else {
-        form.reset({ name: "", date: "", location: "", description: "" });
+        form.reset({ name: "", date: "", location: "", description: "", image: undefined });
         setImagePreview(null);
     }
   }, [campToEdit, form]);
@@ -108,11 +109,26 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         let imageUrl = campToEdit?.image?.imageUrl || "";
         let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
         
+        // If a new image file is selected, upload it
         if (values.image instanceof File) {
           const file: File = values.image;
+          // If editing and an old image exists, delete it from storage
+          if (campToEdit?.image?.imageUrl) {
+            try {
+              const oldImageRef = storageRef(storage, campToEdit.image.imageUrl);
+              await deleteObject(oldImageRef);
+            } catch (error: any) {
+               if (error.code !== 'storage/object-not-found') {
+                console.warn("Could not delete old image, it might not exist:", error.message);
+              }
+            }
+          }
+
+          // Upload the new image
           const newImageRef = storageRef(storage, `camps/${Date.now()}-${file.name}`);
           const snapshot = await uploadBytes(newImageRef, file);
           imageUrl = await getDownloadURL(snapshot.ref);
+          imageId = newImageRef.fullPath; // Use the full path as a unique ID
         }
 
         const campId = campToEdit?.id || `camp-${Date.now()}`;
@@ -139,6 +155,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         });
         onFormSubmit();
       } catch (error: any) {
+        console.error("Camp form submission error:", error);
         toast({
           title: "Operation Failed",
           description: error.message || "An unexpected error occurred. You might not have admin permissions.",
