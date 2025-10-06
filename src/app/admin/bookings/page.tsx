@@ -6,8 +6,8 @@ import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { useMemo, useTransition } from 'react';
 import { format } from 'date-fns';
-import { MoreHorizontal, CalendarSearch, FileDown } from 'lucide-react';
-import { cancelBooking } from './actions';
+import { MoreHorizontal, CalendarSearch, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { cancelBooking, approveBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
 
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { cn } from '@/lib/utils';
 
 type DbUser = {
   firstName: string;
@@ -65,6 +66,7 @@ type DbBooking = {
   campName: string;
   numberOfPeople: number;
   userId: string;
+  status?: 'Pending' | 'Approved' | 'Canceled';
 };
 
 type AggregatedBooking = DbBooking & {
@@ -72,6 +74,24 @@ type AggregatedBooking = DbBooking & {
   customerName: string;
   customerEmail: string;
 };
+
+const statusConfig = {
+    Approved: {
+      label: "Approved",
+      icon: CheckCircle,
+      className: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 border-green-300 dark:border-green-700",
+    },
+    Pending: {
+      label: "Pending",
+      icon: Clock,
+      className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-300 dark:border-amber-700",
+    },
+    Canceled: {
+      label: "Canceled",
+      icon: XCircle,
+      className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-300 dark:border-red-700",
+    },
+  };
 
 function BookingTableRowSkeleton() {
     return (
@@ -92,7 +112,7 @@ function BookingTableRowSkeleton() {
                 <Skeleton className="h-4 w-[80px]" />
             </TableCell>
              <TableCell className="hidden sm:table-cell">
-                <Skeleton className="h-5 w-[70px] rounded-full" />
+                <Skeleton className="h-5 w-[80px] rounded-full" />
             </TableCell>
             <TableCell>
                 <Skeleton className="h-8 w-8 rounded-md" />
@@ -105,7 +125,8 @@ export default function BookingsPage() {
   const database = useDatabase();
   const { user } = useUser();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [isCanceling, startCancelTransition] = useTransition();
+  const [isApproving, startApproveTransition] = useTransition();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -119,14 +140,14 @@ export default function BookingsPage() {
     
     const allBookings: AggregatedBooking[] = [];
     
-    Object.values(usersData).forEach(user => {
-      if (user.bookings) {
-        Object.entries(user.bookings).forEach(([bookingId, bookingData]) => {
+    Object.values(usersData).forEach(userEntry => {
+      if (userEntry.bookings) {
+        Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]) => {
           allBookings.push({
             ...bookingData,
             bookingId,
-            customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-            customerEmail: user.email,
+            customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
+            customerEmail: userEntry.email,
           });
         });
       }
@@ -139,7 +160,7 @@ export default function BookingsPage() {
 
   const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
     if (!user) return;
-    startTransition(async () => {
+    startCancelTransition(async () => {
       const idToken = await user.getIdToken();
       const result = await cancelBooking(idToken, userId, bookingId);
       if (result.success) {
@@ -150,6 +171,26 @@ export default function BookingsPage() {
       } else {
         toast({
           title: "Cancellation Failed",
+          description: result.error || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const handleApproveBooking = (userId: string, bookingId: string, campName: string) => {
+    if (!user) return;
+    startApproveTransition(async () => {
+      const idToken = await user.getIdToken();
+      const result = await approveBooking(idToken, userId, bookingId);
+      if (result.success) {
+        toast({
+          title: "Booking Approved",
+          description: `Booking for ${campName} has been approved.`,
+        });
+      } else {
+        toast({
+          title: "Approval Failed",
           description: result.error || "An unexpected error occurred.",
           variant: "destructive",
         });
@@ -170,7 +211,12 @@ export default function BookingsPage() {
             </TableRow>
         );
     }
-    return bookings.map((booking) => (
+    return bookings.map((booking) => {
+        const status = booking.status || 'Approved'; // Default to Approved if status is not set
+        const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
+        const Icon = currentStatusConfig.icon;
+
+        return (
         <TableRow key={booking.bookingId}>
             <TableCell>
                 <div className="font-medium">{booking.customerName}</div>
@@ -188,20 +234,28 @@ export default function BookingsPage() {
                 {booking.numberOfPeople}
             </TableCell>
             <TableCell className="hidden sm:table-cell">
-                <Badge variant="outline">Confirmed</Badge>
+                <Badge variant="outline" className={cn("gap-1.5", currentStatusConfig.className)}>
+                    <Icon className="h-3.5 w-3.5" />
+                    {currentStatusConfig.label}
+                </Badge>
             </TableCell>
             <TableCell>
               <AlertDialog>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isCanceling || isApproving}>
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Toggle menu</span>
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem>Approve</DropdownMenuItem>
+                    <DropdownMenuItem 
+                        onSelect={() => handleApproveBooking(booking.userId, booking.bookingId, booking.campName)}
+                        disabled={status === 'Approved'}
+                    >
+                        Approve
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Modify</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <AlertDialogTrigger asChild>
@@ -223,16 +277,16 @@ export default function BookingsPage() {
                         <AlertDialogAction
                          className="bg-destructive hover:bg-destructive/90"
                          onClick={() => handleCancelBooking(booking.userId, booking.bookingId, booking.campName)}
-                         disabled={isPending}
+                         disabled={isCanceling}
                         >
-                        {isPending ? "Canceling..." : "Yes, cancel booking"}
+                        {isCanceling ? "Canceling..." : "Yes, cancel booking"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </TableCell>
         </TableRow>
-    ));
+    )});
   }
 
 

@@ -46,3 +46,24 @@ export async function cancelBooking(idToken: string, userId: string, bookingId: 
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }
+
+export async function approveBooking(idToken: string, userId: string, bookingId: string): Promise<{ success: boolean; error?: string }> {
+    const adminUser = await getAdminUser(idToken);
+    if (!adminUser) {
+        return { success: false, error: 'Permission denied. You must be an administrator.' };
+    }
+
+    try {
+        const { app } = await initializeAdminApp();
+        const db = getDatabase(app);
+
+        const bookingRef = db.ref(`users/${userId}/bookings/${bookingId}/status`);
+        await bookingRef.set('Approved');
+        
+        revalidatePath('/admin/bookings');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error approving booking:', error);
+        return { success: false, error: error.message || 'An unexpected error occurred.' };
+    }
+}

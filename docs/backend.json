@@ -68,6 +68,11 @@
           "type": "string",
           "format": "date-time",
           "description": "The date the booking was made."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the booking.",
+          "enum": ["Pending", "Approved", "Canceled"]
         }
       },
       "required": [
