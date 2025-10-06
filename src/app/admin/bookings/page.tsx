@@ -3,7 +3,7 @@
 
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref, update, remove, push } from 'firebase/database';
+import { ref, update, push } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
@@ -169,13 +169,18 @@ export default function BookingsPage() {
     const onCancel = () => {
         if (!user || !database) return;
         startCancelTransition(async () => {
-            const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
-            const historyRef = ref(database, `users/${booking.userId}/history`);
-            const newHistoryRef = push(historyRef);
+            const bookingPath = `users/${booking.userId}/bookings/${booking.bookingId}/status`;
+            const historyPath = `users/${booking.userId}/history`;
+            const newHistoryKey = push(ref(database, historyPath)).key;
+
+            if (!newHistoryKey) {
+                toast({ title: "Failed to generate history key", variant: "destructive" });
+                return;
+            }
 
             const updates: {[key: string]: any} = {};
-            updates[bookingRef.path + '/status'] = 'Canceled';
-            updates[newHistoryRef.key!] = {
+            updates[bookingPath] = 'Canceled';
+            updates[`${historyPath}/${newHistoryKey}`] = {
                 type: 'booking',
                 description: `Booking for ${booking.campName} canceled by admin`,
                 timestamp: new Date().toISOString(),
