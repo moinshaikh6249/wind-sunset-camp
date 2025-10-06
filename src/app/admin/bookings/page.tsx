@@ -198,6 +198,52 @@ export default function BookingsPage() {
     });
   };
 
+  const handleExport = () => {
+    if (bookings.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "There are no bookings to export.",
+      });
+      return;
+    }
+
+    const headers = ["Customer Name", "Email", "Camp Name", "Booked On", "Guests", "Status"];
+    const csvRows = [
+      headers.join(','),
+      ...bookings.map(booking => {
+        const row = [
+          `"${booking.customerName.replace(/"/g, '""')}"`,
+          booking.customerEmail,
+          `"${booking.campName.replace(/"/g, '""')}"`,
+          format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss'),
+          booking.numberOfPeople,
+          booking.status || 'Pending'
+        ];
+        return row.join(',');
+      })
+    ];
+    
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      const filename = `bookings_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    toast({
+      title: "Export Successful",
+      description: "Your bookings data has been downloaded.",
+    });
+  };
+
   const renderTableBody = () => {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <BookingTableRowSkeleton key={i} />);
@@ -294,7 +340,7 @@ export default function BookingsPage() {
     <>
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Bookings</h1>
-          <Button size="sm">
+          <Button size="sm" onClick={handleExport}>
               <FileDown className="h-4 w-4 mr-2" />
               Export
           </Button>
