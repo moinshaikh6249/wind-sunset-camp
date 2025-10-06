@@ -138,14 +138,7 @@ export default function AdminDashboardPage() {
           Here&apos;s a quick overview of your camp&apos;s performance.
         </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Revenue"
-          value="$45,231.89"
-          icon={DollarSign}
-          description="+20.1% from last month"
-          isLoading={isLoading}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Active Bookings"
           value={stats.activeBookings.toLocaleString()}
