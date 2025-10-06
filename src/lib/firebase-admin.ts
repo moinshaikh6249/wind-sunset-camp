@@ -9,15 +9,7 @@ export function initializeAdminApp(): App {
         return apps[0] as App;
     }
 
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-    if (!projectId) {
-        throw new Error("Missing NEXT_PUBLIC_FIREBASE_PROJECT_ID");
-    }
-
-    return initializeApp({
-        projectId,
-        credential: applicationDefault(),
-        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
-    });
+    // By initializing with no options, the Admin SDK will automatically
+    // use the project's default service account credentials from the environment.
+    return initializeApp();
 }
