@@ -48,16 +48,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { AddUserForm } from './AddUserForm';
-
 
 type DbUser = {
   uid: string;
@@ -105,7 +95,6 @@ export default function UsersPage() {
   const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [isAddUserOpen, setAddUserOpen] = useState(false);
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -133,17 +122,17 @@ export default function UsersPage() {
   const handleDeleteUser = (uid: string, name: string) => {
     if (!adminUser) return;
     startTransition(async () => {
-      const idToken = await adminUser.getIdToken();
-      const result = await deleteUser(idToken, uid);
-      if (result.success) {
+      try {
+        const idToken = await adminUser.getIdToken();
+        await deleteUser(idToken, uid);
         toast({
           title: "User Deleted",
           description: `${name} has been permanently deleted.`,
         });
-      } else {
+      } catch (error: any) {
         toast({
           title: "Deletion Failed",
-          description: result.error || "An unexpected error occurred.",
+          description: error.message || "An unexpected error occurred.",
           variant: "destructive",
         });
       }
@@ -236,23 +225,6 @@ export default function UsersPage() {
     <>
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
-          <Dialog open={isAddUserOpen} onOpenChange={setAddUserOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add a New User</DialogTitle>
-                <DialogDescription>
-                  Create a new user account. An email with password setup instructions will be sent to the user.
-                </DialogDescription>
-              </DialogHeader>
-              <AddUserForm onUserAdded={() => setAddUserOpen(false)} />
-            </DialogContent>
-          </Dialog>
       </div>
 
       <Card>
