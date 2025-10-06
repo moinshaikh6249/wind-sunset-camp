@@ -11,7 +11,7 @@ async function getAdminUser(idToken: string): Promise<DecodedIdToken | null> {
     if (!idToken) return null;
       
     try {
-        const { app } = await initializeAdminApp();
+        const app = initializeAdminApp();
         const auth = getAuth(app);
         const decodedToken = await auth.verifyIdToken(idToken);
         
@@ -33,7 +33,7 @@ export async function deleteUser(idToken: string, uid: string): Promise<{ succes
     }
 
     try {
-        const { app } = await initializeAdminApp();
+        const app = initializeAdminApp();
         const auth = getAuth(app);
         const db = getDatabase(app);
 

@@ -2,10 +2,11 @@
 import { getApps, initializeApp, App, applicationDefault } from 'firebase-admin/app';
 import 'server-only';
 
-async function initializeAdminApp() {
+// This function ensures that the admin app is initialized only once.
+export function initializeAdminApp(): App {
     const apps = getApps();
     if (apps.length > 0) {
-        return { app: apps[0] as App };
+        return apps[0] as App;
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -14,13 +15,9 @@ async function initializeAdminApp() {
         throw new Error("Missing NEXT_PUBLIC_FIREBASE_PROJECT_ID");
     }
 
-    const app = initializeApp({
+    return initializeApp({
         projectId,
         credential: applicationDefault(),
         databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`
     });
-
-    return { app };
 }
-
-export { initializeAdminApp };
