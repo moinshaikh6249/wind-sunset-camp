@@ -4,7 +4,7 @@
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
-import { useMemo, useTransition } from 'react';
+import { useMemo, useTransition, useState } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +48,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AddUserForm } from './AddUserForm';
 
 
 type DbUser = {
@@ -96,6 +105,7 @@ export default function UsersPage() {
   const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [isAddUserOpen, setAddUserOpen] = useState(false);
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -226,10 +236,23 @@ export default function UsersPage() {
     <>
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
-          <Button size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User
-          </Button>
+          <Dialog open={isAddUserOpen} onOpenChange={setAddUserOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a New User</DialogTitle>
+                <DialogDescription>
+                  Create a new user account. An email with password setup instructions will be sent to the user.
+                </DialogDescription>
+              </DialogHeader>
+              <AddUserForm onUserAdded={() => setAddUserOpen(false)} />
+            </DialogContent>
+          </Dialog>
       </div>
 
       <Card>
