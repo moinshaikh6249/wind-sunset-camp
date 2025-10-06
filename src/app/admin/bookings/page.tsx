@@ -157,12 +157,10 @@ export default function BookingsPage() {
     
     const onApprove = () => {
       if (!user) return;
-      startApproveTransition(() => {
-        handleAction(
-          async () => {
-              const idToken = await user.getIdToken();
-              await approveBooking(idToken, booking.userId, booking.bookingId);
-          },
+      startApproveTransition(async () => {
+        const idToken = await user.getIdToken();
+        await handleAction(
+          () => approveBooking(idToken, booking.userId, booking.bookingId),
           "Booking Approved",
           `Booking for ${booking.campName} has been approved.`,
           "Approval Failed"
@@ -172,12 +170,10 @@ export default function BookingsPage() {
     
     const onCancel = () => {
         if (!user) return;
-        startCancelTransition(() => {
-            handleAction(
-                async () => {
-                    const idToken = await user.getIdToken();
-                    await cancelBooking(idToken, booking.userId, booking.bookingId);
-                },
+        startCancelTransition(async () => {
+            const idToken = await user.getIdToken();
+            await handleAction(
+                () => cancelBooking(idToken, booking.userId, booking.bookingId),
                 "Booking Canceled",
                 `Booking for ${booking.campName} has been canceled.`,
                 "Cancellation Failed"
