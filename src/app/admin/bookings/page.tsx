@@ -119,7 +119,8 @@ export default function BookingsPage() {
           allBookings.push({
             ...bookingData,
             userId: uid,
-            status: bookingData.status ?? 'Pending',
+            // Default to 'Pending' if status is not set in the database
+            status: bookingData.status ?? 'Pending', 
             bookingId,
             customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
             customerEmail: userEntry.email,
@@ -252,7 +253,7 @@ export default function BookingsPage() {
           `"${booking.campName.replace(/"/g, '""')}"`,
           format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss'),
           booking.numberOfPeople,
-          booking.status || 'Pending'
+          booking.status
         ];
         return row.join(',');
       })
@@ -294,8 +295,7 @@ export default function BookingsPage() {
         );
     }
     return bookings.map((booking) => {
-        const status = booking.status || 'Pending';
-        const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
+        const currentStatusConfig = statusConfig[booking.status] || statusConfig.Pending;
         const Icon = currentStatusConfig.icon;
 
         return (

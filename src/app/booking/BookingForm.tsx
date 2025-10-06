@@ -129,7 +129,7 @@ function BookingFormComponent() {
         campName: camp.name,
         numberOfPeople: values.numberOfPeople,
         bookingDate: new Date().toISOString(),
-        status: "Pending",
+        status: "Pending", // Ensure every booking starts as Pending
       };
 
       // Get a reference to the user's bookings list

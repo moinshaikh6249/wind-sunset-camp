@@ -7,7 +7,7 @@ export type DbBooking = {
   campName: string;
   numberOfPeople: number;
   userId: string;
-  status?: BookingStatus; // Status can be optional in the DB
+  status?: BookingStatus; // Status can be optional in the DB, but we default to 'Pending'
 };
 
 export type DbUser = {
