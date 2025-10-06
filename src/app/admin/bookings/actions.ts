@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -6,10 +7,9 @@ import { revalidatePath } from 'next/cache';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 
 export async function approveBooking(idToken: string, userId: string, bookingId: string): Promise<void> {
-    const adminApp = initializeAdminApp();
-    const auth = getAuth(adminApp);
-    
     try {
+        const adminApp = initializeAdminApp();
+        const auth = getAuth(adminApp);
         const decodedToken = await auth.verifyIdToken(idToken);
         if (!decodedToken.isAdmin) {
             throw new Error('Permission denied. You must be an administrator.');
@@ -27,10 +27,10 @@ export async function approveBooking(idToken: string, userId: string, bookingId:
 }
 
 export async function cancelBooking(idToken: string, userId: string, bookingId: string): Promise<void> {
-    const adminApp = initializeAdminApp();
-    const auth = getAuth(adminApp);
-    
     try {
+        const adminApp = initializeAdminApp();
+        const auth = getAuth(adminApp);
+        
         const decodedToken = await auth.verifyIdToken(idToken);
         if (!decodedToken.isAdmin) {
             throw new Error('Permission denied. You must be an administrator.');
