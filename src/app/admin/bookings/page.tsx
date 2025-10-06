@@ -48,7 +48,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
-import type { BookingStatus, AggregatedBooking } from './types';
+import type { BookingStatus, AggregatedBooking, DbUsers } from './types';
 
 const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, className: string }> = {
     Approved: {
@@ -106,12 +106,10 @@ export default function BookingsPage() {
     return ref(database, 'users');
   }, [database]);
 
-  const { data: usersData, isLoading } = useDatabaseValue(usersRef);
+  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
 
-  const [bookings, setBookings] = useState<AggregatedBooking[]>([]);
-
-  useMemo(() => {
-    if (!usersData) return;
+  const bookings = useMemo(() => {
+    if (!usersData) return [];
     
     const allBookings: AggregatedBooking[] = [];
     
@@ -132,7 +130,7 @@ export default function BookingsPage() {
 
     allBookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
     
-    setBookings(allBookings);
+    return allBookings;
   }, [usersData]);
 
   const handleAction = async (action: () => Promise<void>, successTitle: string, successDescription: string, errorTitle: string) => {
