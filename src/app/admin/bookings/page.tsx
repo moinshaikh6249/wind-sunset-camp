@@ -3,11 +3,11 @@
 
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref } from 'firebase/database';
+import { ref, update, remove } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { cancelBooking, approveBooking } from './actions';
+
 import { useToast } from '@/hooks/use-toast';
 
 import { Badge } from '@/components/ui/badge';
@@ -119,7 +119,6 @@ export default function BookingsPage() {
           allBookings.push({
             ...bookingData,
             userId: uid,
-            // Default to 'Pending' if status is not set in the database
             status: bookingData.status ?? 'Pending', 
             bookingId,
             customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
@@ -144,7 +143,7 @@ export default function BookingsPage() {
     } catch (error: any) {
       toast({
         title: errorTitle,
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred. You may not have the required permissions.",
         variant: "destructive",
       });
     }
@@ -155,11 +154,11 @@ export default function BookingsPage() {
     const [isCancelPending, startCancelTransition] = useTransition();
     
     const onApprove = () => {
-      if (!user) return;
+      if (!user || !database) return;
       startApproveTransition(async () => {
-        const idToken = await user.getIdToken();
+        const bookingStatusRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}/status`);
         await handleAction(
-          () => approveBooking(idToken, booking.userId, booking.bookingId),
+          () => update(bookingStatusRef.parent!, { status: 'Approved' }),
           "Booking Approved",
           `Booking for ${booking.campName} has been approved.`,
           "Approval Failed"
@@ -168,11 +167,11 @@ export default function BookingsPage() {
     };
     
     const onCancel = () => {
-        if (!user) return;
+        if (!user || !database) return;
         startCancelTransition(async () => {
-            const idToken = await user.getIdToken();
+            const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
             await handleAction(
-                () => cancelBooking(idToken, booking.userId, booking.bookingId),
+                () => remove(bookingRef),
                 "Booking Canceled",
                 `Booking for ${booking.campName} has been canceled.`,
                 "Cancellation Failed"

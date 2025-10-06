@@ -3,8 +3,14 @@
   "rules": {
     "users": {
       "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".read": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()",
+        ".write": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+    "admins": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
       }
     }
   }
