@@ -134,21 +134,21 @@ export default function BookingsPage() {
     setBookings(allBookings);
   }, [usersData]);
 
-  const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
-    const result = await action();
-    if (result.success) {
+  const handleAction = async (action: () => Promise<void>, successTitle: string, successDescription: string, errorTitle: string) => {
+    try {
+      await action();
       toast({
         title: successTitle,
         description: successDescription,
       });
-    } else {
+    } catch (error: any) {
       toast({
         title: errorTitle,
-        description: result.error || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
     }
-  }
+  };
 
   function ActionMenu({ booking }: { booking: AggregatedBooking }) {
     const [isApprovePending, startApproveTransition] = useTransition();
@@ -160,7 +160,7 @@ export default function BookingsPage() {
         handleAction(
           async () => {
               const idToken = await user.getIdToken();
-              return approveBooking(idToken, booking.userId, booking.bookingId);
+              await approveBooking(idToken, booking.userId, booking.bookingId);
           },
           "Booking Approved",
           `Booking for ${booking.campName} has been approved.`,
@@ -175,7 +175,7 @@ export default function BookingsPage() {
             handleAction(
                 async () => {
                     const idToken = await user.getIdToken();
-                    return cancelBooking(idToken, booking.userId, booking.bookingId);
+                    await cancelBooking(idToken, booking.userId, booking.bookingId);
                 },
                 "Booking Canceled",
                 `Booking for ${booking.campName} has been canceled.`,
