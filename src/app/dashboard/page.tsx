@@ -293,7 +293,7 @@ export default function DashboardPage() {
                   <ul className="space-y-4">
                     {bookings.map(booking => {
                       const campDetails = upcomingCamps.find(c => c.id === booking.campId);
-                      const status = booking.status || 'Approved';
+                      const status = booking.status || 'Pending';
                       const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
                       const Icon = currentStatusConfig.icon;
 
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-2">
                               <AlertDialog>
                                 <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={status === 'Canceled'}>
                                     <Trash2 className="h-5 w-5" />
                                   </Button>
                                 </AlertDialogTrigger>

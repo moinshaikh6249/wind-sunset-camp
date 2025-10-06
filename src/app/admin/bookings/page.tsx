@@ -3,7 +3,7 @@
 
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref, update, remove } from 'firebase/database';
+import { ref, update, remove, push } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
@@ -133,7 +133,7 @@ export default function BookingsPage() {
     return allBookings;
   }, [usersData]);
 
-  const handleAction = async (action: () => Promise<void>, successTitle: string, successDescription: string, errorTitle: string) => {
+  const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
     try {
       await action();
       toast({
@@ -170,8 +170,19 @@ export default function BookingsPage() {
         if (!user || !database) return;
         startCancelTransition(async () => {
             const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
+            const historyRef = ref(database, `users/${booking.userId}/history`);
+            const newHistoryRef = push(historyRef);
+
+            const updates: {[key: string]: any} = {};
+            updates[bookingRef.path + '/status'] = 'Canceled';
+            updates[newHistoryRef.key!] = {
+                type: 'booking',
+                description: `Booking for ${booking.campName} canceled by admin`,
+                timestamp: new Date().toISOString(),
+            };
+            
             await handleAction(
-                () => remove(bookingRef),
+                () => update(ref(database), updates),
                 "Booking Canceled",
                 `Booking for ${booking.campName} has been canceled.`,
                 "Cancellation Failed"
@@ -202,7 +213,7 @@ export default function BookingsPage() {
                   <DropdownMenuItem 
                     className="text-destructive" 
                     onSelect={(e) => e.preventDefault()}
-                    disabled={isCancelPending}
+                    disabled={isCancelPending || booking.status === 'Canceled'}
                   >
                     Cancel
                   </DropdownMenuItem>
@@ -213,7 +224,7 @@ export default function BookingsPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently cancel the booking for 
+                    This action will mark the booking as Canceled for 
                     <span className="font-semibold"> {booking.customerName} </span>
                      at <span className="font-semibold">{booking.campName}</span>.
                 </AlertDialogDescription>
