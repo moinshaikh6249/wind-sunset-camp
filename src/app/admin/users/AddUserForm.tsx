@@ -57,19 +57,19 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
     }
 
     startTransition(async () => {
-      const idToken = await adminUser.getIdToken();
-      const result = await createUser(idToken, values);
+      try {
+        const idToken = await adminUser.getIdToken();
+        await createUser(idToken, values);
 
-      if (result.success) {
         toast({
           title: "User Created Successfully",
           description: `An account for ${values.email} has been created.`,
         });
         onUserAdded();
-      } else {
+      } catch (error: any) {
         toast({
           title: "Failed to Create User",
-          description: result.error || "An unexpected error occurred.",
+          description: error.message || "An unexpected error occurred.",
           variant: "destructive",
         });
       }

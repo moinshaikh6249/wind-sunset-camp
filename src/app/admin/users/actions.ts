@@ -8,29 +8,22 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-async function getAdminUser(idToken: string): Promise<DecodedIdToken | null> {
-    if (!idToken) return null;
-      
-    try {
-        const app = initializeAdminApp();
-        const auth = getAuth(app);
-        const decodedToken = await auth.verifyIdToken(idToken);
-        
-        if (decodedToken.isAdmin) {
-            return decodedToken;
-        }
-        return null;
-      } catch (error) {
-        console.error('Error verifying ID token:', error);
-        return null;
-      }
+async function verifyAdmin(idToken: string): Promise<void> {
+    if (!idToken) {
+        throw new Error('Authentication token is missing. Access denied.');
+    }
+    
+    const app = initializeAdminApp();
+    const auth = getAuth(app);
+    const decodedToken = await auth.verifyIdToken(idToken);
+    
+    if (!decodedToken.isAdmin) {
+        throw new Error('Permission denied. You must be an administrator.');
+    }
 }
 
-export async function createUser(idToken: string, values: any): Promise<{ success: boolean; error?: string }> {
-    const adminUser = await getAdminUser(idToken);
-    if (!adminUser) {
-        return { success: false, error: 'Permission denied. You must be an administrator.' };
-    }
+export async function createUser(idToken: string, values: any): Promise<void> {
+    await verifyAdmin(idToken);
 
     const schema = z.object({
         firstName: z.string().min(1, "First name is required."),
@@ -42,7 +35,7 @@ export async function createUser(idToken: string, values: any): Promise<{ succes
     const parsed = schema.safeParse(values);
 
     if (!parsed.success) {
-        return { success: false, error: parsed.error.errors.map(e => e.message).join(', ') };
+        throw new Error(parsed.error.errors.map(e => e.message).join(', '));
     }
 
     try {
@@ -78,25 +71,19 @@ export async function createUser(idToken: string, values: any): Promise<{ succes
         });
         
         revalidatePath('/admin/users');
-        return { success: true };
     } catch (error: any) {
         console.error('Error creating user:', error);
-        let errorMessage = 'An unexpected error occurred.';
         if (error.code === 'auth/email-already-exists') {
-            errorMessage = 'A user with this email already exists.';
+            throw new Error('A user with this email already exists.');
         }
-        return { success: false, error: errorMessage };
+        throw new Error(error.message || 'An unexpected error occurred while creating the user.');
     }
 }
 
 
 export async function deleteUser(idToken: string, uid: string): Promise<{ success: boolean; error?: string }> {
-    const adminUser = await getAdminUser(idToken);
-    if (!adminUser) {
-        return { success: false, error: 'Permission denied. You must be an administrator.' };
-    }
-
     try {
+        await verifyAdmin(idToken);
         const app = initializeAdminApp();
         const auth = getAuth(app);
         const db = getDatabase(app);
