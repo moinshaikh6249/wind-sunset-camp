@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { signOut, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle } from 'lucide-react';
+import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref as dbRef, remove, update } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -36,12 +36,32 @@ import {
 import { useAuth } from "@/firebase";
 import { format, formatDistanceToNow } from "date-fns";
 import { upcomingCamps } from "@/lib/mock-data";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 const activityIcons: { [key: string]: React.ReactNode } = {
   'signup': <UserPlus className="h-5 w-5 text-green-500" />,
   'booking': <CalendarPlus className="h-5 w-5 text-blue-500" />,
 };
+
+const statusConfig = {
+    Approved: {
+      label: "Approved",
+      icon: CheckCircle,
+      className: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 border-green-300 dark:border-green-700",
+    },
+    Pending: {
+      label: "Pending",
+      icon: Clock,
+      className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-300 dark:border-amber-700",
+    },
+    Canceled: {
+      label: "Canceled",
+      icon: XCircle,
+      className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-300 dark:border-red-700",
+    },
+  };
 
 
 export default function DashboardPage() {
@@ -273,15 +293,25 @@ export default function DashboardPage() {
                   <ul className="space-y-4">
                     {bookings.map(booking => {
                       const campDetails = upcomingCamps.find(c => c.id === booking.campId);
+                      const status = booking.status || 'Approved';
+                      const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
+                      const Icon = currentStatusConfig.icon;
+
                       return (
                       <Dialog key={booking.id}>
                         <DialogTrigger asChild>
                           <li className="flex items-center justify-between p-4 bg-background rounded-lg border cursor-pointer hover:bg-accent/10 transition-colors">
-                            <div>
-                              <p className="font-semibold text-foreground">{booking.campName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {booking.numberOfPeople} person(s)
-                              </p>
+                            <div className="flex items-center gap-4">
+                              <Badge variant="outline" className={cn("gap-1.5", currentStatusConfig.className)}>
+                                <Icon className="h-3.5 w-3.5" />
+                                {currentStatusConfig.label}
+                              </Badge>
+                              <div>
+                                <p className="font-semibold text-foreground">{booking.campName}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.numberOfPeople} person(s)
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <AlertDialog>
@@ -316,6 +346,12 @@ export default function DashboardPage() {
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 py-4">
+                             <div className="flex items-center gap-4">
+                                <Badge variant="outline" className={cn("gap-1.5", currentStatusConfig.className)}>
+                                    <Icon className="h-3.5 w-3.5" />
+                                    {currentStatusConfig.label}
+                                </Badge>
+                             </div>
                             <div className="flex items-center gap-4">
                               <Users className="h-5 w-5 text-accent" />
                               <span className="font-medium">{booking.numberOfPeople} Person(s)</span>

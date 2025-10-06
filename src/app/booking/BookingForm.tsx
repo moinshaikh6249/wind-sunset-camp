@@ -129,6 +129,7 @@ function BookingFormComponent() {
         campName: camp.name,
         numberOfPeople: values.numberOfPeople,
         bookingDate: new Date().toISOString(),
+        status: "Pending",
       };
 
       // Get a reference to the user's bookings list
@@ -148,7 +149,7 @@ function BookingFormComponent() {
 
       toast({
         title: "Booking Submitted!",
-        description: `We've received your booking for ${camp.name}.`,
+        description: `We've received your booking for ${camp.name}. It is now pending approval.`,
       });
       router.push('/dashboard');
     } catch (error: any) {
