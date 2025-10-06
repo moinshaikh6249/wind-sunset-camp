@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
@@ -6,10 +5,9 @@ import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
-import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Pencil } from 'lucide-react';
+import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { cancelBooking, approveBooking } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import { upcomingCamps } from '@/lib/mock-data';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -112,7 +110,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<AggregatedBooking[]>([]);
 
   useMemo(() => {
-    if (!usersData) return [];
+    if (!usersData) return;
     
     const allBookings: AggregatedBooking[] = [];
     
@@ -137,54 +135,108 @@ export default function BookingsPage() {
   }, [usersData]);
 
   const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
-    try {
-      const result = await action();
-      if (result.success) {
-        toast({
-          title: successTitle,
-          description: successDescription,
-        });
-      } else {
-        toast({
-          title: errorTitle,
-          description: result.error || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-    } catch (e: any) {
-       toast({
-          title: errorTitle,
-          description: e.message || "An unexpected error occurred.",
-          variant: "destructive",
-        });
+    const result = await action();
+    if (result.success) {
+      toast({
+        title: successTitle,
+        description: successDescription,
+      });
+    } else {
+      toast({
+        title: errorTitle,
+        description: result.error || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
   }
 
-  const handleApproveBooking = (userId: string, bookingId: string, campName: string) => {
-    if (!user) return;
-    return handleAction(
-        async () => {
-            const idToken = await user.getIdToken();
-            return approveBooking(idToken, userId, bookingId);
-        },
-        "Booking Approved",
-        `Booking for ${campName} has been approved.`,
-        "Approval Failed"
-    );
-  };
+  function ActionMenu({ booking }: { booking: AggregatedBooking }) {
+    const [isApprovePending, startApproveTransition] = useTransition();
+    const [isCancelPending, startCancelTransition] = useTransition();
+    
+    const onApprove = () => {
+      if (!user) return;
+      startApproveTransition(() => {
+        handleAction(
+          async () => {
+              const idToken = await user.getIdToken();
+              return approveBooking(idToken, booking.userId, booking.bookingId);
+          },
+          "Booking Approved",
+          `Booking for ${booking.campName} has been approved.`,
+          "Approval Failed"
+        );
+      });
+    };
+    
+    const onCancel = () => {
+        if (!user) return;
+        startCancelTransition(() => {
+            handleAction(
+                async () => {
+                    const idToken = await user.getIdToken();
+                    return cancelBooking(idToken, booking.userId, booking.bookingId);
+                },
+                "Booking Canceled",
+                `Booking for ${booking.campName} has been canceled.`,
+                "Cancellation Failed"
+            );
+        });
+    };
 
-  const handleCancelBooking = (userId: string, bookingId: string, campName: string) => {
-    if (!user) return;
-    return handleAction(
-        async () => {
-            const idToken = await user.getIdToken();
-            return cancelBooking(idToken, userId, bookingId);
-        },
-        "Booking Canceled",
-        `Booking for ${campName} has been canceled.`,
-        "Cancellation Failed"
-    );
-  };
+    return (
+       <AlertDialog>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending}>
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Toggle menu</span>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem 
+                    onSelect={onApprove}
+                    disabled={booking.status === 'Approved' || isApprovePending}
+                >
+                    {isApprovePending ? "Approving..." : "Approve"}
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem 
+                    className="text-destructive" 
+                    onSelect={(e) => e.preventDefault()}
+                    disabled={isCancelPending}
+                  >
+                    Cancel
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+            </DropdownMenuContent>
+        </DropdownMenu>
+         <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently cancel the booking for 
+                    <span className="font-semibold"> {booking.customerName} </span>
+                     at <span className="font-semibold">{booking.campName}</span>.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                <AlertDialogAction
+                 className="bg-destructive hover:bg-destructive/90"
+                 onClick={onCancel}
+                 disabled={isCancelPending}
+                >
+                {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
 
   const handleExport = () => {
     if (bookings.length === 0) {
@@ -232,71 +284,6 @@ export default function BookingsPage() {
     });
   };
 
-  function ActionMenu({ booking }: { booking: AggregatedBooking }) {
-    const [isApprovePending, startApproveTransition] = useTransition();
-    const [isCancelPending, startCancelTransition] = useTransition();
-    
-    return (
-       <AlertDialog>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending}>
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-            </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem 
-                    onSelect={() => {
-                        startApproveTransition(async () => {
-                            await handleApproveBooking(booking.userId, booking.bookingId, booking.campName);
-                        });
-                    }}
-                    disabled={booking.status === 'Approved' || isApprovePending}
-                >
-                    {isApprovePending ? "Approving..." : "Approve"}
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem 
-                    className="text-destructive" 
-                    onSelect={(e) => e.preventDefault()}
-                    disabled={isCancelPending}
-                  >
-                    Cancel
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-            </DropdownMenuContent>
-        </DropdownMenu>
-         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently cancel the booking for 
-                    <span className="font-semibold"> {booking.customerName} </span>
-                     at <span className="font-semibold">{booking.campName}</span>.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                <AlertDialogAction
-                 className="bg-destructive hover:bg-destructive/90"
-                 onClick={() => {
-                    startCancelTransition(async () => {
-                        await handleCancelBooking(booking.userId, booking.bookingId, booking.campName);
-                    });
-                 }}
-                 disabled={isCancelPending}
-                >
-                {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    )
-  }
 
   const renderTableBody = () => {
     if (isLoading) {
