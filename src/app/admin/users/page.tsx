@@ -3,9 +3,11 @@
 import { useDatabase, useMemoFirebase } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
-import { useMemo } from 'react';
+import { useMemo, useTransition } from 'react';
 import { format } from 'date-fns';
 import { MoreHorizontal, UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { deleteUser } from './actions';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -33,6 +36,18 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 type DbUser = {
   uid: string;
@@ -77,6 +92,8 @@ function UserTableRowSkeleton() {
 
 export default function UsersPage() {
   const database = useDatabase();
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -100,6 +117,24 @@ export default function UsersPage() {
         } as DbUser & { name: string; joined: string };
     });
   }, [usersData]);
+
+  const handleDeleteUser = (uid: string, name: string) => {
+    startTransition(async () => {
+      const result = await deleteUser(uid);
+      if (result.success) {
+        toast({
+          title: "User Deleted",
+          description: `${name} has been permanently deleted.`,
+        });
+      } else {
+        toast({
+          title: "Deletion Failed",
+          description: result.error || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
 
   const renderTableBody = () => {
     if (isLoading) {
@@ -138,20 +173,45 @@ export default function UsersPage() {
                  {user.joined !== 'N/A' ? format(new Date(user.joined), 'PP') : 'N/A'}
             </TableCell>
             <TableCell>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button aria-haspopup="true" size="icon" variant="ghost">
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Toggle menu</span>
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuItem>Suspend</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <AlertDialog>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem>Suspend</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                     <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user
+                            <span className="font-semibold"> {user.name} </span>
+                             and all of their data from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                         className="bg-destructive hover:bg-destructive/90"
+                         onClick={() => handleDeleteUser(user.uid, user.name)}
+                         disabled={isPending}
+                        >
+                        {isPending ? "Deleting..." : "Yes, delete user"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             </TableCell>
         </TableRow>
     ));
