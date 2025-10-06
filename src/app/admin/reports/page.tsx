@@ -247,15 +247,6 @@ export default function ReportsPage() {
                 </CardContent>
                 </Card>
 
-                 <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><DollarSign className="text-muted-foreground"/>Revenue Analytics</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">Revenue tracking coming soon!</p>
-                    </CardContent>
-                </Card>
-
                 <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><FileText className="text-muted-foreground"/>Content Engagement</CardTitle>
@@ -270,4 +261,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
