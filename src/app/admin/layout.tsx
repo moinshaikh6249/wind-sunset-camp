@@ -5,6 +5,9 @@ import { useUser } from "@/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default function AdminLayout({
   children,
@@ -19,37 +22,50 @@ export default function AdminLayout({
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    // If we are on the login page, don't run any redirection logic.
+    if (isUserLoading) {
+      return; 
+    }
     if (isLoginPage) {
+      // If user is already logged in and is an admin, redirect to dashboard
+      if (user && isAdmin) {
+        router.replace("/admin/dashboard");
+      }
       return;
     }
-
-    if (isUserLoading) {
-      return; // Wait for user status to be determined
-    }
+    // For all other admin pages:
     if (!user) {
       router.replace("/admin/login");
       return;
     }
-    if (!isAdmin) {
-      // If user is not an admin, redirect them to the regular dashboard
+    if (user && !isAdmin) {
+      // If user is not an admin, redirect them away.
       router.replace("/dashboard");
     }
-  }, [user, isUserLoading, isAdmin, router, isLoginPage]);
+  }, [user, isUserLoading, isAdmin, router, isLoginPage, pathname]);
 
-  // If on the login page, just render the content.
+  // If on the login page, just render the content without the admin layout.
   if (isLoginPage) {
     return <>{children}</>;
   }
 
   // For all other admin pages, show loading or protect the content.
-  if (isUserLoading || !isAdmin) {
+  if (isUserLoading || !isAdmin || !user) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  return <>{children}</>;
+  return (
+      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <AdminSidebar />
+        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+          <AdminHeader />
+          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+            {children}
+          </main>
+        </div>
+      </div>
+  );
 }
