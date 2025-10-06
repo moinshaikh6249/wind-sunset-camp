@@ -212,7 +212,7 @@ export default function BookingsPage() {
         );
     }
     return bookings.map((booking) => {
-        const status = booking.status || 'Approved'; // Default to Approved if status is not set
+        const status = booking.status || 'Pending';
         const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
         const Icon = currentStatusConfig.icon;
 
