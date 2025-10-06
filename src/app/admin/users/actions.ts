@@ -9,24 +9,24 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 
 // This is a helper function to get the user from the session cookie.
 async function getAdminUser(): Promise<DecodedIdToken | null> {
-    const sessionCookie = headers().get('__session')?.valueOf();
-    if (!sessionCookie) {
-        return null;
-    }
-
-    try {
+    const authorization = headers().get('Authorization');
+    if (authorization?.startsWith('Bearer ')) {
+      const idToken = authorization.split('Bearer ')[1];
+      try {
         const { app } = await initializeAdminApp();
         const auth = getAuth(app);
-        const decodedIdToken = await auth.verifySessionCookie(sessionCookie);
+        const decodedToken = await auth.verifyIdToken(idToken);
         
-        // Verify the user is an admin
-        if (decodedIdToken.isAdmin) {
-            return decodedIdToken;
+        if (decodedToken.isAdmin) {
+            return decodedToken;
         }
         return null;
-    } catch (error) {
+      } catch (error) {
+        console.error('Error verifying ID token:', error);
         return null;
+      }
     }
+    return null;
 }
 
 
