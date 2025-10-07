@@ -109,29 +109,29 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         let imageUrl = campToEdit?.image?.imageUrl || "";
         let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
         
-        // If a new image file is selected, upload it
-        if (values.image instanceof File) {
-          const file: File = values.image;
-          
-          // If editing and an old image exists that is from Firebase Storage, try to delete it.
+        const newImageFile = values.image instanceof File ? values.image : null;
+
+        if (newImageFile) {
+           // If we are editing and there was a previous image stored in Firebase, delete it.
           if (campToEdit?.image?.imageUrl && campToEdit.image.imageUrl.includes('firebasestorage.googleapis.com')) {
             try {
               const oldImageRef = storageRef(storage, campToEdit.image.imageUrl);
               await deleteObject(oldImageRef);
             } catch (error: any) {
+               // Ignore if object doesn't exist, but log other errors.
                if (error.code !== 'storage/object-not-found') {
                 console.warn("Could not delete old image:", error.message);
               }
             }
           }
-
+          
           // Upload the new image
-          const newImageRef = storageRef(storage, `camps/${Date.now()}-${file.name}`);
-          const snapshot = await uploadBytes(newImageRef, file);
+          const newImageRef = storageRef(storage, `camps/${Date.now()}-${newImageFile.name}`);
+          const snapshot = await uploadBytes(newImageRef, newImageFile);
           imageUrl = await getDownloadURL(snapshot.ref);
           imageId = newImageRef.fullPath;
+
         } else if (!campToEdit) {
-            // No new image and it's a new camp
             toast({
                 title: "Image Required",
                 description: "You must upload an image for a new camp.",
@@ -151,7 +151,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           image: {
             id: imageId,
             imageUrl,
-            imageHint: values.image instanceof File ? 'custom upload' : (campToEdit?.image?.imageHint || 'camp image'),
+            imageHint: newImageFile ? 'custom upload' : (campToEdit?.image?.imageHint || 'camp image'),
           }
         };
 
@@ -168,7 +168,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         console.error("Camp form submission error:", error);
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred. Check if you have admin permissions and that storage rules are configured.",
+          description: error.message || "An unexpected error occurred. Please ensure you have admin permissions and the database rules are correctly set.",
           variant: "destructive",
         });
       }
