@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { submitContactForm } from "./actions";
+import { useDatabase } from "@/firebase";
+import { ref, push, set } from "firebase/database";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -29,6 +30,7 @@ const formSchema = z.object({
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const database = useDatabase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,17 +43,32 @@ export default function ContactPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const result = await submitContactForm(values);
-    if (result.success) {
+    if (!database) {
+        toast({
+            title: "Database Error",
+            description: "Could not connect to the database. Please try again later.",
+            variant: "destructive",
+        });
+        return;
+    }
+    try {
+        const messagesRef = ref(database, 'contactMessages');
+        const newMessageRef = push(messagesRef);
+        await set(newMessageRef, {
+            ...values,
+            timestamp: new Date().toISOString(),
+            read: false,
+        });
+
       toast({
         title: "Message Sent!",
         description: "Thanks for reaching out. We'll get back to you soon.",
       });
       form.reset();
-    } else {
+    } catch (error: any) {
       toast({
         title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request. Please try again.",
+        description: error.message || "There was a problem with your request. Please try again.",
         variant: "destructive",
       });
     }
@@ -169,5 +186,3 @@ export default function ContactPage() {
     </div>
   );
 }
-
-    
