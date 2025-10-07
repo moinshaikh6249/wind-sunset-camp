@@ -72,6 +72,16 @@ type DbCamps = {
   }
 };
 
+const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    try {
+        const parsedUrl = new URL(url);
+        return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(parsedUrl.pathname);
+    } catch (e) {
+        return false;
+    }
+};
+
 
 function CampTableRowSkeleton() {
     return (
@@ -182,12 +192,17 @@ export default function CampsPage() {
             </TableRow>
         );
     }
-    return filteredCamps.map((camp) => (
+    return filteredCamps.map((camp) => {
+        const imageUrl = isValidImageUrl(camp.image?.imageUrl) 
+            ? camp.image.imageUrl 
+            : `https://picsum.photos/seed/${camp.id}/64/64`;
+
+        return (
         <TableRow key={camp.id}>
             <TableCell className="font-medium">
                 <div className="flex items-center gap-4">
                     <Image
-                        src={camp.image?.imageUrl || `https://picsum.photos/seed/${camp.id}/64/64`}
+                        src={imageUrl}
                         alt={camp.name}
                         width={64}
                         height={64}
@@ -243,7 +258,7 @@ export default function CampsPage() {
             </AlertDialog>
             </TableCell>
         </TableRow>
-    ));
+    )});
   }
 
 
