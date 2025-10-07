@@ -1,0 +1,214 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile for the Sunset Camp application.",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The user's phone number."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "history": {
+          "type": "array",
+          "description": "A log of the user's activities.",
+          "items": {
+            "$ref": "#/entities/UserActivity"
+          }
+        }
+      },
+      "required": [
+        "firstName",
+        "email"
+      ]
+    },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a camp booking made by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who made the booking."
+        },
+        "campId": {
+          "type": "string",
+          "description": "The ID of the booked camp."
+        },
+        "campName": {
+          "type": "string",
+          "description": "The name of the booked camp."
+        },
+        "numberOfPeople": {
+          "type": "number",
+          "description": "The number of people in the booking."
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the booking was made."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the booking.",
+          "enum": ["Pending", "Approved", "Canceled"]
+        }
+      },
+      "required": [
+        "userId",
+        "campId",
+        "campName",
+        "numberOfPeople",
+        "bookingDate"
+      ]
+    },
+    "UserActivity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserActivity",
+      "type": "object",
+      "description": "Represents a single activity performed by a user.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of activity (e.g., 'signup', 'booking')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the activity."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The ISO 8601 timestamp of when the activity occurred."
+        }
+      },
+      "required": [
+        "type",
+        "description",
+        "timestamp"
+      ]
+    },
+    "Camp": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Camp",
+      "type": "object",
+      "description": "Represents an upcoming camp.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "image": {
+          "$ref": "#/entities/Image"
+        }
+      },
+      "required": ["id", "name", "date", "location", "description", "image", "price", "activities"]
+    },
+    "Image": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Image",
+      "type": "object",
+      "description": "Represents an image with metadata.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "imageHint": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "imageUrl", "imageHint"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ],
+    "customClaims": {
+      "isAdmin": {
+        "type": "boolean",
+        "description": "Determines if the user has administrative privileges."
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile information. The document ID is the user's Firebase Auth UID."
+    },
+    "/users/{userId}/bookings/{bookingId}": {
+      "schema": {
+        "$ref": "#/entities/Booking"
+      },
+      "description": "Stores the camp bookings for a specific user."
+    },
+    "/users/{userId}/history/{activityId}": {
+      "schema": {
+        "$ref": "#/entities/UserActivity"
+      },
+      "description": "Stores a log of user activities."
+    },
+    "/camps/{campId}": {
+      "schema": {
+        "$ref": "#/entities/Camp"
+      },
+      "description": "Stores details about upcoming camps."
+    },
+    "/galleryImages/{imageId}": {
+      "schema": {
+        "$ref": "#/entities/Image"
+      },
+      "description": "Stores images for the public"
+    }
+  }
+}

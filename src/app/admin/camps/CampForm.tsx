@@ -20,14 +20,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
-import { LoaderCircle, Camera } from "lucide-react";
+import { LoaderCircle, Camera, Wand2 } from "lucide-react";
 import Image from "next/image";
+import { getCampSuggestions } from "./actions";
 
 const formSchema = z.object({
   name: z.string().min(3, "Camp name is required."),
   date: z.string().min(3, "Date is required."),
   location: z.string().min(3, "Location is required."),
+  price: z.coerce.number().min(0, "Price must be a positive number."),
   description: z.string().min(10, "Description is required."),
+  activities: z.string().min(10, "Please list some activities."),
   imageUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   image: z.any().optional(),
 }).refine(data => data.imageUrl || data.image, {
@@ -69,6 +72,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const storage = useStorage();
   const database = useDatabase();
   const [isPending, startTransition] = useTransition();
+  const [isSuggesting, startSuggestionTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(campToEdit?.image?.imageUrl || null);
   
   const form = useForm<FormValues>({
@@ -77,7 +81,9 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       name: campToEdit?.name || "",
       date: campToEdit?.date || "",
       location: campToEdit?.location || "",
+      price: campToEdit?.price || 0,
       description: campToEdit?.description || "",
+      activities: campToEdit?.activities ? (Array.isArray(campToEdit.activities) ? campToEdit.activities.join(', ') : campToEdit.activities) : "",
       imageUrl: campToEdit?.image?.imageUrl || "",
       image: undefined,
     },
@@ -89,13 +95,15 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         name: campToEdit.name,
         date: campToEdit.date,
         location: campToEdit.location,
+        price: campToEdit.price,
         description: campToEdit.description,
+        activities: Array.isArray(campToEdit.activities) ? campToEdit.activities.join(', ') : campToEdit.activities,
         imageUrl: campToEdit.image?.imageUrl || "",
         image: undefined,
       });
       setImagePreview(campToEdit.image?.imageUrl);
     } else {
-        form.reset({ name: "", date: "", location: "", description: "", imageUrl: "", image: undefined });
+        form.reset({ name: "", date: "", location: "", price: 0, description: "", activities: "", imageUrl: "", image: undefined });
         setImagePreview(null);
     }
   }, [campToEdit, form]);
@@ -111,6 +119,38 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       reader.readAsDataURL(file);
       form.setValue("imageUrl", ""); // Clear URL if file is selected
     }
+  };
+  
+  const handleSuggestion = async () => {
+    const campName = form.getValues("name");
+    if (!campName) {
+      toast({
+        title: "Camp Name Required",
+        description: "Please enter a camp name to get AI suggestions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startSuggestionTransition(async () => {
+      try {
+        const suggestions = await getCampSuggestions(campName);
+        if (suggestions) {
+          if (suggestions.description) form.setValue('description', suggestions.description);
+          if (suggestions.activities) form.setValue('activities', suggestions.activities.join(', '));
+          toast({
+            title: "Suggestions Loaded",
+            description: "AI suggestions have been filled in."
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: "Suggestion Failed",
+          description: error.message || "Could not get suggestions.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const imageUrlValue = form.watch("imageUrl");
@@ -169,13 +209,16 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         }
 
         const campId = campToEdit?.id || `camp-${Date.now()}`;
+        const activitiesArray = values.activities.split(',').map(s => s.trim()).filter(Boolean);
 
         const campData = {
           id: campId,
           name: values.name,
           date: values.date,
           location: values.location,
+          price: values.price,
           description: values.description,
+          activities: activitiesArray,
           image: {
             id: imageId,
             imageUrl: finalImageUrl,
@@ -208,6 +251,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   }
 
   const showPreview = imagePreview && (imagePreview.startsWith('data:image/') || isValidImageUrl(imagePreview));
+  const isSubmitting = isPending || isSuggesting;
 
   return (
     <Form {...form}>
@@ -247,16 +291,48 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
             )}
             />
         </div>
+         <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Price ($)</FormLabel>
+                <FormControl><Input type="number" placeholder="100" {...field} /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+          />
+
+        <div className="space-y-2">
+            <div className="flex justify-between items-center">
+                 <FormLabel>Description</FormLabel>
+                 <Button type="button" size="sm" variant="ghost" onClick={handleSuggestion} disabled={isSubmitting}>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    {isSuggesting ? 'Thinking...' : 'Suggest with AI'}
+                 </Button>
+            </div>
+            <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+                <FormItem className="space-y-0">
+                <FormControl><Textarea placeholder="Describe the camp experience." {...field} rows={4} /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
         <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl><Textarea placeholder="Describe the camp experience." {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+            control={form.control}
+            name="activities"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Activities (comma-separated)</FormLabel>
+                <FormControl><Textarea placeholder="e.g., Hiking, Kayaking, Campfire Stories" {...field} rows={3}/></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
         />
         
          <FormField
@@ -294,7 +370,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
                 />
         </div>
        
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
           {isPending ? 'Saving...' : (campToEdit ? 'Update Camp' : 'Add Camp')}
         </Button>
@@ -302,3 +378,4 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     </Form>
   );
 }
+
