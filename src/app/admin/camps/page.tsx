@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dialog"
 import { CampForm, type CampWithId } from './CampForm';
 import Image from 'next/image';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type DbCamps = {
   [id: string]: {
@@ -280,7 +281,9 @@ export default function CampsPage() {
                         {editingCamp ? "Update the details for this camp." : "Fill in the form to add a new camp to the database."}
                     </DialogDescription>
                 </DialogHeader>
-                <CampForm campToEdit={editingCamp} onFormSubmit={() => setDialogOpen(false)} />
+                <ScrollArea className="max-h-[70vh] p-4">
+                  <CampForm campToEdit={editingCamp} onFormSubmit={() => setDialogOpen(false)} />
+                </ScrollArea>
             </DialogContent>
          </Dialog>
       </div>
