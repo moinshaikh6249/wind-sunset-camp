@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +49,19 @@ type CampFormProps = {
   campToEdit?: CampWithId | null;
   onFormSubmit: () => void;
 };
+
+const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    try {
+        const parsedUrl = new URL(url);
+        // Basic check for image extensions
+        return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(parsedUrl.pathname);
+    } catch (e) {
+        // Invalid URL format
+        return false;
+    }
+};
+
 
 export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const { toast } = useToast();
@@ -195,6 +207,8 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     });
   }
 
+  const showPreview = imagePreview && (imagePreview.startsWith('data:image/') || isValidImageUrl(imagePreview));
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -258,7 +272,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         />
 
         <div className="flex items-center gap-4">
-            {imagePreview && <Image src={imagePreview} alt="Preview" width={64} height={64} className="rounded-md object-cover" />}
+            {showPreview && <Image src={imagePreview!} alt="Preview" width={64} height={64} className="rounded-md object-cover" />}
              <FormField
                 control={form.control}
                 name="image"
@@ -288,5 +302,3 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     </Form>
   );
 }
-
-    
