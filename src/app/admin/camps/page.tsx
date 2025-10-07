@@ -43,6 +43,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useSearch } from '@/context/SearchProvider';
 import {
@@ -132,7 +133,7 @@ export default function CampsPage() {
         const campDbRef = ref(database, `camps/${camp.id}`);
         await remove(campDbRef);
 
-        if (camp.image?.imageUrl) {
+        if (camp.image?.imageUrl && camp.image.imageUrl.includes('firebasestorage.googleapis.com')) {
             try {
                 const imageStorageRef = storageRef(storage, camp.image.imageUrl);
                 await deleteObject(imageStorageRef);
