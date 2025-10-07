@@ -29,6 +29,7 @@ import { useAuth } from "@/firebase";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
