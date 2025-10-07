@@ -5,8 +5,8 @@ import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref } from 'firebase/database';
 import { useMemo, useTransition, useState } from 'react';
-import { format } from 'date-fns';
-import { MoreHorizontal, UserPlus } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { MoreHorizontal, UserPlus, X, Calendar, Activity, Info, Tent, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 import { Badge } from '@/components/ui/badge';
@@ -58,15 +58,30 @@ import {
 } from "@/components/ui/dialog"
 import { AddUserForm } from './AddUserForm';
 import { deleteUser } from './actions';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
+type Booking = {
+  id: string;
+  campName: string;
+  bookingDate: string;
+  status: 'Pending' | 'Approved' | 'Canceled';
+};
+
+type HistoryItem = {
+    type: string;
+    description: string;
+    timestamp: string;
+};
 
 type DbUser = {
   uid: string;
   firstName: string;
   lastName?: string;
   email: string;
+  phone?: string;
   photoURL?: string;
-  history?: { [key: string]: { type: string; description: string; timestamp: string } };
+  history?: { [key: string]: HistoryItem };
+  bookings?: { [key: string]: Booking };
 };
 
 type DbUsers = {
@@ -101,13 +116,96 @@ function UserTableRowSkeleton() {
     )
 }
 
+function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { name: string; joined: string }) | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+  if (!user) return null;
+
+  const bookings = user.bookings ? Object.entries(user.bookings).map(([id, booking]) => ({ id, ...booking })) : [];
+  const history = user.history ? Object.values(user.history).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+             <Avatar className="h-12 w-12">
+                <AvatarImage src={user.photoURL ?? undefined} alt={user.name} />
+                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              {user.name}
+              <DialogDescription>{user.email}</DialogDescription>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="max-h-[60vh] p-1">
+          <div className="space-y-6 pr-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><Info className="h-5 w-5 text-accent"/> User Information</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                    <p><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
+                    <p><strong>Joined:</strong> {user.joined !== 'N/A' ? format(new Date(user.joined), "PPP") : 'N/A'}</p>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><Tent className="h-5 w-5 text-accent"/> Bookings ({bookings.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {bookings.length > 0 ? (
+                        <ul className="space-y-3">
+                            {bookings.map(booking => (
+                                <li key={booking.id} className="border-b pb-2">
+                                    <p className="font-semibold">{booking.campName}</p>
+                                    <p className="text-sm text-muted-foreground">{format(new Date(booking.bookingDate), "PP")} - <Badge variant="outline">{booking.status || "Pending"}</Badge></p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-muted-foreground text-sm">No bookings found.</p>}
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-accent"/> Activity Log</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {history.length > 0 ? (
+                        <ul className="space-y-4">
+                            {history.map((item, index) => (
+                                <li key={index} className="flex items-start gap-3">
+                                    <div className="mt-1">
+                                        {item.type === 'signup' && <UserPlus className="h-4 w-4 text-green-500" />}
+                                        {item.type === 'booking' && <Calendar className="h-4 w-4 text-blue-500" />}
+                                        {item.type === 'message' && <Mail className="h-4 w-4 text-orange-500" />}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">{item.description}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}</p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-muted-foreground text-sm">No activity recorded.</p>}
+                </CardContent>
+            </Card>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function UsersPage() {
   const database = useDatabase();
   const { user: adminUser } = useUser();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [profileUser, setProfileUser] = useState<(DbUser & { name: string; joined: string }) | null>(null);
   
   const usersRef = useMemoFirebase(() => {
     if (!database) return null;
@@ -162,6 +260,10 @@ export default function UsersPage() {
     });
   };
 
+  const handleRowClick = (user: DbUser & { name: string; joined: string; }) => {
+    setProfileUser(user);
+  }
+
   const renderTableBody = () => {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <UserTableRowSkeleton key={i} />);
@@ -176,7 +278,7 @@ export default function UsersPage() {
         );
     }
     return filteredUsers.map((user) => (
-        <TableRow key={user.uid}>
+        <TableRow key={user.uid} onClick={() => handleRowClick(user)} className="cursor-pointer">
             <TableCell className="font-medium">
             <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">
@@ -201,7 +303,7 @@ export default function UsersPage() {
             <TableCell>
             <AlertDialog>
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                     <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Toggle menu</span>
@@ -209,7 +311,7 @@ export default function UsersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleRowClick(user)}>View Profile</DropdownMenuItem>
                     <DropdownMenuItem>Suspend</DropdownMenuItem>
                     <DropdownMenuSeparator />
                      <AlertDialogTrigger asChild>
@@ -217,7 +319,7 @@ export default function UsersPage() {
                     </AlertDialogTrigger>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <AlertDialogContent>
+                <AlertDialogContent onClick={e => e.stopPropagation()}>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -248,7 +350,7 @@ export default function UsersPage() {
     <>
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
             <DialogTrigger asChild>
                 <Button size="sm">
                     <UserPlus className="mr-2 h-4 w-4" />
@@ -262,7 +364,7 @@ export default function UsersPage() {
                         Create a new user account and add them to the database.
                     </DialogDescription>
                 </DialogHeader>
-                <AddUserForm onUserAdded={() => setDialogOpen(false)} />
+                <AddUserForm onUserAdded={() => setAddUserDialogOpen(false)} />
             </DialogContent>
          </Dialog>
       </div>
@@ -293,6 +395,12 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <UserProfileDialog 
+        user={profileUser}
+        isOpen={!!profileUser}
+        onOpenChange={(open) => !open && setProfileUser(null)}
+      />
     </>
   );
 }
