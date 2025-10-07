@@ -23,9 +23,12 @@ export async function getCompletionSuggestions(
       campName: upcomingCamps.map(c => c.name),
     };
 
+    // Make sure not to send empty objects if no options are available
+    const availableOptions = availableCamps.campName.length > 0 ? availableCamps : undefined;
+
     const suggestions = await suggestBookingFormCompletion({
       partialForm,
-      availableOptions: availableCamps,
+      availableOptions,
     });
     
     return suggestions;

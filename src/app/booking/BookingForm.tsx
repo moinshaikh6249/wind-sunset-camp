@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { LoaderCircle, Wand2 } from "lucide-react";
 import { useUser, useDatabase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { ref, push, set, query } from "firebase/database";
+import { ref, push, set, query, update } from "firebase/database";
 
 
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCompletionSuggestions } from "./actions";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
+  phone: z.string().min(10, "Please enter a valid phone number."),
   campId: z.string({ required_error: "Please select a camp." }),
   numberOfPeople: z.coerce.number().min(1, "At least one person must be attending."),
 });
@@ -51,6 +52,12 @@ type Camp = {
 
 type DbCamps = {
     [id: string]: Camp;
+}
+
+type UserProfile = {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -80,8 +87,16 @@ function BookingFormComponent() {
     if (!database) return null;
     return query(ref(database, 'camps'));
   }, [database]);
+  
+  const userProfileRef = useMemo(() => {
+    if (!database || !user) return null;
+    return ref(database, `users/${user.uid}`);
+  }, [database, user]);
+
 
   const { data: campsData, isLoading: campsLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const { data: userProfile, isLoading: profileLoading } = useDatabaseValue<UserProfile>(userProfileRef);
+
   const upcomingCamps = useMemo(() => campsData ? Object.values(campsData) : [], [campsData]);
 
 
@@ -90,24 +105,29 @@ function BookingFormComponent() {
     defaultValues: {
       fullName: "",
       email: "",
+      phone: "",
       campId: initialCamp,
       numberOfPeople: 1,
     },
   });
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      toast({
-        title: "Authentication Required",
-        description: "You need to be logged in to book a camp.",
-        variant: "destructive",
-      });
-      router.push('/login');
-    } else if (user) {
-      form.setValue('fullName', user.displayName || '');
+    if (user) {
+      const displayName = user.displayName || `${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`.trim();
+      form.setValue('fullName', displayName);
       form.setValue('email', user.email || '');
+      if (userProfile?.phone) {
+        form.setValue('phone', userProfile.phone);
+      }
     }
-  }, [user, isUserLoading, router, toast, form]);
+  }, [user, userProfile, form]);
+  
+  useEffect(() => {
+    // If initialCamp changes (e.g. from URL), update the form
+    if (initialCamp) {
+        form.setValue('campId', initialCamp);
+    }
+  }, [initialCamp, form]);
 
 
   const watchedCampId = form.watch("campId");
@@ -119,7 +139,7 @@ function BookingFormComponent() {
       if (camp) {
         startSuggestionTransition(async () => {
             const partialForm = { campName: camp.name };
-            await getCompletionSuggestions(partialForm);
+            await getCompletionSuggestions(partialForm, upcomingCamps);
         });
       }
     }
@@ -147,14 +167,11 @@ function BookingFormComponent() {
         campName: camp.name,
         numberOfPeople: values.numberOfPeople,
         bookingDate: new Date().toISOString(),
-        status: "Pending", // Ensure every booking starts as Pending
+        status: "Pending",
       };
 
-      // Get a reference to the user's bookings list
       const bookingsRef = ref(database, `users/${user.uid}/bookings`);
-      // Create a new child with a unique key
       const newBookingRef = push(bookingsRef);
-      // Set the data for the new booking
       await set(newBookingRef, bookingData);
 
       const historyRef = ref(database, `users/${user.uid}/history`);
@@ -164,6 +181,10 @@ function BookingFormComponent() {
         description: `Booked ${camp.name}`,
         timestamp: new Date().toISOString(),
       });
+      
+      if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
+          await update(userProfileRef, { phone: values.phone });
+      }
 
       toast({
         title: "Booking Submitted!",
@@ -202,7 +223,7 @@ function BookingFormComponent() {
     });
   }
 
-  if (isUserLoading || !user || campsLoading) {
+  if (isUserLoading || campsLoading || profileLoading) {
     return (
         <div className="flex justify-center items-center h-96">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -212,7 +233,10 @@ function BookingFormComponent() {
 
   return (
     <Card>
-      <CardContent className="p-6">
+       <CardHeader>
+        <CardTitle className="font-headline text-2xl text-gradient">Booking Details</CardTitle>
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -237,6 +261,22 @@ function BookingFormComponent() {
                   <FormControl>
                     <Input placeholder="jane@example.com" {...field} readOnly />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your contact number" {...field} />
+                  </FormControl>
+                   <FormDescription>
+                    We'll use this to contact you about your booking.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
