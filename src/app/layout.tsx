@@ -25,9 +25,9 @@ const pacifico = Pacifico({
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${pacifico.variable}`}>
       <head>
