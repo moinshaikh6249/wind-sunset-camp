@@ -4,8 +4,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Mail, MapPin, Phone } from "lucide-react";
-
+import { Mail, MapPin, Phone, CheckCircle, Clock } from "lucide-react";
+import Link from "next/link";
+import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { ref, push, set, update } from "firebase/database";
+import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,8 +21,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useDatabase } from "@/firebase";
-import { ref, push, set } from "firebase/database";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -28,9 +32,31 @@ const formSchema = z.object({
   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
 });
 
+type Message = {
+  id: string;
+  subject: string;
+  timestamp: string;
+  read: boolean;
+};
+
 export default function ContactPage() {
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
   const database = useDatabase();
+
+  const userMessagesRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return ref(database, `users/${user.uid}/messages`);
+  }, [user, database]);
+
+  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+
+  const sentMessages = useMemo(() => {
+    if (!messagesData) return [];
+    return Object.entries(messagesData)
+      .map(([id, msg]) => ({ id, ...msg }))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [messagesData]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,29 +68,54 @@ export default function ContactPage() {
     },
   });
 
+  useEffect(() => {
+    if (user) {
+      form.setValue("name", user.displayName || "");
+      form.setValue("email", user.email || "");
+    }
+  }, [user, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!database) {
+    if (!database || !user) {
         toast({
-            title: "Database Error",
-            description: "Could not connect to the database. Please try again later.",
+            title: "Authentication Error",
+            description: "You must be logged in to send a message.",
             variant: "destructive",
         });
         return;
     }
     try {
-        const messagesRef = ref(database, 'contactMessages');
-        const newMessageRef = push(messagesRef);
-        await set(newMessageRef, {
-            ...values,
-            timestamp: new Date().toISOString(),
-            read: false,
-        });
+        const messageId = push(ref(database)).key;
+        if (!messageId) throw new Error("Could not create message ID.");
 
-      toast({
-        title: "Message Sent!",
-        description: "Thanks for reaching out. We'll get back to you soon.",
-      });
-      form.reset();
+        const timestamp = new Date().toISOString();
+        const messageData = {
+          ...values,
+          timestamp,
+          read: false,
+          userId: user.uid,
+          messageId,
+        };
+        
+        const updates: {[key: string]: any} = {};
+        updates[`users/${user.uid}/messages/${messageId}`] = { 
+            subject: values.subject, 
+            timestamp,
+            read: false,
+        };
+        updates[`adminMessages/${messageId}`] = messageData;
+
+        await update(ref(database), updates);
+
+        toast({
+            title: "Message Sent!",
+            description: "Thanks for reaching out. We'll get back to you soon.",
+        });
+        form.reset({
+            ...form.getValues(),
+            subject: "",
+            message: "",
+        });
     } catch (error: any) {
       toast({
         title: "Uh oh! Something went wrong.",
@@ -72,6 +123,22 @@ export default function ContactPage() {
         variant: "destructive",
       });
     }
+  }
+
+  if (isUserLoading) {
+    return <div className="container text-center p-16">Loading...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="container text-center p-16">
+        <h2 className="text-2xl font-bold mb-4">Please Login</h2>
+        <p className="mb-6">You need to be logged in to send and view messages.</p>
+        <Button asChild>
+          <Link href="/login?redirect=/contact">Login</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -87,37 +154,7 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-1 space-y-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-accent/10 p-3 rounded-full">
-                <MapPin className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="font-headline text-xl text-heading-color">Our Basecamp</h3>
-                <p className="text-muted-foreground">123 Adventure Lane<br />Wilderness, WY 82801</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="bg-accent/10 p-3 rounded-full">
-                <Mail className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="font-headline text-xl text-heading-color">Email Us</h3>
-                <a href="mailto:hello@windsunsetcamp.com" className="text-muted-foreground hover:text-accent transition-colors">hello@windsunsetcamp.com</a>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="bg-accent/10 p-3 rounded-full">
-                <Phone className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="font-headline text-xl text-heading-color">Call Us</h3>
-                <a href="tel:+1234567890" className="text-muted-foreground hover:text-accent transition-colors">(123) 456-7890</a>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-2">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -129,7 +166,7 @@ export default function ContactPage() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input placeholder="John Doe" {...field} readOnly />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -142,7 +179,7 @@ export default function ContactPage() {
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="you@example.com" {...field} />
+                          <Input placeholder="you@example.com" {...field} readOnly />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -180,6 +217,35 @@ export default function ContactPage() {
                 </Button>
               </form>
             </Form>
+          </div>
+          <div className="lg:col-span-3">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Your Sent Messages</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {messagesLoading ? (
+                        <p>Loading messages...</p>
+                    ) : sentMessages.length > 0 ? (
+                        <ul className="space-y-3">
+                            {sentMessages.map(msg => (
+                                <li key={msg.id} className="border-b pb-3">
+                                    <p className="font-semibold">{msg.subject}</p>
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <span>{formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}</span>
+                                        <div className={cn("flex items-center gap-1.5", msg.read ? "text-green-600" : "text-amber-600")}>
+                                            {msg.read ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                                            {msg.read ? "Read" : "Sent"}
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground">You have not sent any messages yet.</p>
+                    )}
+                </CardContent>
+             </Card>
           </div>
         </div>
       </div>

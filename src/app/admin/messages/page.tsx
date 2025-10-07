@@ -4,7 +4,7 @@
 import { useDatabase, useMemoFirebase } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
 import { ref, update, remove } from 'firebase/database';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Mail, Trash2, Archive, ArchiveRestore } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +47,7 @@ type ContactMessage = {
   message: string;
   timestamp: string;
   read: boolean;
+  userId: string;
 };
 
 type DbMessages = {
@@ -70,7 +71,7 @@ export default function MessagesPage() {
 
   const messagesRef = useMemoFirebase(() => {
     if (!database) return null;
-    return ref(database, 'contactMessages');
+    return ref(database, 'adminMessages');
   }, [database]);
 
   const { data: messagesData, isLoading } = useDatabaseValue<DbMessages>(messagesRef);
@@ -96,10 +97,15 @@ export default function MessagesPage() {
   const handleToggleRead = async (message: ContactMessage) => {
     if (!database) return;
     try {
-      const messageRef = ref(database, `contactMessages/${message.id}`);
-      await update(messageRef, { read: !message.read });
+      const updates: {[key: string]: any} = {};
+      const newReadStatus = !message.read;
+      updates[`adminMessages/${message.id}/read`] = newReadStatus;
+      updates[`users/${message.userId}/messages/${message.id}/read`] = newReadStatus;
+
+      await update(ref(database), updates);
+
       toast({
-        title: `Message marked as ${!message.read ? 'read' : 'unread'}`,
+        title: `Message marked as ${newReadStatus ? 'read' : 'unread'}`,
       });
     } catch (error: any) {
       toast({
@@ -113,11 +119,13 @@ export default function MessagesPage() {
   const handleDelete = async (id: string) => {
     if (!database) return;
     try {
-      const messageRef = ref(database, `contactMessages/${id}`);
+      // Note: This only deletes from the admin view.
+      // A more robust system might also remove it from the user's view or archive it.
+      const messageRef = ref(database, `adminMessages/${id}`);
       await remove(messageRef);
       toast({
         title: "Message Deleted",
-        description: "The message has been permanently removed.",
+        description: "The message has been removed from the admin inbox.",
       });
     } catch (error: any) {
       toast({
@@ -139,7 +147,7 @@ export default function MessagesPage() {
         <CardHeader>
           <CardTitle>Contact Messages</CardTitle>
           <CardDescription>
-            Messages submitted through the contact form.
+            Messages submitted by users.
           </CardDescription>
         </CardHeader>
         <CardContent>
