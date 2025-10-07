@@ -18,7 +18,7 @@ const legalLinks = [
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: Facebook },
-  { href: "#", label: "Instagram", icon: Instagram },
+  { href: "https://www.instagram.com/wind_and_sunset_camping_123773/", label: "Instagram", icon: Instagram },
   { href: "#", label: "Twitter", icon: Twitter },
 ];
 
@@ -68,7 +68,7 @@ export function Footer() {
             </ul>
             <div className="flex justify-center md:justify-start gap-5 mt-6">
               {socialLinks.map(({ href, label, icon: Icon }) => (
-                <Link key={label} href={href} aria-label={label}>
+                <Link key={label} href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
                   <Icon className="w-6 h-6 text-muted-foreground/70 hover:text-accent dark:hover:text-primary transition-all duration-300 hover:scale-125 hover:drop-shadow-[0_0_5px_hsl(var(--accent))] dark:hover:drop-shadow-[0_0_5px_hsl(var(--primary))]" />
                 </Link>
               ))}
@@ -87,6 +87,3 @@ export function Footer() {
     </footer>
   );
 }
-
-    
-
