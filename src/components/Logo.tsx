@@ -11,7 +11,7 @@ export function Logo() {
       <Flame className="h-7 w-7 text-orange-500 icon-glow" />
       <div>
         <span>Wind & Sunset Camp</span>
-        <span className="block text-xs font-sans text-foreground dark:text-white dark:text-glow tracking-widest">
+        <span className="block text-xs font-sans text-foreground dark:text-glow tracking-widest">
           pawna lake camping
         </span>
       </div>
