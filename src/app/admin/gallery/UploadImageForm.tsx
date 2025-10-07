@@ -28,8 +28,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState } from "react";
-import { LoaderCircle, Upload } from "lucide-react";
+import { LoaderCircle, Upload, Wand2 } from "lucide-react";
 import Image from "next/image";
+import { getSuggestions } from "./actions";
 
 const formSchema = z.object({
   description: z.string().min(5, "Description is required."),
@@ -43,7 +44,8 @@ export function UploadImageForm() {
   const { toast } = useToast();
   const database = useDatabase();
   const storage = useStorage();
-  const [isPending, startTransition] = useTransition();
+  const [isUploading, startUploadingTransition] = useTransition();
+  const [isSuggesting, startSuggestionTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -76,7 +78,7 @@ export function UploadImageForm() {
   function onSubmit(values: FormValues) {
     if (!database || !storage) return;
 
-    startTransition(async () => {
+    startUploadingTransition(async () => {
       try {
         const file: File = values.image[0];
         const newImageRef = storageRef(storage, `gallery/${Date.now()}-${file.name}`);
@@ -112,6 +114,44 @@ export function UploadImageForm() {
     });
   }
 
+  const handleSuggestion = async () => {
+    const imageFiles = form.getValues("image");
+    if (!imageFiles || imageFiles.length === 0) {
+      toast({
+        title: "No Image Selected",
+        description: "Please select an image file first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const file = imageFiles[0];
+    const formData = new FormData();
+    formData.append('image', file);
+
+    startSuggestionTransition(async () => {
+      try {
+        const suggestions = await getSuggestions(formData);
+        if (suggestions) {
+          if(suggestions.description) form.setValue('description', suggestions.description);
+          if(suggestions.imageHint) form.setValue('imageHint', suggestions.imageHint);
+          toast({
+            title: "Suggestions Loaded",
+            description: "AI-powered suggestions have been filled in."
+          })
+        }
+      } catch (error: any) {
+        toast({
+          title: "Suggestion Failed",
+          description: error.message || "Could not get suggestions from AI.",
+          variant: "destructive",
+        })
+      }
+    });
+  }
+
+  const isPending = isUploading || isSuggesting;
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
         setOpen(isOpen);
@@ -131,6 +171,30 @@ export function UploadImageForm() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+             <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image File</FormLabel>
+                  <FormControl>
+                    <Input type="file" accept="image/*" onChange={handleFileChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {imagePreview && (
+                <div className="w-full relative">
+                    <p className="text-sm font-medium mb-2">Preview:</p>
+                    <Image src={imagePreview} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
+                </div>
+            )}
+             <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isPending || !imagePreview}>
+                {isSuggesting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                Suggest with AI
+            </Button>
+
             <FormField
               control={form.control}
               name="description"
@@ -157,28 +221,10 @@ export function UploadImageForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image File</FormLabel>
-                  <FormControl>
-                    <Input type="file" accept="image/*" onChange={handleFileChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {imagePreview && (
-                <div className="w-full">
-                    <p className="text-sm font-medium mb-2">Preview:</p>
-                    <Image src={imagePreview} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
-                </div>
-            )}
+           
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              {isPending ? 'Uploading...' : 'Upload to Gallery'}
+              {isUploading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              {isUploading ? 'Uploading...' : 'Upload to Gallery'}
             </Button>
           </form>
         </Form>
