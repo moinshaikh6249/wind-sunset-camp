@@ -75,8 +75,8 @@ type DbCamps = {
 const isValidImageUrl = (url: string | null | undefined): boolean => {
     if (!url) return false;
     try {
-        const parsedUrl = new URL(url);
-        return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(parsedUrl.pathname);
+        new URL(url);
+        return true;
     } catch (e) {
         return false;
     }
