@@ -159,7 +159,7 @@ function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { n
                             {bookings.map(booking => (
                                 <li key={booking.id} className="border-b pb-2">
                                     <p className="font-semibold">{booking.campName}</p>
-                                    <p className="text-sm text-muted-foreground">{format(new Date(booking.bookingDate), "PP")} - <Badge variant="outline">{booking.status || "Pending"}</Badge></p>
+                                    <div className="text-sm text-muted-foreground">{format(new Date(booking.bookingDate), "PP")} - <Badge variant="outline">{booking.status || "Pending"}</Badge></div>
                                 </li>
                             ))}
                         </ul>
