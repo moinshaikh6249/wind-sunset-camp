@@ -6,7 +6,7 @@ import { Compass, Leaf, Star } from "lucide-react";
 
 export default function AboutPage() {
   const roleIcons: { [key: string]: React.ReactNode } = {
-    'Founder & Lead Guide': <Compass className="h-4 w-4 text-accent" />,
+    'Owner': <Compass className="h-4 w-4 text-accent" />,
     'Activities Coordinator': <Star className="h-4 w-4 text-accent" />,
     'Chef & Nutritionist': <Leaf className="h-4 w-4 text-accent" />,
   };
