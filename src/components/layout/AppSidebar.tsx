@@ -51,7 +51,7 @@ function MessagesDialog() {
   const database = useDatabase();
 
   const userMessagesRef = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !database) return null;
     return ref(database, `users/${user.uid}/messages`);
   }, [user, database]);
 
