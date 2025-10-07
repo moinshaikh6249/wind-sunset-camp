@@ -15,5 +15,6 @@ export function initializeAdminApp(): App {
     // credentials provided by the cloud environment.
     return initializeApp({
         credential: applicationDefault(),
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
     });
 }
