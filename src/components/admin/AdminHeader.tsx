@@ -3,7 +3,7 @@
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Sun, Moon, Tent, GalleryVertical } from "lucide-react";
+import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Sun, Moon, Tent, GalleryVertical, Mail } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ const navLinks = [
     { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck },
     { href: "/admin/camps", label: "Camps", icon: Tent },
     { href: "/admin/gallery", label: "Gallery", icon: GalleryVertical },
+    { href: "/admin/messages", label: "Messages", icon: Mail },
     { href: "/admin/reports", label: "Reports", icon: BarChart },
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

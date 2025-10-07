@@ -166,6 +166,21 @@
         }
       },
       "required": ["id", "imageUrl", "imageHint"]
+    },
+    "ContactMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContactMessage",
+      "type": "object",
+      "description": "Represents a message submitted through the contact form.",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["name", "email", "subject", "message", "timestamp"]
     }
   },
   "auth": {
@@ -209,6 +224,12 @@
         "$ref": "#/entities/Image"
       },
       "description": "Stores images for the public"
+    },
+    "/contactMessages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/ContactMessage"
+      },
+      "description": "Stores messages submitted from the contact form."
     }
   }
 }

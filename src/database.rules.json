@@ -1,3 +1,4 @@
+
 {
   "rules": {
     "users": {
@@ -17,6 +18,10 @@
     "galleryImages": {
        ".read": true,
        ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+    "contactMessages": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".write": true
     }
   }
 }
