@@ -13,7 +13,7 @@ const findImage = (id: string): ImagePlaceholder => {
 
 export const teamMembers = [
   {
-    name: 'Alex Johnson',
+    name: 'Sameer More',
     role: 'Founder & Lead Guide',
     bio: 'Alex founded Wind & Sunset Camp with the vision of sharing the transformative power of nature. An expert survivalist and storyteller.',
     image: findImage('team-1'),
