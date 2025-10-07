@@ -3,10 +3,10 @@
 
 import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
 import { useDatabaseValue } from '@/firebase/database/use-database-value';
-import { ref, update, push } from 'firebase/database';
+import { ref, update, push, remove } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
-import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
 
@@ -164,6 +164,8 @@ export default function BookingsPage() {
   function ActionMenu({ booking }: { booking: AggregatedBooking }) {
     const [isApprovePending, startApproveTransition] = useTransition();
     const [isCancelPending, startCancelTransition] = useTransition();
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    const [dialogType, setDialogType] = useState<'cancel' | 'delete' | null>(null);
     
     const onApprove = () => {
       if (!user || !database) return;
@@ -201,11 +203,24 @@ export default function BookingsPage() {
         });
     };
 
+    const onDelete = () => {
+        if(!user || !database) return;
+        startDeleteTransition(async () => {
+            const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
+            await handleAction(
+                () => remove(bookingRef),
+                "Booking Deleted",
+                `Booking for ${booking.campName} has been permanently deleted.`,
+                "Deletion Failed"
+            );
+        });
+    }
+
     return (
-       <AlertDialog>
+       <AlertDialog onOpenChange={(open) => !open && setDialogType(null)}>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending}>
+            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending || isDeletePending}>
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">Toggle menu</span>
             </Button>
@@ -219,37 +234,73 @@ export default function BookingsPage() {
                     {isApprovePending ? "Approving..." : "Approve"}
                 </DropdownMenuItem>
                 
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
+                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem 
-                    className="text-destructive" 
-                    onSelect={(e) => e.preventDefault()}
+                    onSelect={() => setDialogType('cancel')}
                     disabled={isCancelPending || booking.status === 'Canceled'}
                   >
-                    Cancel
+                   Cancel Booking
                   </DropdownMenuItem>
+                </AlertDialogTrigger>
+
+                <DropdownMenuSeparator />
+
+                 <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                        className="text-destructive" 
+                        onSelect={() => setDialogType('delete')}
+                        disabled={isDeletePending}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4"/> Delete Booking
+                    </DropdownMenuItem>
                 </AlertDialogTrigger>
             </DropdownMenuContent>
         </DropdownMenu>
          <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action will mark the booking as Canceled for 
-                    <span className="font-semibold"> {booking.customerName} </span>
-                     at <span className="font-semibold">{booking.campName}</span>.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                <AlertDialogAction
-                 className="bg-destructive hover:bg-destructive/90"
-                 onClick={onCancel}
-                 disabled={isCancelPending}
-                >
-                {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
-                </AlertDialogAction>
-            </AlertDialogFooter>
+            {dialogType === 'cancel' && (
+                <>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action will mark the booking as Canceled for 
+                            <span className="font-semibold"> {booking.customerName} </span>
+                            at <span className="font-semibold">{booking.campName}</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                        <AlertDialogAction
+                        className="bg-destructive hover:bg-destructive/90"
+                        onClick={onCancel}
+                        disabled={isCancelPending}
+                        >
+                        {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </>
+            )}
+             {dialogType === 'delete' && (
+                <>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this booking permanently?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           This action cannot be undone. This will permanently delete the booking for
+                            <span className="font-semibold"> {booking.customerName} </span>
+                            at <span className="font-semibold">{booking.campName}</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                        <AlertDialogAction
+                        className="bg-destructive hover:bg-destructive/90"
+                        onClick={onDelete}
+                        disabled={isDeletePending}
+                        >
+                        {isDeletePending ? "Deleting..." : "Yes, delete booking"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </>
+            )}
         </AlertDialogContent>
       </AlertDialog>
     )
@@ -391,3 +442,5 @@ export default function BookingsPage() {
     </>
   );
 }
+
+    
