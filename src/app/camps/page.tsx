@@ -36,6 +36,18 @@ type DbCamps = {
     [id: string]: Camp;
 }
 
+const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    try {
+        const parsedUrl = new URL(url);
+        // Basic check for image extensions
+        return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(parsedUrl.pathname);
+    } catch (e) {
+        // Invalid URL format
+        return false;
+    }
+};
+
 function CampCardSkeleton() {
     return (
         <Card className="flex flex-col overflow-hidden shadow-lg rounded-2xl">
@@ -88,7 +100,12 @@ export default function CampsPage() {
                 <CampCardSkeleton />
             </>
           ) : upcomingCamps.length > 0 ? (
-            upcomingCamps.map((camp) => (
+            upcomingCamps.map((camp) => {
+              const imageUrl = isValidImageUrl(camp.image?.imageUrl) 
+                ? camp.image.imageUrl 
+                : `https://picsum.photos/seed/${camp.id}/600/400`;
+
+              return (
               <Card
                 key={camp.id}
                 id={camp.id}
@@ -96,7 +113,7 @@ export default function CampsPage() {
               >
                 <div className="relative h-56 w-full">
                   <Image
-                    src={camp.image.imageUrl}
+                    src={imageUrl}
                     alt={camp.name}
                     fill
                     className="object-cover"
@@ -129,7 +146,7 @@ export default function CampsPage() {
                   </CardContent>
                 </div>
               </Card>
-            ))
+            )})
           ) : (
              <div className="col-span-full text-center py-12">
                  <p className="text-muted-foreground mb-4">No upcoming camps at the moment. Please check back soon!</p>
