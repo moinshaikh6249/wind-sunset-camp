@@ -243,7 +243,7 @@ export default function ContactPage() {
                         <Phone className="h-6 w-6 text-accent mt-1"/>
                         <div>
                             <h4 className="font-semibold">Call Us</h4>
-                            <p className="text-muted-foreground">(123) 456-7890</p>
+                            <p className="text-muted-foreground">7559155354</p>
                         </div>
                     </div>
                 </CardContent>
