@@ -39,11 +39,10 @@ type DbCamps = {
 const isValidImageUrl = (url: string | null | undefined): boolean => {
     if (!url) return false;
     try {
-        const parsedUrl = new URL(url);
-        // Basic check for image extensions
-        return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(parsedUrl.pathname);
+        // More relaxed validation: just check if it's a valid URL format.
+        new URL(url);
+        return true;
     } catch (e) {
-        // Invalid URL format
         return false;
     }
 };
