@@ -16,6 +16,7 @@ const formSchema = z.object({
 export async function submitContactForm(values: z.infer<typeof formSchema>) {
   const parsed = formSchema.safeParse(values);
   if (!parsed.success) {
+      // This will be caught by the try/catch in the client component
       throw new Error(parsed.error.errors.map(e => e.message).join(', '));
   }
 
@@ -30,14 +31,16 @@ export async function submitContactForm(values: z.infer<typeof formSchema>) {
     };
 
     const messagesRef = db.ref('contactMessages');
-    const newMessageRef = messagesRef.push();
+    const newMessageRef = messagesRef.push(); // Generates a unique key
     await newMessageRef.set(messageData);
 
+    // Revalidate the path to ensure the admin sees the new message immediately
     revalidatePath('/admin/messages');
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error submitting contact form:", error);
-    return { success: false, error: "An unexpected error occurred." };
+    // Return a structured error for the client
+    return { success: false, error: error.message || "An unexpected server error occurred." };
   }
 }
