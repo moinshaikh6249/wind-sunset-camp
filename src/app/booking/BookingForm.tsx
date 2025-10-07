@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import React, { useEffect, useState, useTransition, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { LoaderCircle, Wand2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useUser, useDatabase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { ref, push, set, query, update } from "firebase/database";
@@ -31,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCompletionSuggestions } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 
@@ -60,19 +59,6 @@ type UserProfile = {
     phone?: string;
 }
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-
 function BookingFormComponent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -80,8 +66,6 @@ function BookingFormComponent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const database = useDatabase();
-
-  const [isSuggesting, startSuggestionTransition] = useTransition();
 
   const campsRef = useMemo(() => {
     if (!database) return null;
@@ -129,21 +113,6 @@ function BookingFormComponent() {
     }
   }, [initialCamp, form]);
 
-
-  const watchedCampId = form.watch("campId");
-  const debouncedCampId = useDebounce(watchedCampId, 500);
-
-  useEffect(() => {
-    if (debouncedCampId) {
-      const camp = upcomingCamps.find(c => c.id === debouncedCampId);
-      if (camp) {
-        startSuggestionTransition(async () => {
-            const partialForm = { campName: camp.name };
-            await getCompletionSuggestions(partialForm, upcomingCamps);
-        });
-      }
-    }
-  }, [debouncedCampId, upcomingCamps]);
 
   async function onSubmit(values: FormValues) {
     if (!user || !database) {
@@ -199,28 +168,6 @@ function BookingFormComponent() {
         variant: "destructive",
       });
     }
-  }
-  
-
-  const handleSuggestion = () => {
-    startSuggestionTransition(async () => {
-        const partialForm: Record<string, string> = {};
-        const currentValues = form.getValues();
-
-        const camp = upcomingCamps.find(c => c.id === currentValues.campId);
-        if(camp) partialForm.campName = camp.name;
-
-        if(currentValues.email) partialForm.email = currentValues.email;
-        if(currentValues.fullName) partialForm.fullName = currentValues.fullName;
-
-        const suggestions = await getCompletionSuggestions(partialForm, upcomingCamps);
-
-        for (const [key, value] of Object.entries(suggestions)) {
-            if (key in form.getValues() && key !== 'campId' && key !== 'campName') {
-                form.setValue(key as keyof FormValues, value as any);
-            }
-        }
-    });
   }
 
   if (isUserLoading || campsLoading || profileLoading) {
@@ -301,9 +248,6 @@ function BookingFormComponent() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Select a camp to see AI suggestions.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -323,14 +267,6 @@ function BookingFormComponent() {
             />
 
             <div className="space-y-4">
-              <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isSuggesting}>
-                {isSuggesting ? (
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <Wand2 className="mr-2 h-4 w-4" />
-                )}
-                Suggest Details
-              </Button>
               <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Submitting..." : "Submit Booking"}
               </Button>

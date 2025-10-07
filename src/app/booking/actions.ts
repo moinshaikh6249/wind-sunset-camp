@@ -1,7 +1,8 @@
 
 'use server';
 
-import { suggestBookingFormCompletion } from '@/ai/flows/booking-form-completion-suggester';
+// This file is no longer used for AI suggestions, but is kept as a placeholder
+// in case server-side actions are needed for the booking form in the future.
 
 type Camp = {
     id: string;
@@ -18,23 +19,6 @@ export async function getCompletionSuggestions(
   partialForm: Record<string, string>,
   upcomingCamps: Camp[]
 ): Promise<Record<string, string>> {
-  try {
-    const availableCamps = {
-      campName: upcomingCamps.map(c => c.name),
-    };
-
-    // Make sure not to send empty objects if no options are available
-    const availableOptions = availableCamps.campName.length > 0 ? availableCamps : undefined;
-
-    const suggestions = await suggestBookingFormCompletion({
-      partialForm,
-      availableOptions,
-    });
-    
-    return suggestions;
-  } catch (error) {
-    console.error('Error getting completion suggestions:', error);
-    // In case of an error, return an empty object to prevent crashes.
-    return {};
-  }
+  // AI functionality has been removed from the booking form.
+  return {};
 }
