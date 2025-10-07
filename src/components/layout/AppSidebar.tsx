@@ -15,7 +15,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
 import { useUser, useDatabase, useMemoFirebase, useAdmin } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
@@ -26,6 +26,9 @@ import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/firebase";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -34,6 +37,73 @@ const navLinks = [
   { href: "/camps", label: "Upcoming Camps", icon: Tent },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
+
+type Message = {
+  id: string;
+  subject: string;
+  timestamp: string;
+  read: boolean;
+};
+
+function MessagesDialog() {
+  const { user } = useUser();
+  const database = useDatabase();
+
+  const userMessagesRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return ref(database, `users/${user.uid}/messages`);
+  }, [user, database]);
+
+  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+
+  const sentMessages = useMemo(() => {
+    if (!messagesData) return [];
+    return Object.entries(messagesData)
+      .map(([id, msg]) => ({ id, ...msg }))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [messagesData]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <MessageSquare className="mr-2 h-4 w-4" />
+          My Messages
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Your Sent Messages</DialogTitle>
+          <DialogDescription>
+            Here is a list of messages you've sent to the camp administrators.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 max-h-[60vh] overflow-y-auto">
+          {messagesLoading ? (
+            <p>Loading messages...</p>
+          ) : sentMessages.length > 0 ? (
+            <ul className="space-y-4">
+              {sentMessages.map(msg => (
+                <li key={msg.id} className="border-b pb-3 last:border-b-0">
+                  <p className="font-semibold">{msg.subject}</p>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>{formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}</span>
+                    <div className={cn("flex items-center gap-1.5", msg.read ? "text-green-600" : "text-amber-600")}>
+                      {msg.read ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                      {msg.read ? "Read" : "Sent"}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground text-center">You have not sent any messages yet.</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function UserProfileSection() {
   const { user, isUserLoading } = useUser();
@@ -114,6 +184,7 @@ function UserProfileSection() {
             </Link>
          </Button>
       )}
+      {!isAdmin && <MessagesDialog />}
       <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
         <LogOut className="mr-2 h-4 w-4" />
         Logout
