@@ -31,8 +31,7 @@ export async function submitContactForm(values: z.infer<typeof formSchema>) {
     };
 
     const messagesRef = db.ref('contactMessages');
-    const newMessageRef = messagesRef.push(); // Generates a unique key
-    await newMessageRef.set(messageData);
+    await messagesRef.push(messageData);
 
     // Revalidate the path to ensure the admin sees the new message immediately
     revalidatePath('/admin/messages');
