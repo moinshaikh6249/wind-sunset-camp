@@ -6,17 +6,19 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, LoaderCircle } from "lucide-react";
+import { Calendar, MapPin, LoaderCircle, IndianRupee, Zap } from "lucide-react";
 import Link from "next/link";
 import { useDatabase, useMemoFirebase } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref } from "firebase/database";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 
 type Camp = {
@@ -25,6 +27,8 @@ type Camp = {
     date: string;
     location: string;
     description: string;
+    price: number;
+    activities: string[];
     image: {
         id: string;
         imageUrl: string;
@@ -57,7 +61,9 @@ function CampCardSkeleton() {
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-5/6" />
                 </div>
-                <Skeleton className="h-10 w-full mt-auto" />
+                 <div className="mt-auto pt-4 border-t">
+                    <Skeleton className="h-10 w-full" />
+                 </div>
             </div>
         </Card>
     )
@@ -118,6 +124,12 @@ export default function CampsPage() {
                     className="object-cover"
                     data-ai-hint={camp.image.imageHint}
                   />
+                   {camp.price > 0 && (
+                      <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground text-lg font-bold">
+                        <IndianRupee className="h-5 w-5 mr-1" />
+                        {camp.price}
+                      </Badge>
+                    )}
                 </div>
                 <div className="flex flex-col flex-grow">
                   <CardHeader>
@@ -134,15 +146,28 @@ export default function CampsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-col flex-grow">
-                    <p className="mb-6 text-muted-foreground flex-grow">
+                    <p className="mb-6 text-muted-foreground">
                       {camp.description}
                     </p>
-                    <div className="mt-auto">
-                      <Button asChild className="w-full btn-glow">
-                        <Link href={`/booking?camp=${camp.id}`}>Book This Camp</Link>
-                      </Button>
-                    </div>
+                     {camp.activities && camp.activities.length > 0 && (
+                        <div className="mb-6">
+                            <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                                <Zap className="h-5 w-5 text-accent" />
+                                Activities
+                            </h4>
+                            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                                {camp.activities.map((activity, index) => (
+                                    <li key={index}>{activity}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                   </CardContent>
+                  <CardFooter className="mt-auto pt-4 border-t border-border/50">
+                    <Button asChild className="w-full btn-glow">
+                      <Link href={`/booking?camp=${camp.id}`}>Book This Camp</Link>
+                    </Button>
+                  </CardFooter>
                 </div>
               </Card>
             )})
