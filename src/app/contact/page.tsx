@@ -219,7 +219,35 @@ export default function ContactPage() {
               </form>
             </Form>
           </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-8">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-start gap-4">
+                        <MapPin className="h-6 w-6 text-accent mt-1"/>
+                        <div>
+                            <h4 className="font-semibold">Our Basecamp</h4>
+                            <p className="text-muted-foreground">123 Adventure Lane, Wilderness, WY 82801</p>
+                        </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                        <Mail className="h-6 w-6 text-accent mt-1"/>
+                        <div>
+                            <h4 className="font-semibold">Email Us</h4>
+                            <a href="mailto:hello@windsunsetcamp.com" className="text-muted-foreground hover:text-accent">hello@windsunsetcamp.com</a>
+                        </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                        <Phone className="h-6 w-6 text-accent mt-1"/>
+                        <div>
+                            <h4 className="font-semibold">Call Us</h4>
+                            <p className="text-muted-foreground">(123) 456-7890</p>
+                        </div>
+                    </div>
+                </CardContent>
+             </Card>
              <Card>
                 <CardHeader>
                     <CardTitle>Your Sent Messages</CardTitle>
