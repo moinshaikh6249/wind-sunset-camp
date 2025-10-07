@@ -296,7 +296,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
             name="price"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Price ($)</FormLabel>
+                <FormLabel>Price (₹)</FormLabel>
                 <FormControl><Input type="number" placeholder="100" {...field} /></FormControl>
                 <FormMessage />
                 </FormItem>
