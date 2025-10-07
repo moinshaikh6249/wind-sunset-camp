@@ -28,7 +28,11 @@ const formSchema = z.object({
   date: z.string().min(3, "Date is required."),
   location: z.string().min(3, "Location is required."),
   description: z.string().min(10, "Description is required."),
+  imageUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
   image: z.any().optional(),
+}).refine(data => data.imageUrl || data.image, {
+    message: "Either an image URL or an uploaded image is required.",
+    path: ["imageUrl"], // Point error to imageUrl field
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -62,6 +66,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       date: campToEdit?.date || "",
       location: campToEdit?.location || "",
       description: campToEdit?.description || "",
+      imageUrl: campToEdit?.image?.imageUrl || "",
       image: undefined,
     },
   });
@@ -73,11 +78,12 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         date: campToEdit.date,
         location: campToEdit.location,
         description: campToEdit.description,
+        imageUrl: campToEdit.image?.imageUrl || "",
         image: undefined,
       });
       setImagePreview(campToEdit.image?.imageUrl);
     } else {
-        form.reset({ name: "", date: "", location: "", description: "", image: undefined });
+        form.reset({ name: "", date: "", location: "", description: "", imageUrl: "", image: undefined });
         setImagePreview(null);
     }
   }, [campToEdit, form]);
@@ -91,8 +97,16 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      form.setValue("imageUrl", ""); // Clear URL if file is selected
     }
   };
+
+  const imageUrlValue = form.watch("imageUrl");
+    useEffect(() => {
+        if(imageUrlValue && !form.getValues("image")){
+            setImagePreview(imageUrlValue)
+        }
+    }, [imageUrlValue, form])
 
   function onSubmit(values: FormValues) {
     if (!adminUser || !storage || !database) {
@@ -106,7 +120,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
 
     startTransition(async () => {
       try {
-        let imageUrl = campToEdit?.image?.imageUrl || "";
+        let finalImageUrl = campToEdit?.image?.imageUrl || values.imageUrl || "";
         let imageId = campToEdit?.image?.id || `img-${Date.now()}`;
         
         const newImageFile = values.image instanceof File ? values.image : null;
@@ -128,13 +142,15 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           // Upload the new image
           const newImageRef = storageRef(storage, `camps/${Date.now()}-${newImageFile.name}`);
           const snapshot = await uploadBytes(newImageRef, newImageFile);
-          imageUrl = await getDownloadURL(snapshot.ref);
+          finalImageUrl = await getDownloadURL(snapshot.ref);
           imageId = newImageRef.fullPath;
 
-        } else if (!campToEdit) {
+        }
+
+        if (!finalImageUrl) {
             toast({
                 title: "Image Required",
-                description: "You must upload an image for a new camp.",
+                description: "You must either upload an image or provide an image URL.",
                 variant: "destructive"
             });
             return;
@@ -150,7 +166,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
           description: values.description,
           image: {
             id: imageId,
-            imageUrl,
+            imageUrl: finalImageUrl,
             imageHint: newImageFile ? 'custom upload' : (campToEdit?.image?.imageHint || 'camp image'),
           }
         };
@@ -166,9 +182,13 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       } catch (error: any)
       {
         console.error("Camp form submission error:", error);
+        let description = error.message || "An unexpected error occurred.";
+        if (error.code === 'storage/unauthorized') {
+            description = "You do not have permission to upload files. Please check your Firebase Storage rules or use the Image URL field instead."
+        }
         toast({
           title: "Operation Failed",
-          description: error.message || "An unexpected error occurred. Please ensure you have admin permissions and the database rules are correctly set.",
+          description: description,
           variant: "destructive",
         });
       }
@@ -224,26 +244,42 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
             </FormItem>
           )}
         />
-        <FormField
+        
+         <FormField
           control={form.control}
-          name="image"
-          render={() => (
+          name="imageUrl"
+          render={({ field }) => (
             <FormItem>
-              <FormLabel>Camp Image</FormLabel>
-              <FormControl>
-                <div className="flex items-center gap-4">
-                    {imagePreview && <Image src={imagePreview} alt="Preview" width={64} height={64} className="rounded-md object-cover" />}
-                    <Button type="button" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
-                        <Camera className="mr-2 h-4 w-4" />
-                        {imagePreview ? 'Change' : 'Upload'} Image
-                    </Button>
-                    <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
-                </div>
-              </FormControl>
+              <FormLabel>Image URL</FormLabel>
+              <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <div className="flex items-center gap-4">
+            {imagePreview && <Image src={imagePreview} alt="Preview" width={64} height={64} className="rounded-md object-cover" />}
+             <FormField
+                control={form.control}
+                name="image"
+                render={() => (
+                    <FormItem>
+                    <FormLabel className="text-sm text-muted-foreground">Or Upload Image</FormLabel>
+                    <FormControl>
+                        <div>
+                            <Button type="button" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
+                                <Camera className="mr-2 h-4 w-4" />
+                                {imagePreview && form.getValues("image") ? 'Change' : 'Upload'}
+                            </Button>
+                            <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+       
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
           {isPending ? 'Saving...' : (campToEdit ? 'Update Camp' : 'Add Camp')}
@@ -252,3 +288,5 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     </Form>
   );
 }
+
+    
