@@ -31,6 +31,7 @@ import { useTransition, useState } from "react";
 import { LoaderCircle, Upload, Wand2 } from "lucide-react";
 import Image from "next/image";
 import { getSuggestions } from "./actions";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   description: z.string().min(5, "Description is required."),
@@ -169,65 +170,67 @@ export function UploadImageForm() {
             Add a new photo to the public camp gallery.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-             <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image File</FormLabel>
-                  <FormControl>
-                    <Input type="file" accept="image/*" onChange={handleFileChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {imagePreview && (
-                <div className="w-full relative">
-                    <p className="text-sm font-medium mb-2">Preview:</p>
-                    <Image src={imagePreview} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
-                </div>
-            )}
-             <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isPending || !imagePreview}>
-                {isSuggesting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                Suggest with AI
-            </Button>
+        <ScrollArea className="max-h-[70vh] p-4">
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Image File</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" onChange={handleFileChange} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                {imagePreview && (
+                    <div className="w-full relative">
+                        <p className="text-sm font-medium mb-2">Preview:</p>
+                        <Image src={imagePreview} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
+                    </div>
+                )}
+                <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isPending || !imagePreview}>
+                    {isSuggesting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                    Suggest with AI
+                </Button>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="A beautiful sunset over the lake..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="imageHint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image Hint</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., sunset lake" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-           
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isUploading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              {isUploading ? 'Uploading...' : 'Upload to Gallery'}
-            </Button>
-          </form>
-        </Form>
+                <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="A beautiful sunset over the lake..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="imageHint"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Image Hint</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., sunset lake" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            
+                <Button type="submit" className="w-full" disabled={isPending}>
+                {isUploading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                {isUploading ? 'Uploading...' : 'Upload to Gallery'}
+                </Button>
+            </form>
+            </Form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
