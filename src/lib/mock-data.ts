@@ -19,12 +19,6 @@ export const teamMembers = [
     image: findImage('team-1'),
   },
   {
-    name: 'Maria Garcia',
-    role: 'Activities Coordinator',
-    bio: 'Maria designs all our camp activities, from kayaking to stargazing, ensuring every moment is an adventure.',
-    image: findImage('team-2'),
-  },
-  {
     name: 'Sam Lee',
     role: 'Chef & Nutritionist',
     bio: 'Sam believes that great food is a core part of the camping experience. He creates delicious, healthy meals over the open fire.',
