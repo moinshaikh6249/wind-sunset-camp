@@ -57,8 +57,9 @@ type CampFormProps = {
 const isValidImageUrl = (url: string | null | undefined): boolean => {
     if (!url) return false;
     try {
-        new URL(url);
-        return true;
+        const urlObject = new URL(url);
+        // Ensure it's a direct image link
+        return /\.(jpg|jpeg|png|gif|webp)$/.test(urlObject.pathname);
     } catch (e) {
         // Invalid URL format
         return false;
@@ -136,7 +137,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     if (!imageFile && !isValidImageUrl(form.getValues('imageUrl'))) {
         toast({
             title: "Image Required for Suggestion",
-            description: "Please upload an image to get image-based suggestions.",
+            description: "Please upload or provide a valid image URL to get image-based suggestions.",
             variant: "destructive"
         });
         return;
