@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'media.istockphoto.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'blog-assets.thedyrt.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
