@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -228,7 +227,7 @@ export default function ContactPage() {
                     <div className="flex items-start gap-4">
                         <MapPin className="h-6 w-6 text-accent mt-1"/>
                         <div>
-                            <h4 className="font-semibold">Our Basecamp</h4>
+                            <h4 className="font-semibold">Wind and Sunset Camping Near Pawana Lake</h4>
                             <p className="text-muted-foreground">Gevhande Jawan Shiv, Thankursai Ajivali Road, Pawana Nagar, Post, Gevhande Khadak, Maharashtra 410506</p>
                         </div>
                     </div>
