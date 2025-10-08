@@ -1,6 +1,13 @@
 
 {
   "users": {
+    "n1XN7eF4AAMzq1d2sJnEew0bSQt2": {
+      "email": "sameermore3010@gmail.com",
+      "firstName": "Sameer",
+      "lastName": "More",
+      "phone": "",
+      "photoURL": ""
+    },
     "2xweAt0JifePccSN4RmWBN8CSb43": {
       "email": "abhishek@gmail.com",
       "firstName": "Abhishek",
@@ -65,7 +72,8 @@
     }
   },
   "admins": {
-    "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": true
+    "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": true,
+    "n1XN7eF4AAMzq1d2sJnEew0bSQt2": true
   },
   "camps": {
     "summer-adventure-2024": {
@@ -133,4 +141,5 @@
     "gallery-3": {
       "id": "gallery-3",
       "description": "A cozy campfire with friends sharing stories.",
-      "imageUrl": "https://images.unsplash.com/photo-1661758211116-388aae0197f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU5MDk2Njg1fDA&ixlib
+      "imageUrl": "https://images.unsplash.com/photo-1661758211116-388aae0197f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjYW1wZmlyZSUyMGZyaWVuZHN8ZW58MHx8fHwxNzU5MDk2Njg1fDA&ixlib"
+}
