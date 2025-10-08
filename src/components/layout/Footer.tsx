@@ -24,7 +24,7 @@ export function Footer() {
   return (
     <footer className="bg-footer-light dark:bg-footer-dark text-foreground border-t border-accent/20 dark:border-primary/20">
       <div className="container pt-16 pb-8 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-center md:text-left">
           
           <div className="flex flex-col items-center md:items-start md:col-span-1">
             <Logo />
@@ -33,7 +33,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="md:col-span-1">
+          <div className="lg:col-span-1">
             <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Navigate</h3>
             <ul className="space-y-3">
               {navLinks.map(({ href, label, icon: Icon }) => (
@@ -50,17 +50,17 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="md:col-span-1">
+          <div className="lg:col-span-1">
             <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Legal & Social</h3>
             <ul className="space-y-3">
               {legalLinks.map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="group flex items-center justify-center md:justify-start gap-2.5 text-muted-foreground hover:text-accent dark:hover:text-primary transition-all duration-300 transform hover:scale-105">
+                  <a href={href} className="group flex items-center justify-center md:justify-start gap-2.5 text-muted-foreground hover:text-accent dark:hover:text-primary transition-all duration-300 transform hover:scale-105">
                      <span className="relative">
                       {label}
                       <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent dark:bg-primary transition-all duration-300 group-hover:w-full"></span>
                     </span>
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -71,6 +71,22 @@ export function Footer() {
                 </a>
               ))}
             </div>
+          </div>
+          
+          <div className="lg:col-span-1">
+             <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Our Location</h3>
+             <div className="aspect-video w-full rounded-lg overflow-hidden border-2 border-accent/20 dark:border-primary/20 shadow-lg">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.351347313835!2d73.4989340752148!3d18.62310108257858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2a1380900f6ff%3A0x4d32a933224b174!2sWind%20and%20Sunset%20Camping%20Near%20Pawana%20Lake!5e0!3m2!1sen!2sin!4v1700000000000"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen={false}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Wind and Sunset Camping Location"
+                ></iframe>
+             </div>
           </div>
 
         </div>
