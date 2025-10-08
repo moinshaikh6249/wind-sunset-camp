@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -240,6 +241,9 @@ export function SignupForm() {
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Please don't forget your password.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
