@@ -132,9 +132,26 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       return;
     }
 
+    const imageFile = form.getValues("image");
+    if (!imageFile && !isValidImageUrl(form.getValues('imageUrl'))) {
+        toast({
+            title: "Image Required for Suggestion",
+            description: "Please upload an image to get image-based suggestions.",
+            variant: "destructive"
+        });
+        return;
+    }
+
     startSuggestionTransition(async () => {
       try {
-        const suggestions = await getCampSuggestions(campName);
+        const formData = new FormData();
+        formData.append('campName', campName);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+        
+        const suggestions = await getCampSuggestions(formData);
+
         if (suggestions) {
           if (suggestions.description) form.setValue('description', suggestions.description);
           if (suggestions.activities) form.setValue('activities', suggestions.activities.join(', '));
@@ -378,4 +395,3 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     </Form>
   );
 }
-
