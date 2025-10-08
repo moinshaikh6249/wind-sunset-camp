@@ -26,14 +26,14 @@ export function Footer() {
       <div className="container pt-16 pb-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-center md:text-left">
           
-          <div className="flex flex-col items-center md:items-start md:col-span-1">
+          <div className="flex flex-col items-center md:items-start">
             <Logo />
             <p className="mt-4 text-sm italic text-muted-foreground/80 max-w-xs">
               Your next adventure starts here, under the open sky.
             </p>
           </div>
 
-          <div className="lg:col-span-1">
+          <div>
             <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Navigate</h3>
             <ul className="space-y-3">
               {navLinks.map(({ href, label, icon: Icon }) => (
@@ -50,7 +50,7 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="lg:col-span-1">
+          <div>
             <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Legal & Social</h3>
             <ul className="space-y-3">
               {legalLinks.map(({ href, label }) => (
@@ -73,7 +73,7 @@ export function Footer() {
             </div>
           </div>
           
-          <div className="lg:col-span-1">
+          <div>
              <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Our Location</h3>
              <div className="aspect-video w-full rounded-lg overflow-hidden border-2 border-accent/20 dark:border-primary/20 shadow-lg">
                 <iframe
