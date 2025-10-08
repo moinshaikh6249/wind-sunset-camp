@@ -18,12 +18,6 @@ export const teamMembers = [
     bio: 'Alex founded Wind & Sunset Camp with the vision of sharing the transformative power of nature. An expert survivalist and storyteller.',
     image: findImage('team-1'),
   },
-  {
-    name: 'Sam Lee',
-    role: 'Chef & Nutritionist',
-    bio: 'Sam believes that great food is a core part of the camping experience. He creates delicious, healthy meals over the open fire.',
-    image: findImage('team-3'),
-  },
 ];
 
 // This data is now managed in the database.
