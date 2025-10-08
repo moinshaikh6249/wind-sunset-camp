@@ -75,7 +75,7 @@ export function Footer() {
           
           <div>
              <h3 className="font-bold text-base uppercase tracking-wider text-foreground/80 dark:text-foreground/80 mb-4">Our Location</h3>
-             <div className="aspect-video w-full rounded-lg overflow-hidden border-2 border-accent/20 dark:border-primary/20 shadow-lg">
+             <a href="https://maps.app.goo.gl/wUXEvEwvFkzxGz627" target="_blank" rel="noopener noreferrer" className="block aspect-video w-full rounded-lg overflow-hidden border-2 border-accent/20 dark:border-primary/20 shadow-lg hover:shadow-xl transition-shadow">
                 <iframe
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.351347313835!2d73.4989340752148!3d18.62310108257858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2a1380900f6ff%3A0x4d32a933224b174!2sWind%20and%20Sunset%20Camping%20Near%20Pawana%20Lake!5e0!3m2!1sen!2sin!4v1700000000000"
                     width="100%"
@@ -85,8 +85,9 @@ export function Footer() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     title="Wind and Sunset Camping Location"
+                    className="pointer-events-none"
                 ></iframe>
-             </div>
+             </a>
           </div>
 
         </div>
