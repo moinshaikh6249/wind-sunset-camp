@@ -1,13 +1,13 @@
 
 # Admin Setup Instructions
 
-To gain admin access to the application, you need to set a custom claim on your user account in Firebase. This is a one-time setup.
+To gain admin access to the application, you need to set a custom claim on your user account in Firebase and add your UID to the admins list in the Realtime Database. This is a one-time setup.
 
 There are two primary ways to do this:
 
-## Method 1: Using the Firebase Admin SDK in a Script
+## Method 1: Using the Firebase Admin SDK in a Script (Recommended)
 
-This is the most common method. You will need Node.js installed on your machine.
+This is the most common and complete method. You will need Node.js installed on your machine.
 
 1.  **Create a User Account**: First, make sure you have signed up for a regular user account in the application with the email you want to be admin.
 
@@ -55,66 +55,65 @@ This is the most common method. You will need Node.js installed on your machine.
     // Initialize Firebase Admin SDK
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
+      databaseURL: `https://<YOUR_PROJECT_ID>.firebaseio.com` // <-- ‼️ ADD YOUR DATABASE URL
     });
 
-    // Set admin custom claim
-    admin.auth().setCustomUserClaims(userUid, { isAdmin: true })
-      .then(() => {
-        console.log(`✅ Successfully set admin claim for user: ${userUid}`);
-        console.log('You can now log in as an admin.');
+    async function setAdmin() {
+      try {
+        // Set admin custom claim
+        await admin.auth().setCustomUserClaims(userUid, { isAdmin: true });
+        console.log(`✅ Successfully set admin custom claim for user: ${userUid}`);
+
+        // Add user to the /admins node in Realtime Database
+        const db = admin.database();
+        const adminRef = db.ref(`admins/${userUid}`);
+        await adminRef.set(true);
+        console.log(`✅ Successfully added user ${userUid} to the admins list in Realtime Database.`);
+
+        console.log('\nSetup complete. You can now log in as an admin.');
         process.exit(0);
-      })
-      .catch((error) => {
-        console.error('❌ Error setting custom claim:', error);
+
+      } catch (error) {
+        console.error('❌ Error during admin setup:', error);
         process.exit(1);
-      });
+      }
+    }
+
+    setAdmin();
     ```
 
-6.  **Get Service Account Key**:
+6.  **Get Service Account Key & Database URL**:
     *   In the Firebase Console, go to **Project settings** (click the gear icon ⚙️).
     *   Go to the **Service accounts** tab.
     *   Click **Generate new private key**.
     *   A JSON file will be downloaded. Rename this file to `serviceAccountKey.json` and place it in the same `admin-scripts` folder.
-    *   **WARNING**: Keep this file secure. Do not commit it to version control.
+    *   Go to the **Realtime Database** section in the console. Your database URL (e.g., `https://my-project-123.firebaseio.com`) will be listed there. Copy it and paste it into the `databaseURL` field in `set-admin.js`.
+    *   **WARNING**: Keep the service account file secure. Do not commit it to version control.
 
 7.  **Run the Script**:
     *   Open your terminal in the `admin-scripts` folder.
     *   Run `npm install` to install the `firebase-admin` package.
     *   Run `node set-admin.js`.
 
-    If successful, you will see a success message.
+    If successful, you will see two success messages.
 
-## Method 2: Using a Temporary Cloud Function
+## Method 2: Manually in the Firebase Console
 
-If you are more comfortable with Cloud Functions, you can deploy a temporary function to set the claim.
+If you prefer not to run a script, you can perform the necessary steps manually.
 
-1. **Deploy the Cloud Function**:
-   Use the Firebase CLI to deploy a callable Cloud Function like this:
+1.  **Set up Custom Claim (Follow Method 1)**: You still need to run the script from Method 1 to set the custom claim, as this cannot be done from the console. You can, however, ignore the database part if the script fails.
 
-   ```javascript
-   // In your index.js or main.js for Cloud Functions
-   const { onCall } = require("firebase-functions/v2/https");
-   const admin = require("firebase-admin");
-   admin.initializeApp();
-
-   exports.makeAdmin = onCall((request) => {
-     // Note: This is insecure for production. It should be protected.
-     // This is only for a one-time setup.
-     const uid = request.data.uid;
-     return admin.auth().setCustomUserClaims(uid, { isAdmin: true })
-       .then(() => {
-         return { message: `Success! ${uid} is now an admin.` };
-       })
-       .catch(err => {
-         return err;
-       });
-   });
-   ```
-
-2. **Call the function**: Once deployed, you can call this function from your client-side code (or a simple script) to give a specific UID admin rights. **Remember to delete or secure this function after you've set your claim.**
+2.  **Add to Realtime Database Manually**:
+    *   Go to the **Firebase Console**.
+    *   Select your project.
+    *   Navigate to **Build** -> **Realtime Database**.
+    *   At the top level of your database, find the `admins` node. If it doesn't exist, create it by clicking the `+` icon next to your database name and entering `admins` as the key.
+    *   Click the `+` icon next to the `admins` node.
+    *   For the **Name (key)**, paste the **User UID** (`n1XN7eF4AAMzq1d2sJnEew0bSQt2`).
+    *   For the **Value**, type `true` and press Enter.
 
 ---
 
 ## Final Step
 
-After setting the claim, you need to **log out and log back in** to the application. Firebase ID tokens are refreshed hourly, so logging back in will force a refresh and your new `isAdmin` claim will be recognized.
+After setting the claim and adding the database entry, you need to **log out and log back in** to the application. Firebase ID tokens are refreshed hourly, so logging back in will force a refresh and your new `isAdmin` status will be recognized.
