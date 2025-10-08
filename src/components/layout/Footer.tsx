@@ -19,7 +19,6 @@ const legalLinks = [
 const socialLinks = [
   { href: "#", label: "Facebook", icon: Facebook },
   { href: "https://www.instagram.com/wind_and_sunset_camping_123773/", label: "Instagram", icon: Instagram },
-  { href: "#", label: "Twitter", icon: Twitter },
 ];
 
 export function Footer() {
