@@ -28,7 +28,7 @@ export async function suggestCampDetails(input: SuggestCampDetailsInput): Promis
 }
 
 const prompt = ai.definePrompt({
-  name: 'suggestCampDetailsPrompt',
+  name: 'suggestCampDetails',
   input: {schema: SuggestCampDetailsInputSchema},
   output: {schema: SuggestCampDetailsOutputSchema},
   prompt: `You are a creative director for a company called "Wind & Sunset Camp". Your task is to generate an exciting, one-paragraph marketing description and a list of 3 to 5 sample activities for a new camp.
