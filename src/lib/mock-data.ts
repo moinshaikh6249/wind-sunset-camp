@@ -15,7 +15,7 @@ export const teamMembers = [
   {
     name: 'Sameer More',
     role: 'Owner',
-    bio: 'Alex founded Wind & Sunset Camp with the vision of sharing the transformative power of nature. An expert survivalist and storyteller.',
+    bio: "I founded Wind & Sunset pawna lake camping to help people unplug from the daily grind and find their own connection with nature. We aren't just offering a campsite we're providing a space for rest, reconnection, and the kind of moments that become lifelong memories.",
     image: findImage('team-1'),
   },
 ];
