@@ -229,7 +229,7 @@ export default function ContactPage() {
                         <MapPin className="h-6 w-6 text-accent mt-1"/>
                         <div>
                             <h4 className="font-semibold">Our Basecamp</h4>
-                            <p className="text-muted-foreground">123 Adventure Lane, Wilderness, WY 82801</p>
+                            <p className="text-muted-foreground">Gevhande Jawan Shiv, Thankursai Ajivali Road, Pawana Nagar, Post, Gevhande Khadak, Maharashtra 410506</p>
                         </div>
                     </div>
                      <div className="flex items-start gap-4">
