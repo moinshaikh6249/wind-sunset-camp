@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Info, GalleryVertical, Tent, Mail, PenSquare, Facebook, Instagram, Twitter } from "lucide-react";
+import { Info, GalleryVertical, Tent, Mail, PenSquare, Instagram } from "lucide-react";
 
 const navLinks = [
     { href: "/about", label: "About Us", icon: Info },
@@ -17,7 +17,6 @@ const legalLinks = [
 ]
 
 const socialLinks = [
-  { href: "#", label: "Facebook", icon: Facebook },
   { href: "https://www.instagram.com/wind_and_sunset_camping_123773/", label: "Instagram", icon: Instagram },
 ];
 
