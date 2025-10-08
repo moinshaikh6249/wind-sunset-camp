@@ -41,11 +41,11 @@ export default function AboutPage() {
           <h2 className="font-headline text-3xl md:text-5xl text-center mb-12 text-heading-color heading-shadow heading-underline">
             Meet the Team
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="flex justify-center gap-8 lg:gap-12">
             {teamMembers.map((member) => (
               <Card
                 key={member.name}
-                className="text-center border-0 bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 p-6 transform hover:-translate-y-2 rounded-2xl team-card-hover"
+                className="text-center border-0 bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 p-6 transform hover:-translate-y-2 rounded-2xl team-card-hover md:max-w-sm"
               >
                 <CardHeader className="items-center p-0">
                   <div className="relative h-32 w-32 rounded-full overflow-hidden mb-4 shadow-lg border-4 border-background">
