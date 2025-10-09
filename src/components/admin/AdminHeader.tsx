@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -34,20 +33,23 @@ const navLinks = [
 function MobileNav() {
     const pathname = usePathname();
     return (
-        <SheetContent side="left" className="sm:max-w-xs">
-        <nav className="grid gap-6 text-lg font-medium">
+        <SheetContent side="left" className="flex flex-col">
+        <nav className="grid gap-2 text-lg font-medium">
           <Link
-            href="/admin/dashboard"
-            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+            href="/"
+            className="flex items-center gap-2 text-lg font-semibold mb-4"
           >
-            <Home className="h-5 w-5 transition-all group-hover:scale-110" />
-            <span className="sr-only">Admin Dashboard</span>
+            <Tent className="h-6 w-6" />
+            <span className="">Wind & Sunset</span>
           </Link>
           {navLinks.map(({ href, label, icon: Icon }) => (
             <Link
               key={label}
               href={href}
-              className={`flex items-center gap-4 px-2.5 ${pathname === href ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={cn(
+                "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
+                 pathname.startsWith(href) && "bg-muted text-foreground"
+                )}
             >
               <Icon className="h-5 w-5" />
               {label}
@@ -85,14 +87,15 @@ function UserMenu() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
-                variant="outline"
+                variant="secondary"
                 size="icon"
-                className="overflow-hidden rounded-full"
+                className="rounded-full"
                 >
-                <Avatar className="h-9 w-9">
+                <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.photoURL ?? undefined} alt="Admin" />
                     <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
+                <span className="sr-only">Toggle user menu</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -107,19 +110,6 @@ function UserMenu() {
     )
 }
 
-
-function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
-  
-    return (
-        <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-        </Button>
-    );
-}
-
 export function AdminHeader() {
     const pathname = usePathname();
     const pageName = pathname.split('/').pop();
@@ -127,40 +117,34 @@ export function AdminHeader() {
     const { searchQuery, setSearchQuery } = useSearch();
 
     return (
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
             <Sheet>
               <SheetTrigger asChild>
-                <Button size="icon" variant="outline" className="sm:hidden">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 md:hidden"
+                >
                   <PanelLeft className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
               <MobileNav />
             </Sheet>
-            <Breadcrumb className="hidden md:flex">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link href="/admin/dashboard">Admin</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{capitalizedPageName}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="relative ml-auto flex-1 md:grow-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="w-full flex-1">
+                <form>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search..."
+                            className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </form>
             </div>
-            
             <UserMenu />
         </header>
     )
