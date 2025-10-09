@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -5,7 +6,7 @@ import { useCollection } from "@/firebase/firestore/use-collection";
 import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useMemo, useTransition } from "react";
 import { formatDistanceToNow } from 'date-fns';
-import { Star, Trash2, Eye, EyeOff, Pin, PinOff } from "lucide-react";
+import { Star, Trash2, Eye, EyeOff, Pin, PinOff, MessageSquare } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
@@ -17,14 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -40,7 +33,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toggleReviewPinned, toggleReviewVisibility, deleteReview as deleteReviewAction } from "./actions";
 
 type Review = {
     id: string;
@@ -65,44 +57,34 @@ function StarRating({ rating }: { rating: number }) {
     );
 }
 
-function ReviewTableRowSkeleton() {
+function ReviewCardSkeleton() {
     return (
-        <TableRow>
-            <TableCell className="w-[200px]">
-                <div className="space-y-1">
-                    <Skeleton className="h-4 w-[150px]" />
-                    <Skeleton className="h-3 w-[100px]" />
-                </div>
-            </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-[100px]" />
-            </TableCell>
-            <TableCell>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
+        <div className="bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-border/50">
+            <div className="flex justify-between items-start">
+                 <div className="w-full space-y-3">
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-4 w-full mt-2" />
                     <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-3 w-1/2 mt-2" />
                 </div>
-            </TableCell>
-             <TableCell className="hidden md:table-cell text-center">
-                <Skeleton className="h-4 w-20 mx-auto" />
-            </TableCell>
-            <TableCell className="text-right">
-                <div className="flex gap-2 justify-end">
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
+                <div className="flex flex-col items-end gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <div className="flex gap-2 mt-4">
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                    </div>
                 </div>
-            </TableCell>
-        </TableRow>
-    )
+            </div>
+        </div>
+    );
 }
 
 export default function ReviewsPage() {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
-  const [isPending, startTransition] = useTransition();
   
   const reviewsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -132,143 +114,46 @@ export default function ReviewsPage() {
   }, [sortedReviews, searchQuery]);
   
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
-    startTransition(async () => {
-        try {
-            await action();
-            toast({ title: successTitle });
-        } catch (error: any) {
-            toast({
-                title: errorTitle,
-                description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
-                variant: "destructive",
-            });
-        }
-    });
+    try {
+        await action();
+        toast({ title: successTitle });
+    } catch (error: any) {
+        toast({
+            title: errorTitle,
+            description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
+            variant: "destructive",
+        });
+    }
   };
   
   const onToggleVisibility = async (review: Review) => {
-    if (!user) return;
-    const idToken = await user.getIdToken();
+    if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        () => toggleReviewVisibility(idToken, review.id, review.visible),
+        () => updateDoc(reviewRef, { visible: !review.visible }),
         `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
         "Failed to update visibility"
     );
   }
 
   const onTogglePin = async (review: Review) => {
-    if (!user) return;
-    const idToken = await user.getIdToken();
+    if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        () => toggleReviewPinned(idToken, review.id, review.pinned),
+        () => updateDoc(reviewRef, { pinned: !review.pinned }),
         `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
         "Failed to update pin status"
     );
   }
 
   const onDelete = async (review: Review) => {
-    if (!user) return;
-    const idToken = await user.getIdToken();
+    if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        () => deleteReviewAction(idToken, review.id),
+        () => deleteDoc(reviewRef),
         `Review by ${review.name} deleted.`,
         "Failed to delete review"
     );
-  }
-
-
-  const renderTableBody = () => {
-    if (isLoading) {
-      return [...Array(5)].map((_, i) => <ReviewTableRowSkeleton key={i} />);
-    }
-    if (filteredReviews.length === 0) {
-        return (
-            <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                    No reviews found.
-                </TableCell>
-            </TableRow>
-        );
-    }
-    return filteredReviews.map((review) => (
-        <TableRow key={review.id} className={cn(!review.visible && "bg-muted/30")}>
-            <TableCell>
-                <div className="font-medium">{review.name}</div>
-                <div className="text-xs text-muted-foreground">
-                    {review.createdAt ? formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true }) : ''}
-                </div>
-            </TableCell>
-            <TableCell>
-                <StarRating rating={review.rating} />
-            </TableCell>
-            <TableCell>
-                <p className="max-w-md truncate">{review.comment}</p>
-            </TableCell>
-            <TableCell className="hidden md:table-cell text-center">
-                <div className="flex justify-center gap-2">
-                    <Badge variant={review.visible ? "default" : "secondary"} className={cn(review.visible ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400")}>
-                        {review.visible ? 'Visible' : 'Hidden'}
-                    </Badge>
-                     {review.pinned && (
-                        <Badge variant="secondary" className="gap-1.5">
-                            <Pin className="h-3 w-3" /> Pinned
-                        </Badge>
-                    )}
-                </div>
-            </TableCell>
-            <TableCell className="text-right">
-                <TooltipProvider>
-                    <div className="flex gap-1 justify-end">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)} disabled={isPending}>
-                                    {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{review.visible ? 'Hide Review' : 'Show Review'}</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)} disabled={isPending}>
-                                    {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{review.pinned ? 'Unpin Review' : 'Pin Review'}</TooltipContent>
-                        </Tooltip>
-                         <AlertDialog>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                     <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent>Delete Review</TooltipContent>
-                            </Tooltip>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently delete the review by <span className="font-semibold">{review.name}</span>. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                    className="bg-destructive hover:bg-destructive/90"
-                                    onClick={() => onDelete(review)}
-                                    >
-                                    Yes, delete review
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                </TooltipProvider>
-            </TableCell>
-        </TableRow>
-    ));
   }
 
   return (
@@ -276,8 +161,7 @@ export default function ReviewsPage() {
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Manage Reviews</h1>
       </div>
-
-      <Card>
+       <Card>
         <CardHeader>
           <CardTitle>
             All Submitted Reviews
@@ -287,22 +171,97 @@ export default function ReviewsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Reviewer</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Comment</TableHead>
-                <TableHead className="hidden md:table-cell text-center">Status</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {renderTableBody()}
-            </TableBody>
-          </Table>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {isLoading && (
+                  <>
+                    <ReviewCardSkeleton />
+                    <ReviewCardSkeleton />
+                    <ReviewCardSkeleton />
+                  </>
+              )}
+               {!isLoading && filteredReviews.length === 0 && (
+                <div className="col-span-full text-center text-muted-foreground py-10 bg-card/50 rounded-lg">
+                  <MessageSquare className="mx-auto h-12 w-12 mb-4" />
+                  <p className="text-lg font-semibold">No reviews yet 🌄</p>
+                  <p className="text-sm">User reviews will appear here once submitted.</p>
+                </div>
+              )}
+              {!isLoading && filteredReviews.map((review) => (
+                  <div key={review.id} className="review-card bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-border/50 hover:border-primary/50 hover:shadow-primary/10 transition-all duration-300 group">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-foreground">{review.name}</h3>
+                        <div className="my-1"><StarRating rating={review.rating} /></div>
+                        <p className="text-muted-foreground mt-3 italic text-sm">&quot;{review.comment}&quot;</p>
+                         <p className="text-xs text-muted-foreground/80 mt-3">
+                           {review.createdAt ? formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true }) : ''}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-2">
+                          {review.pinned && (
+                              <Badge variant="secondary" className="gap-1.5 bg-accent/20 text-accent dark:bg-sidebar-accent/20 dark:text-sidebar-accent-foreground border-accent/30">
+                                  <Pin className="h-3.5 w-3.5" /> Pinned
+                              </Badge>
+                          )}
+                           <Badge variant="outline" className={cn(review.visible ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-gray-500/20 text-gray-400 border border-gray-500/40")}>
+                              {review.visible ? 'Visible' : 'Hidden'}
+                          </Badge>
+                        </div>
+                        <TooltipProvider>
+                          <div className="flex gap-1 justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)}>
+                                          {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{review.visible ? 'Hide Review' : 'Show Review'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)}>
+                                          {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{review.pinned ? 'Unpin Review' : 'Pin Review'}</TooltipContent>
+                              </Tooltip>
+                              <AlertDialog>
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                          <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                  <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                          </AlertDialogTrigger>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Delete Review</TooltipContent>
+                                  </Tooltip>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              This will permanently delete the review by <span className="font-semibold">{review.name}</span>. This action cannot be undone.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                          className="bg-destructive hover:bg-destructive/90"
+                                          onClick={() => onDelete(review)}
+                                          >
+                                          Yes, delete review
+                                          </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          </div>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+              ))}
+            </div>
         </CardContent>
       </Card>
     </>
