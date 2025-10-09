@@ -1,12 +1,10 @@
-
 {
   "rules": {
     "reviews": {
       "$reviewId": {
-        "read": "resource.data.visible == true",
-        "create": "true",
-        "update": "request.auth != null && root.child('admins').child(request.auth.uid).exists()",
-        "delete": "request.auth != null && root.child('admins').child(request.auth.uid).exists()"
+        "allow read": "if resource.data.visible == true;",
+        "allow create": "if true;",
+        "allow update, delete": "if false;"
       }
     }
   }

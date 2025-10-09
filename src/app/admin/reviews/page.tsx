@@ -1,8 +1,8 @@
 'use client';
 
-import { useFirestore, useMemoFirebase } from "@/firebase";
+import { useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { useCollection } from "@/firebase/firestore/use-collection";
-import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { useMemo, useTransition } from "react";
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Trash2, Eye, EyeOff, Pin, PinOff } from "lucide-react";
@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toggleReviewVisibility, toggleReviewPinned, deleteReview } from './actions';
 
 
 type Review = {
@@ -99,6 +100,7 @@ function ReviewTableRowSkeleton() {
 
 export default function ReviewsPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   const [isPending, startTransition] = useTransition();
@@ -121,6 +123,11 @@ export default function ReviewsPage() {
   }, [reviewsData, searchQuery]);
 
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "Admin user not found.", variant: "destructive" });
+        return;
+    }
+    
     startTransition(async () => {
         try {
             await action();
@@ -135,31 +142,37 @@ export default function ReviewsPage() {
     });
   };
   
-  const handleToggleVisibility = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, "reviews", review.id);
+  const onToggleVisibility = (review: Review) => {
+    if (!user) return;
     handleAction(
-        () => updateDoc(reviewRef, { visible: !review.visible }),
+        async () => {
+            const idToken = await user.getIdToken();
+            await toggleReviewVisibility(idToken, review.id, review.visible)
+        },
         `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
         "Failed to update visibility"
     );
   }
 
-  const handleTogglePin = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, "reviews", review.id);
+  const onTogglePin = (review: Review) => {
+     if (!user) return;
     handleAction(
-        () => updateDoc(reviewRef, { pinned: !review.pinned }),
+        async () => {
+            const idToken = await user.getIdToken();
+            await toggleReviewPinned(idToken, review.id, review.pinned)
+        },
         `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
         "Failed to update pin status"
     );
   }
 
-  const handleDelete = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, "reviews", review.id);
+  const onDelete = (review: Review) => {
+    if (!user) return;
     handleAction(
-        () => deleteDoc(reviewRef),
+        async () => {
+            const idToken = await user.getIdToken();
+            await deleteReview(idToken, review.id)
+        },
         `Review by ${review.name} deleted.`,
         "Failed to delete review"
     );
@@ -210,7 +223,7 @@ export default function ReviewsPage() {
                     <div className="flex gap-1 justify-end">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleToggleVisibility(review)} disabled={isPending}>
+                                <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)} disabled={isPending}>
                                     {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </Button>
                             </TooltipTrigger>
@@ -218,7 +231,7 @@ export default function ReviewsPage() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleTogglePin(review)} disabled={isPending}>
+                                <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)} disabled={isPending}>
                                     {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                                 </Button>
                             </TooltipTrigger>
@@ -246,7 +259,7 @@ export default function ReviewsPage() {
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                     className="bg-destructive hover:bg-destructive/90"
-                                    onClick={() => handleDelete(review)}
+                                    onClick={() => onDelete(review)}
                                     >
                                     Yes, delete review
                                     </AlertDialogAction>
