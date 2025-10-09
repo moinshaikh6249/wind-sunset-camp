@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { useSearch } from "@/context/SearchProvider";
+import { cn } from "@/lib/utils";
 
 
 const navLinks = [
