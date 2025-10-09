@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -80,15 +81,26 @@ export default function ReviewsPage() {
 
   const reviewsRef = useMemoFirebase(() => {
     if (!firestore) return null;
+    // Simplified query to avoid needing a composite index
     return query(
         collection(firestore, "reviews"), 
         where("visible", "==", true),
-        orderBy("pinned", "desc"),
         orderBy("createdAt", "desc")
     );
   }, [firestore]);
 
-  const { data: reviews, isLoading } = useCollection<Review>(reviewsRef);
+  const { data: reviewsData, isLoading } = useCollection<Review>(reviewsRef);
+  
+  // Sort reviews client-side to show pinned reviews first
+  const sortedReviews = useMemo(() => {
+    if (!reviewsData) return [];
+    return [...reviewsData].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        // If both have same pinned status, sort by date (already done by query)
+        return 0;
+    });
+  }, [reviewsData]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -107,13 +119,13 @@ export default function ReviewsPage() {
     try {
         await addDoc(collection(firestore, "reviews"), {
             ...values,
-            visible: true,
+            visible: true, // New reviews are visible by default but need admin approval conceptually
             pinned: false,
             createdAt: serverTimestamp(),
         });
         toast({
             title: "Review Submitted!",
-            description: "Thank you for your feedback. Your review will be visible shortly.",
+            description: "Thank you for your feedback. Your review is now pending approval.",
             icon: <ThumbsUp className="h-5 w-5 text-green-500" />,
         });
         form.reset();
@@ -147,8 +159,8 @@ export default function ReviewsPage() {
                         <ReviewSkeleton />
                     </div>
                 )}
-                {!isLoading && reviews && reviews.length > 0 ? (
-                    reviews.map((review) => (
+                {!isLoading && sortedReviews && sortedReviews.length > 0 ? (
+                    sortedReviews.map((review) => (
                         <Card key={review.id} className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
                             <CardHeader className="flex flex-row items-center gap-4">
                                 <Avatar className="h-12 w-12 text-xl">
