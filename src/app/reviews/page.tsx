@@ -81,7 +81,8 @@ export default function ReviewsPage() {
 
   const reviewsRef = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Simplified query to avoid needing a composite index
+    // This query is now simplified to only filter by 'visible' and order by 'createdAt'.
+    // This avoids the need for a composite index in Firestore.
     return query(
         collection(firestore, "reviews"), 
         where("visible", "==", true),
@@ -91,13 +92,13 @@ export default function ReviewsPage() {
 
   const { data: reviewsData, isLoading } = useCollection<Review>(reviewsRef);
   
-  // Sort reviews client-side to show pinned reviews first
+  // Client-side sorting to show pinned reviews first.
   const sortedReviews = useMemo(() => {
     if (!reviewsData) return [];
     return [...reviewsData].sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
-        // If both have same pinned status, sort by date (already done by query)
+        // For items with the same pinned status, the default chronological order from the query is maintained.
         return 0;
     });
   }, [reviewsData]);
