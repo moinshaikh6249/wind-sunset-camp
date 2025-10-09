@@ -2,7 +2,7 @@
 
 import { useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { useCollection } from "@/firebase/firestore/use-collection";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useMemo, useTransition } from "react";
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Trash2, Eye, EyeOff, Pin, PinOff } from "lucide-react";
@@ -40,8 +40,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toggleReviewVisibility, toggleReviewPinned, deleteReview } from './actions';
-
 
 type Review = {
     id: string;
@@ -100,7 +98,6 @@ function ReviewTableRowSkeleton() {
 
 export default function ReviewsPage() {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   const [isPending, startTransition] = useTransition();
@@ -123,11 +120,6 @@ export default function ReviewsPage() {
   }, [reviewsData, searchQuery]);
 
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
-    if (!user) {
-        toast({ title: "Authentication Error", description: "Admin user not found.", variant: "destructive" });
-        return;
-    }
-    
     startTransition(async () => {
         try {
             await action();
@@ -135,7 +127,7 @@ export default function ReviewsPage() {
         } catch (error: any) {
             toast({
                 title: errorTitle,
-                description: error.message || "An unexpected error occurred.",
+                description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
                 variant: "destructive",
             });
         }
@@ -143,36 +135,30 @@ export default function ReviewsPage() {
   };
   
   const onToggleVisibility = (review: Review) => {
-    if (!user) return;
+    if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        async () => {
-            const idToken = await user.getIdToken();
-            await toggleReviewVisibility(idToken, review.id, review.visible)
-        },
+        () => updateDoc(reviewRef, { visible: !review.visible }),
         `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
         "Failed to update visibility"
     );
   }
 
   const onTogglePin = (review: Review) => {
-     if (!user) return;
+     if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        async () => {
-            const idToken = await user.getIdToken();
-            await toggleReviewPinned(idToken, review.id, review.pinned)
-        },
+        () => updateDoc(reviewRef, { pinned: !review.pinned }),
         `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
         "Failed to update pin status"
     );
   }
 
   const onDelete = (review: Review) => {
-    if (!user) return;
+    if (!firestore) return;
+    const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
-        async () => {
-            const idToken = await user.getIdToken();
-            await deleteReview(idToken, review.id)
-        },
+        () => deleteDoc(reviewRef),
         `Review by ${review.name} deleted.`,
         "Failed to delete review"
     );
