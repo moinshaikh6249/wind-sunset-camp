@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toggleReviewPinned, toggleReviewVisibility, deleteReview as deleteReviewAction } from "./actions";
 
 type Review = {
     id: string;
@@ -98,6 +99,7 @@ function ReviewTableRowSkeleton() {
 
 export default function ReviewsPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   const [isPending, startTransition] = useTransition();
@@ -108,17 +110,27 @@ export default function ReviewsPage() {
   }, [firestore]);
 
   const { data: reviewsData, isLoading } = useCollection<Review>(reviewsQuery);
+  
+  const sortedReviews = useMemo(() => {
+      if (!reviewsData) return [];
+      return [...reviewsData].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0);
+      });
+  }, [reviewsData]);
+
 
   const filteredReviews = useMemo(() => {
-    if (!reviewsData) return [];
-    if (!searchQuery) return reviewsData;
+    if (!sortedReviews) return [];
+    if (!searchQuery) return sortedReviews;
     const lowercasedQuery = searchQuery.toLowerCase();
-    return reviewsData.filter(review => 
+    return sortedReviews.filter(review => 
         review.name.toLowerCase().includes(lowercasedQuery) ||
         review.comment.toLowerCase().includes(lowercasedQuery)
     );
-  }, [reviewsData, searchQuery]);
-
+  }, [sortedReviews, searchQuery]);
+  
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
     startTransition(async () => {
         try {
@@ -134,31 +146,31 @@ export default function ReviewsPage() {
     });
   };
   
-  const onToggleVisibility = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+  const onToggleVisibility = async (review: Review) => {
+    if (!user) return;
+    const idToken = await user.getIdToken();
     handleAction(
-        () => updateDoc(reviewRef, { visible: !review.visible }),
+        () => toggleReviewVisibility(idToken, review.id, review.visible),
         `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
         "Failed to update visibility"
     );
   }
 
-  const onTogglePin = (review: Review) => {
-     if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+  const onTogglePin = async (review: Review) => {
+    if (!user) return;
+    const idToken = await user.getIdToken();
     handleAction(
-        () => updateDoc(reviewRef, { pinned: !review.pinned }),
+        () => toggleReviewPinned(idToken, review.id, review.pinned),
         `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
         "Failed to update pin status"
     );
   }
 
-  const onDelete = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+  const onDelete = async (review: Review) => {
+    if (!user) return;
+    const idToken = await user.getIdToken();
     handleAction(
-        () => deleteDoc(reviewRef),
+        () => deleteReviewAction(idToken, review.id),
         `Review by ${review.name} deleted.`,
         "Failed to delete review"
     );
@@ -194,7 +206,7 @@ export default function ReviewsPage() {
             </TableCell>
             <TableCell className="hidden md:table-cell text-center">
                 <div className="flex justify-center gap-2">
-                    <Badge variant={review.visible ? "default" : "secondary"} className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">
+                    <Badge variant={review.visible ? "default" : "secondary"} className={cn(review.visible ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400")}>
                         {review.visible ? 'Visible' : 'Hidden'}
                     </Badge>
                      {review.pinned && (
@@ -213,7 +225,7 @@ export default function ReviewsPage() {
                                     {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{review.visible ? 'Hide' : 'Show'}</TooltipContent>
+                            <TooltipContent>{review.visible ? 'Hide Review' : 'Show Review'}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -221,7 +233,7 @@ export default function ReviewsPage() {
                                     {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{review.pinned ? 'Unpin' : 'Pin'}</TooltipContent>
+                            <TooltipContent>{review.pinned ? 'Unpin Review' : 'Pin Review'}</TooltipContent>
                         </Tooltip>
                          <AlertDialog>
                             <Tooltip>
@@ -232,7 +244,7 @@ export default function ReviewsPage() {
                                         </Button>
                                     </AlertDialogTrigger>
                                 </TooltipTrigger>
-                                <TooltipContent>Delete</TooltipContent>
+                                <TooltipContent>Delete Review</TooltipContent>
                             </Tooltip>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
