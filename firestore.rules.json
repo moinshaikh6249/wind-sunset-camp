@@ -1,0 +1,13 @@
+
+{
+  "rules": {
+    "reviews": {
+      "$reviewId": {
+        "read": "resource.data.visible == true",
+        "create": "true",
+        "update": "request.auth.token.isAdmin == true",
+        "delete": "request.auth.token.isAdmin == true"
+      }
+    }
+  }
+}
