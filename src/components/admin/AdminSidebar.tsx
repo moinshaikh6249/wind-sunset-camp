@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { Home, Settings, Users2, CalendarCheck, BarChart, Tent, GalleryVertical, Mail } from "lucide-react";
+import { Home, Settings, Users2, CalendarCheck, BarChart, Tent, GalleryVertical, Mail, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ const navLinks = [
     { href: "/admin/camps", label: "Camps", icon: Tent },
     { href: "/admin/gallery", label: "Gallery", icon: GalleryVertical },
     { href: "/admin/messages", label: "Messages", icon: Mail },
+    { href: "/admin/reviews", label: "Reviews", icon: Star },
     { href: "/admin/reports", label: "Reports", icon: BarChart },
 ];
 

@@ -201,6 +201,21 @@
         "read": { "type": "boolean" }
       },
       "required": ["subject", "timestamp", "read"]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a user-submitted review.",
+      "properties": {
+        "name": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "visible": { "type": "boolean" },
+        "pinned": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "rating", "comment", "visible", "pinned", "createdAt"]
     }
   },
   "auth": {
@@ -256,6 +271,12 @@
         "$ref": "#/entities/ContactMessage"
       },
       "description": "A centralized collection of all user messages for admin access."
+    },
+    "/reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/Review"
+      },
+      "description": "Stores user-submitted reviews for the camp."
     }
   }
 }

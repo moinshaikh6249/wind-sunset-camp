@@ -15,7 +15,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
 import { useUser, useDatabase, useMemoFirebase, useAdmin } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
@@ -36,6 +36,7 @@ const navLinks = [
   { href: "/about", label: "About Us", icon: Info },
   { href: "/gallery", label: "Gallery", icon: GalleryVertical },
   { href: "/camps", label: "Upcoming Camps", icon: Tent },
+  { href: "/reviews", label: "Reviews", icon: Star },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
