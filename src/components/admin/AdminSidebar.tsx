@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { Home, Settings, Users2, CalendarCheck, BarChart, Tent, GalleryVertical, Mail, Star, Bell } from "lucide-react";
+import { Home, Settings, Users2, CalendarCheck, BarChart, Tent, GalleryVertical, Mail, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,15 @@ export function AdminSidebar() {
                     </nav>
                 </div>
                 <div className="mt-auto p-4">
-                    
+                    <Link href="/admin/settings"
+                        className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                            pathname.startsWith(settingsLink.href) && "bg-muted text-primary"
+                        )}
+                    >
+                        <Settings className="h-4 w-4" />
+                        {settingsLink.label}
+                    </Link>
                 </div>
             </div>
         </div>
