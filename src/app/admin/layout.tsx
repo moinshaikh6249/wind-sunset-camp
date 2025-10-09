@@ -63,7 +63,7 @@ export default function AdminLayout({
         <AdminSidebar />
         <div className="flex flex-col">
           <AdminHeader />
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <main className="flex flex-1 flex-col gap-4 p-4 sm:p-6 md:gap-6 md:p-8">
             {children}
           </main>
         </div>
