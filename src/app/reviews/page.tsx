@@ -108,7 +108,7 @@ export default function ReviewsPage() {
         console.error("Error fetching reviews:", error);
         toast({
           title: "Error loading reviews",
-          description: error.message || "Could not fetch reviews from the database.",
+          description: "Could not fetch reviews. If the issue persists, a database index may be required. See console for details.",
           variant: "destructive",
         });
       } finally {
@@ -135,12 +135,27 @@ export default function ReviewsPage() {
         return;
     }
     try {
-        await addDoc(collection(firestore, "reviews"), {
+        const docRef = await addDoc(collection(firestore, "reviews"), {
             ...values,
             visible: true, // New reviews are visible by default
             pinned: false,
             createdAt: serverTimestamp(),
         });
+
+        const newReview: Review = {
+            id: docRef.id,
+            ...values,
+            pinned: false,
+            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } // Approximate timestamp
+        };
+
+        // Add the new review to the top of the list (if unpinned)
+        setReviews(prevReviews => {
+            const unpinned = prevReviews.filter(r => !r.pinned);
+            const pinned = prevReviews.filter(r => r.pinned);
+            return [ ...pinned, newReview, ...unpinned ];
+        });
+
         toast({
             title: "Review Submitted!",
             description: "Thank you for your feedback. Your review is now visible.",
