@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useMemo, useEffect } from "react";
-import { useFirestore, useMemoFirebase } from "@/firebase";
+import { useFirestore } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from "firebase/firestore";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
@@ -87,34 +87,28 @@ export default function ReviewsPage() {
     const fetchReviews = async () => {
       setIsLoading(true);
       try {
-        // Query for pinned reviews
-        const pinnedQuery = query(
+        // Step 1: Use a simple query that Firestore can handle without a custom index.
+        // Fetch all visible reviews, sorted by date.
+        const q = query(
           collection(firestore, "reviews"),
           where("visible", "==", true),
-          where("pinned", "==", true),
           orderBy("createdAt", "desc")
         );
-        const pinnedSnapshot = await getDocs(pinnedQuery);
-        const pinnedReviews = pinnedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
-
-        // Query for unpinned reviews
-        const unpinnedQuery = query(
-          collection(firestore, "reviews"),
-          where("visible", "==", true),
-          where("pinned", "==", false),
-          orderBy("createdAt", "desc")
-        );
-        const unpinnedSnapshot = await getDocs(unpinnedQuery);
-        const unpinnedReviews = unpinnedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+        const querySnapshot = await getDocs(q);
+        const allVisibleReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
         
-        // Combine and set the reviews
+        // Step 2: Perform the sorting for pinned reviews on the client-side.
+        const pinnedReviews = allVisibleReviews.filter(review => review.pinned);
+        const unpinnedReviews = allVisibleReviews.filter(review => !review.pinned);
+
+        // Combine and set the reviews, ensuring pinned reviews are first.
         setReviews([...pinnedReviews, ...unpinnedReviews]);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching reviews:", error);
         toast({
           title: "Error loading reviews",
-          description: "Could not fetch reviews from the database.",
+          description: error.message || "Could not fetch reviews from the database.",
           variant: "destructive",
         });
       } finally {
@@ -143,13 +137,13 @@ export default function ReviewsPage() {
     try {
         await addDoc(collection(firestore, "reviews"), {
             ...values,
-            visible: true, // New reviews are visible by default but need admin approval conceptually
+            visible: true, // New reviews are visible by default
             pinned: false,
             createdAt: serverTimestamp(),
         });
         toast({
             title: "Review Submitted!",
-            description: "Thank you for your feedback. Your review is now pending approval.",
+            description: "Thank you for your feedback. Your review is now visible.",
             icon: <ThumbsUp className="h-5 w-5 text-green-500" />,
         });
         form.reset();
