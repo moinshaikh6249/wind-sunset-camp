@@ -4,9 +4,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useState, useMemo } from "react";
-import { useFirestore, useMemoFirebase, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
+import { useState, useMemo, useEffect } from "react";
+import { useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from "firebase/firestore";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -78,30 +78,53 @@ export default function ReviewsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [hoverRating, setHoverRating] = useState(0);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const reviewsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    // This query is now simplified to only filter by 'visible' and order by 'createdAt'.
-    // This avoids the need for a composite index in Firestore.
-    return query(
-        collection(firestore, "reviews"), 
-        where("visible", "==", true),
-        orderBy("createdAt", "desc")
-    );
-  }, [firestore]);
+  useEffect(() => {
+    if (!firestore) return;
 
-  const { data: reviewsData, isLoading } = useCollection<Review>(reviewsRef);
-  
-  // Client-side sorting to show pinned reviews first.
-  const sortedReviews = useMemo(() => {
-    if (!reviewsData) return [];
-    return [...reviewsData].sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        // For items with the same pinned status, the default chronological order from the query is maintained.
-        return 0;
-    });
-  }, [reviewsData]);
+    const fetchReviews = async () => {
+      setIsLoading(true);
+      try {
+        // Query for pinned reviews
+        const pinnedQuery = query(
+          collection(firestore, "reviews"),
+          where("visible", "==", true),
+          where("pinned", "==", true),
+          orderBy("createdAt", "desc")
+        );
+        const pinnedSnapshot = await getDocs(pinnedQuery);
+        const pinnedReviews = pinnedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+
+        // Query for unpinned reviews
+        const unpinnedQuery = query(
+          collection(firestore, "reviews"),
+          where("visible", "==", true),
+          where("pinned", "==", false),
+          orderBy("createdAt", "desc")
+        );
+        const unpinnedSnapshot = await getDocs(unpinnedQuery);
+        const unpinnedReviews = unpinnedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+        
+        // Combine and set the reviews
+        setReviews([...pinnedReviews, ...unpinnedReviews]);
+
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        toast({
+          title: "Error loading reviews",
+          description: "Could not fetch reviews from the database.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [firestore, toast]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -160,8 +183,8 @@ export default function ReviewsPage() {
                         <ReviewSkeleton />
                     </div>
                 )}
-                {!isLoading && sortedReviews && sortedReviews.length > 0 ? (
-                    sortedReviews.map((review) => (
+                {!isLoading && reviews && reviews.length > 0 ? (
+                    reviews.map((review) => (
                         <Card key={review.id} className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
                             <CardHeader className="flex flex-row items-center gap-4">
                                 <Avatar className="h-12 w-12 text-xl">
