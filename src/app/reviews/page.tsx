@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useMemo, useEffect } from "react";
 import { useFirestore } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs } from "firebase/firestore";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ type Review = {
     name: string;
     rating: number;
     comment: string;
+    visible: boolean;
     pinned: boolean;
     createdAt: { seconds: number; nanoseconds: number; };
 }
@@ -87,19 +88,19 @@ export default function ReviewsPage() {
     const fetchReviews = async () => {
       setIsLoading(true);
       try {
-        // Step 1: Use a simple query that Firestore can handle without a custom index.
-        // Fetch all visible reviews, sorted by date.
+        // Step 1: Use a simple query that Firestore can handle without an index.
+        // Fetch all reviews, sorted only by date.
         const q = query(
           collection(firestore, "reviews"),
-          where("visible", "==", true),
           orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
-        const allVisibleReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+        const allReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
         
-        // Step 2: Perform the sorting for pinned reviews on the client-side.
-        const pinnedReviews = allVisibleReviews.filter(review => review.pinned);
-        const unpinnedReviews = allVisibleReviews.filter(review => !review.pinned);
+        // Step 2: Perform filtering and sorting for pinned/visible reviews on the client-side.
+        const visibleReviews = allReviews.filter(review => review.visible);
+        const pinnedReviews = visibleReviews.filter(review => review.pinned);
+        const unpinnedReviews = visibleReviews.filter(review => !review.pinned);
 
         // Combine and set the reviews, ensuring pinned reviews are first.
         setReviews([...pinnedReviews, ...unpinnedReviews]);
@@ -145,6 +146,7 @@ export default function ReviewsPage() {
         const newReview: Review = {
             id: docRef.id,
             ...values,
+            visible: true,
             pinned: false,
             createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } // Approximate timestamp
         };
@@ -301,3 +303,5 @@ export default function ReviewsPage() {
     </div>
   );
 }
+
+    
