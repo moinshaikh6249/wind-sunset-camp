@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { useFirestore, useMemoFirebase, useUser, useAdmin } from "@/firebase";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useMemo, useTransition } from "react";
@@ -59,7 +59,7 @@ function StarRating({ rating }: { rating: number }) {
 
 function ReviewCardSkeleton() {
     return (
-        <div className="bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-border/50">
+        <div className="review-card bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-border/50">
             <div className="flex justify-between items-start">
                  <div className="w-full space-y-3">
                     <Skeleton className="h-5 w-1/3" />
@@ -85,6 +85,7 @@ export default function ReviewsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
+  const { isAdmin } = useAdmin();
   
   const reviewsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -208,55 +209,57 @@ export default function ReviewsPage() {
                               {review.visible ? 'Visible' : 'Hidden'}
                           </Badge>
                         </div>
-                        <TooltipProvider>
-                          <div className="flex gap-1 justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)}>
-                                          {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{review.visible ? 'Hide Review' : 'Show Review'}</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)}>
-                                          {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{review.pinned ? 'Unpin Review' : 'Pin Review'}</TooltipContent>
-                              </Tooltip>
-                              <AlertDialog>
-                                  <Tooltip>
-                                      <TooltipTrigger asChild>
-                                          <AlertDialogTrigger asChild>
-                                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                  <Trash2 className="h-4 w-4" />
-                                              </Button>
-                                          </AlertDialogTrigger>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Delete Review</TooltipContent>
-                                  </Tooltip>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              This will permanently delete the review by <span className="font-semibold">{review.name}</span>. This action cannot be undone.
-                                          </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction
-                                          className="bg-destructive hover:bg-destructive/90"
-                                          onClick={() => onDelete(review)}
-                                          >
-                                          Yes, delete review
-                                          </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                          </div>
-                        </TooltipProvider>
+                        {isAdmin && (
+                            <TooltipProvider>
+                            <div className="flex gap-1 justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)}>
+                                            {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{review.visible ? 'Hide Review' : 'Show Review'}</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)}>
+                                            {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{review.pinned ? 'Unpin Review' : 'Pin Review'}</TooltipContent>
+                                </Tooltip>
+                                <AlertDialog>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Delete Review</TooltipContent>
+                                    </Tooltip>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete the review by <span className="font-semibold">{review.name}</span>. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                            className="bg-destructive hover:bg-destructive/90"
+                                            onClick={() => onDelete(review)}
+                                            >
+                                            Yes, delete review
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                            </TooltipProvider>
+                        )}
                       </div>
                     </div>
                   </div>

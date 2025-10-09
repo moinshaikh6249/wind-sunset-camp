@@ -3,7 +3,7 @@
     "reviews": {
       "$reviewId": {
         "allow read": "if resource.data.visible == true;",
-        "allow create": "if true;",
+        "allow create": "if request.auth != null;",
         "allow update, delete": "if request.auth != null && request.auth.token.isAdmin == true;"
       }
     }
