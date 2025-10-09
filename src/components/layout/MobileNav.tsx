@@ -3,12 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, X, Star } from "lucide-react";
+import { LogOut, X, Star, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser, useDatabase, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useDatabase, useMemoFirebase, useAuth, useAdmin } from "@/firebase";
 import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref } from "firebase/database";
 import { signOut } from "firebase/auth";
@@ -26,6 +26,7 @@ const navLinks = [
 
 function UserProfileSection() {
     const { user, isUserLoading } = useUser();
+    const { isAdmin, isAdminLoading } = useAdmin();
     const database = useDatabase();
     const auth = useAuth();
     const { toast } = useToast();
@@ -53,7 +54,7 @@ function UserProfileSection() {
         }
     };
     
-    if (isUserLoading || (user && isProfileLoading)) {
+    if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
         return (
              <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-10 w-10 text-xl animate-pulse bg-muted"></Avatar>
@@ -89,7 +90,7 @@ function UserProfileSection() {
     return (
         <div className="space-y-4">
             <SheetClose asChild>
-                <Link href="/dashboard" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/10">
+                <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/10">
                     <Avatar className="h-10 w-10 text-xl">
                         <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
                         <AvatarFallback>{userInitial}</AvatarFallback>
@@ -100,6 +101,16 @@ function UserProfileSection() {
                     </div>
                 </Link>
             </SheetClose>
+            {isAdmin && (
+              <SheetClose asChild>
+                <Button asChild variant="secondary" size="sm" className="w-full">
+                    <Link href="/admin/dashboard">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin Dashboard
+                    </Link>
+                </Button>
+              </SheetClose>
+            )}
             <SheetClose asChild>
                 <Button variant="outline" className="w-full" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
