@@ -10,11 +10,11 @@ export function initializeAdminApp(): App {
         return apps[0] as App;
     }
 
-    // Initialize with application default credentials.
-    // This allows the Admin SDK to automatically find and use the service account
-    // credentials provided by the cloud environment.
+    // Initialize with application default credentials and explicitly set the projectId.
+    // This ensures the Admin SDK uses the correct Firebase project, preventing "aud" claim mismatches.
     return initializeApp({
         credential: applicationDefault(),
         databaseURL: process.env.FIREBASE_DATABASE_URL,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
 }
