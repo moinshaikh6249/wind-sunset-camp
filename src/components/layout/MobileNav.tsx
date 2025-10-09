@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
@@ -20,6 +20,7 @@ const navLinks = [
     { href: "/about", label: "About Us" },
     { href: "/gallery", label: "Gallery" },
     { href: "/camps", label: "Upcoming Camps" },
+    { href: "/reviews", label: "Reviews" },
     { href: "/contact", label: "Contact" },
   ];
 
