@@ -8,8 +8,8 @@
     },
     {
       "id": "team-1",
-      "description": "Portrait of Alex Johnson, a confident guide.",
-      "imageUrl": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg5NTE1NDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Portrait of Sameer More, the owner.",
+      "imageUrl": "/images/sameer.jpg",
       "imageHint": "man portrait"
     },
     {
