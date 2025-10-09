@@ -4,9 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useMemo } from "react";
-import { useFirestore, useMemoFirebase } from "@/firebase";
+import { useFirestore, useMemoFirebase, useCollection } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
-import { useCollection } from "@/firebase/firestore/use-collection";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
