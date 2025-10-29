@@ -10,11 +10,17 @@ export function initializeAdminApp(): App {
         return apps[0] as App;
     }
 
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!projectId) {
+        throw new Error("NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is not set.");
+    }
+
     // Initialize with application default credentials.
     // The SDK will automatically use the GOOGLE_APPLICATION_CREDENTIALS environment variable
     // and other gcloud context in this environment.
     return initializeApp({
         credential: applicationDefault(),
-        databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
+        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
+        projectId: projectId,
     });
 }
