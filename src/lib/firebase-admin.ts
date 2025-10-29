@@ -10,11 +10,11 @@ export function initializeAdminApp(): App {
         return apps[0] as App;
     }
 
-    // Initialize with application default credentials and explicitly set the projectId.
-    // This ensures the Admin SDK uses the correct Firebase project, preventing "aud" claim mismatches.
+    // Initialize with application default credentials.
+    // The SDK will automatically use the GOOGLE_APPLICATION_CREDENTIALS environment variable
+    // and other gcloud context in this environment.
     return initializeApp({
         credential: applicationDefault(),
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
     });
 }
