@@ -86,6 +86,7 @@ export default function ReviewsPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   const { isAdmin } = useAdmin();
+  const [isPending, startTransition] = useTransition();
   
   const reviewsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -115,19 +116,21 @@ export default function ReviewsPage() {
   }, [sortedReviews, searchQuery]);
   
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
-    try {
-        await action();
-        toast({ title: successTitle });
-    } catch (error: any) {
-        toast({
-            title: errorTitle,
-            description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
-            variant: "destructive",
-        });
-    }
+    startTransition(async () => {
+        try {
+            await action();
+            toast({ title: successTitle });
+        } catch (error: any) {
+            toast({
+                title: errorTitle,
+                description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
+                variant: "destructive",
+            });
+        }
+    });
   };
   
-  const onToggleVisibility = async (review: Review) => {
+  const onToggleVisibility = (review: Review) => {
     if (!firestore) return;
     const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
@@ -137,7 +140,7 @@ export default function ReviewsPage() {
     );
   }
 
-  const onTogglePin = async (review: Review) => {
+  const onTogglePin = (review: Review) => {
     if (!firestore) return;
     const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
@@ -147,7 +150,7 @@ export default function ReviewsPage() {
     );
   }
 
-  const onDelete = async (review: Review) => {
+  const onDelete = (review: Review) => {
     if (!firestore) return;
     const reviewRef = doc(firestore, 'reviews', review.id);
     handleAction(
@@ -214,7 +217,7 @@ export default function ReviewsPage() {
                             <div className="flex gap-1 justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)}>
+                                        <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(review)} disabled={isPending}>
                                             {review.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </Button>
                                     </TooltipTrigger>
@@ -222,7 +225,7 @@ export default function ReviewsPage() {
                                 </Tooltip>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)}>
+                                        <Button variant="ghost" size="icon" onClick={() => onTogglePin(review)} disabled={isPending}>
                                             {review.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                                         </Button>
                                     </TooltipTrigger>
@@ -232,7 +235,7 @@ export default function ReviewsPage() {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>
@@ -251,8 +254,9 @@ export default function ReviewsPage() {
                                             <AlertDialogAction
                                             className="bg-destructive hover:bg-destructive/90"
                                             onClick={() => onDelete(review)}
+                                            disabled={isPending}
                                             >
-                                            Yes, delete review
+                                            {isPending ? "Deleting..." : "Yes, delete review"}
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -270,3 +274,5 @@ export default function ReviewsPage() {
     </>
   );
 }
+
+    
