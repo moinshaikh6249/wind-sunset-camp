@@ -5,8 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useMemo, useEffect } from "react";
-import { useFirestore } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, where } from "firebase/firestore";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ type Review = {
     visible: boolean;
     pinned: boolean;
     createdAt: { seconds: number; nanoseconds: number; };
+    userId?: string;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -78,6 +79,7 @@ function ReviewSkeleton() {
 export default function ReviewsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const [hoverRating, setHoverRating] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,28 +90,24 @@ export default function ReviewsPage() {
     const fetchReviews = async () => {
       setIsLoading(true);
       try {
-        // Step 1: Use a simple query that Firestore can handle without an index.
-        // Fetch all reviews, sorted only by date.
         const q = query(
           collection(firestore, "reviews"),
+          where("visible", "==", true),
           orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
-        const allReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+        const fetchedReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
         
-        // Step 2: Perform filtering and sorting for pinned/visible reviews on the client-side.
-        const visibleReviews = allReviews.filter(review => review.visible);
-        const pinnedReviews = visibleReviews.filter(review => review.pinned);
-        const unpinnedReviews = visibleReviews.filter(review => !review.pinned);
+        const pinnedReviews = fetchedReviews.filter(r => r.pinned);
+        const unpinnedReviews = fetchedReviews.filter(r => !r.pinned);
 
-        // Combine and set the reviews, ensuring pinned reviews are first.
         setReviews([...pinnedReviews, ...unpinnedReviews]);
 
       } catch (error: any) {
         console.error("Error fetching reviews:", error);
         toast({
           title: "Error loading reviews",
-          description: "Could not fetch reviews. If the issue persists, a database index may be required. See console for details.",
+          description: "Could not fetch reviews. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -130,24 +128,36 @@ export default function ReviewsPage() {
     },
   });
 
+  useEffect(() => {
+    if (user && user.displayName) {
+        form.setValue("name", user.displayName);
+    }
+  }, [user, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) {
         toast({ title: "Error", description: "Could not connect to the database.", variant: "destructive" });
         return;
     }
+    if (!user) {
+        toast({ title: "Not logged in", description: "You must be logged in to leave a review.", variant: "destructive" });
+        return;
+    }
+
     try {
-        const docRef = await addDoc(collection(firestore, "reviews"), {
+        const reviewData = {
             ...values,
+            userId: user.uid,
             visible: true, // New reviews are visible by default
             pinned: false,
             createdAt: serverTimestamp(),
-        });
+        };
+
+        const docRef = await addDoc(collection(firestore, "reviews"), reviewData);
 
         const newReview: Review = {
             id: docRef.id,
-            ...values,
-            visible: true,
-            pinned: false,
+            ...reviewData,
             createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } // Approximate timestamp
         };
 
@@ -164,6 +174,12 @@ export default function ReviewsPage() {
             icon: <ThumbsUp className="h-5 w-5 text-green-500" />,
         });
         form.reset();
+        if (user?.displayName) {
+            form.setValue('name', user.displayName);
+        }
+        form.setValue('rating', 0);
+
+
     } catch (error: any) {
         toast({
             title: "Submission Failed",
@@ -236,65 +252,71 @@ export default function ReviewsPage() {
                         <CardDescription>Share your experience with us and future campers.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Your Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="John D." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                 <FormField
-                                    control={form.control}
-                                    name="rating"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Your Rating</FormLabel>
-                                        <FormControl>
-                                            <div className="flex items-center gap-1" onMouseLeave={() => setHoverRating(0)}>
-                                                {[...Array(5)].map((_, i) => {
-                                                    const ratingValue = i + 1;
-                                                    return (
-                                                        <Star
-                                                            key={i}
-                                                            className={`h-8 w-8 cursor-pointer transition-colors ${ratingValue <= (hoverRating || field.value) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}
-                                                            onClick={() => field.onChange(ratingValue)}
-                                                            onMouseEnter={() => setHoverRating(ratingValue)}
-                                                        />
-                                                    )
-                                                })}
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="comment"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Your Comment</FormLabel>
-                                        <FormControl>
-                                            <Textarea rows={4} placeholder="It was an amazing experience..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
-                                    {form.formState.isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                    {form.formState.isSubmitting ? "Submitting..." : "Submit Review"}
-                                </Button>
-                            </form>
-                        </Form>
+                        {user ? (
+                             <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Your Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="John D." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="rating"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Your Rating</FormLabel>
+                                            <FormControl>
+                                                <div className="flex items-center gap-1" onMouseLeave={() => setHoverRating(0)}>
+                                                    {[...Array(5)].map((_, i) => {
+                                                        const ratingValue = i + 1;
+                                                        return (
+                                                            <Star
+                                                                key={i}
+                                                                className={`h-8 w-8 cursor-pointer transition-colors ${ratingValue <= (hoverRating || field.value) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}
+                                                                onClick={() => field.onChange(ratingValue)}
+                                                                onMouseEnter={() => setHoverRating(ratingValue)}
+                                                            />
+                                                        )
+                                                    })}
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="comment"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Your Comment</FormLabel>
+                                            <FormControl>
+                                                <Textarea rows={4} placeholder="It was an amazing experience..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
+                                        {form.formState.isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                        {form.formState.isSubmitting ? "Submitting..." : "Submit Review"}
+                                    </Button>
+                                </form>
+                            </Form>
+                        ) : (
+                            <div className="text-center text-muted-foreground p-8">
+                                <p>You must be logged in to leave a review.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -303,5 +325,3 @@ export default function ReviewsPage() {
     </div>
   );
 }
-
-    

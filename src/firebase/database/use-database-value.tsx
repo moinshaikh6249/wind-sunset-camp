@@ -1,33 +1,32 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { onValue, ref, query, Query } from 'firebase/database';
-import { useDatabase } from '@/firebase';
+import { onValue, off, type Query } from 'firebase/database';
+import { useMemoFirebase } from '../provider';
 
-export interface UseDatabaseValueResult<T> {
-  data: T | null;
-  isLoading: boolean;
-  error: Error | null;
+interface UseDatabaseValueOptions {
+  // If true, the hook will only fetch the data once.
+  once?: boolean;
 }
 
-export function useDatabaseValue<T = any>(
-  memoizedQuery: Query | null | undefined,
-): UseDatabaseValueResult<T> {
+export function useDatabaseValue<T>(
+  query: Query | null,
+  options?: UseDatabaseValueOptions
+) {
   const [data, setData] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  // Memoize the query to prevent re-renders from creating new query objects
+  const memoizedQuery = useMemoFirebase(() => query, [query]);
 
   useEffect(() => {
     if (!memoizedQuery) {
-      setData(null);
       setIsLoading(false);
-      setError(null);
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     const listener = onValue(
       memoizedQuery,
@@ -40,19 +39,21 @@ export function useDatabaseValue<T = any>(
         setError(error);
         setIsLoading(false);
         // Note: RealtimeDB security errors are not as detailed client-side.
-        // A more robust solution might involve a global error handler
-        // or a specific error boundary for components that use this hook.
+        // A proper production app might log this to a server for analysis.
       }
     );
 
+    // If `once` is true, we immediately detach the listener after the first value is received.
+    if (options?.once) {
+        // The onValue listener gets the first value, then we detach.
+        return () => off(memoizedQuery, 'value', listener);
+    }
+
+    // Standard cleanup function to detach the listener on unmount
     return () => {
-      // Detach the listener when the component unmounts
-      // This is done by calling the function returned by onValue with no arguments,
-      // but the Firebase SDK overloads `off` for this purpose as well.
-      // In modern SDKs, the returned function itself is the unsubscriber.
-      listener();
+      off(memoizedQuery, 'value', listener);
     };
-  }, [memoizedQuery]);
+  }, [memoizedQuery, options?.once]);
 
   return { data, isLoading, error };
 }
