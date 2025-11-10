@@ -3,7 +3,10 @@
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid",
+        "messages": {
+          ".read": "auth != null && auth.uid === $uid"
+        }
       }
     },
     "admins": {
@@ -22,6 +25,10 @@
     },
     "adminMessages": {
       ".read": "auth != null && auth.token.isAdmin === true",
+      ".write": "auth != null"
+    },
+    "reviews": {
+      ".read": true,
       ".write": "auth != null"
     }
   }
