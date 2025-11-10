@@ -1,11 +1,21 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid",
+        "bookings": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "history": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "messages": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
       }
     },
     "admins": {
@@ -25,16 +35,20 @@
     "adminMessages": {
       ".read": "auth != null && auth.token.isAdmin === true",
       "$messageId": {
+        // Allow any authenticated user to write a message
         ".write": "auth != null"
       }
     },
     "reviews": {
-      // Allow public read only for reviews marked as visible
       ".indexOn": ["visible", "pinned"],
+      // Allow public read only for reviews marked as visible
       "$reviewId": {
          ".read": "data.child('visible').val() === true",
+         // Allow an authenticated user to write a review.
+         // Allow an admin to update an existing review, but not change the userId.
          ".write": "auth != null && (newData.child('userId').val() === auth.uid || (auth.token.isAdmin === true && data.child('userId').val() === newData.child('userId').val()))"
       },
+      // Allow admins to write to the top-level /reviews node (for bulk operations)
       ".write": "auth != null && auth.token.isAdmin === true"
     }
   }
