@@ -1,28 +1,24 @@
 
-// This file is no longer used for Firebase Admin SDK initialization
-// in the context of user/review management, as those actions have been
-// moved to the client-side with security enforced by rules.
-// It is kept for potential future use cases but is currently inactive.
+import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
+import { credential } from 'firebase-admin';
+import { firebaseConfig } from '@/firebase/config';
 
-import { getApps, initializeApp, App, applicationDefault } from 'firebase-admin/app';
-import 'server-only';
-
+// This function initializes and returns the Firebase Admin App instance.
+// It ensures that the app is initialized only once.
 export function initializeAdminApp(): App {
-    const apps = getApps();
-    if (apps.length > 0) {
-        return apps[0] as App;
-    }
+  // If the default app is already initialized, return it.
+  if (getApps().length) {
+    return getApp();
+  }
 
-    const projectId = process.env.GCLOUD_PROJECT;
-    if (!projectId) {
-        throw new Error("GCLOUD_PROJECT environment variable is not set.");
-    }
+  // If GOOGLE_APPLICATION_CREDENTIALS environment variable is set,
+  // it will be used automatically by `credential.applicationDefault()`.
+  // This is the recommended approach for server environments.
+  // The user needs to set this variable pointing to their service account JSON file.
+  const app = initializeApp({
+    credential: credential.applicationDefault(),
+    databaseURL: firebaseConfig.databaseURL,
+  });
 
-    return initializeApp({
-        credential: applicationDefault(),
-        databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
-        projectId: projectId,
-    });
+  return app;
 }
-
-    

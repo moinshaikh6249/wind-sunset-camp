@@ -1,22 +1,9 @@
-
 {
   "rules": {
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
-        "bookings": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        },
-        "history": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        },
-        "messages": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        }
+        ".write": "auth != null && auth.uid === $uid"
       }
     },
     "admins": {
@@ -35,17 +22,11 @@
     },
     "adminMessages": {
       ".read": "auth != null && auth.token.isAdmin === true",
-      "$messageId": {
-        ".write": "auth != null"
-      }
+      ".write": "auth != null"
     },
     "reviews": {
-      ".indexOn": ["visible", "pinned"],
-      "$reviewId": {
-         ".read": "data.child('visible').val() === true",
-         ".write": "auth != null && (newData.child('userId').val() === auth.uid || (auth.token.isAdmin === true && data.child('userId').val() === newData.child('userId').val()))"
-      },
-      ".write": "auth != null && auth.token.isAdmin === true"
+      ".read": true,
+      ".write": "auth != null"
     }
   }
 }
