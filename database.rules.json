@@ -1,0 +1,41 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "admins": {
+      ".read": "auth != null && auth.token.isAdmin === true",
+      "$uid": {
+        ".write": "auth != null && auth.token.isAdmin === true"
+      }
+    },
+    "camps": {
+      ".read": true,
+      ".write": "auth != null && auth.token.isAdmin === true"
+    },
+    "galleryImages": {
+      ".read": true,
+      ".write": "auth != null && auth.token.isAdmin === true"
+    },
+    "adminMessages": {
+      ".read": "auth != null && auth.token.isAdmin === true",
+      "$messageId": {
+        ".write": "auth != null"
+      }
+    },
+    "reviews": {
+      // Allow public read only for reviews marked as visible
+      ".indexOn": ["visible", "pinned"],
+      "$reviewId": {
+         ".read": "data.child('visible').val() === true",
+         ".write": "auth != null && (newData.child('userId').val() === auth.uid || (auth.token.isAdmin === true && data.child('userId').val() === newData.child('userId').val()))"
+      },
+      ".write": "auth != null && auth.token.isAdmin === true"
+    }
+  }
+}
