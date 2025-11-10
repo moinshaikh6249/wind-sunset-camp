@@ -225,22 +225,14 @@ export const useUser = (): UserHookResult => {
 
 /**
  * Hook to determine if the current user has admin privileges.
- * It checks for the user's UID in the `/admins` path of the Realtime Database.
- * This is more reliable than custom claims for immediate UI changes.
+ * It checks the 'isAdmin' custom claim from the user's ID token.
+ * This is the secure and correct way to check for admin status on the client.
  */
 export const useAdmin = (): AdminHookResult => {
-    const { user, isUserLoading } = useUser();
-    const database = useDatabase();
+    const { idTokenResult, isUserLoading } = useUser();
 
-    const adminRef = useMemoFirebase(() => {
-        if (!user || !database) return null;
-        return ref(database, `admins/${user.uid}`);
-    }, [database, user]);
-
-    const { data: adminData, isLoading: isAdminDataLoading } = useDatabaseValue<boolean>(adminRef);
-
-    const isAdmin = !!adminData;
-    const isAdminLoading = isUserLoading || (!!user && isAdminDataLoading);
+    const isAdmin = !!idTokenResult?.claims.isAdmin;
+    const isAdminLoading = isUserLoading;
 
     return { isAdmin, isAdminLoading };
 };
