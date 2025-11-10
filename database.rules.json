@@ -23,10 +23,6 @@
     "adminMessages": {
       ".read": "auth != null && auth.token.isAdmin === true",
       ".write": "auth != null"
-    },
-    "reviews": {
-      ".read": true,
-      ".write": "auth != null"
     }
   }
 }
