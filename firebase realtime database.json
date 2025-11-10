@@ -1,4 +1,3 @@
-
 {
   "admins": {
     "jyuqnOk9R2V1aMCJLs5RFZGBFdV2": true
@@ -20,7 +19,7 @@
       },
       "location": "Maple Valley",
       "name": "Autumn Colors Retreat",
-      "price": 18000
+      "price": 1800
     },
     "coastal-survival-2024": {
       "activities": [
@@ -38,7 +37,7 @@
       },
       "location": "Shipwreck Cove",
       "name": "Coastal Survival Skills",
-      "price": 22000
+      "price": 2200
     },
     "mountain-explorer-2024": {
       "activities": [
@@ -56,7 +55,7 @@
       },
       "location": "Granite Peak National Park",
       "name": "Mountain Explorer",
-      "price": 25000
+      "price": 2500
     },
     "summer-adventure-2024": {
       "activities": [
@@ -74,7 +73,7 @@
       },
       "location": "Whispering Pines Forest",
       "name": "Summer Adventure Camp",
-      "price": 15000
+      "price": 1500
     }
   },
   "galleryImages": {
