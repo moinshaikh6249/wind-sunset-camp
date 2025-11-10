@@ -1,39 +1,29 @@
 
 {
   "rules": {
+    ".read": false,
+    ".write": false,
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
-        "messages": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        },
-        "bookings": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        },
-        "history": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        }
+        ".write": "auth != null && auth.uid === $uid"
       }
-    },
-    "admins": {
-      ".read": "auth != null && auth.token.isAdmin === true",
-      ".write": false
     },
     "camps": {
       ".read": true,
       ".write": "auth != null && auth.token.isAdmin === true"
     },
     "galleryImages": {
-       ".read": true,
-       ".write": "auth != null && auth.token.isAdmin === true"
+      ".read": true,
+      ".write": "auth != null && auth.token.isAdmin === true"
     },
     "adminMessages": {
       ".read": "auth != null && auth.token.isAdmin === true",
       ".write": "auth != null"
+    },
+    "admins": {
+      ".read": "auth != null && auth.token.isAdmin === true",
+      ".write": "auth != null && auth.token.isAdmin === true"
     }
   }
 }
