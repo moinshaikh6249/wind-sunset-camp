@@ -2,14 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  ref,
-  onValue,
-  off,
-  DatabaseReference,
-  DataSnapshot
-} from 'firebase/database';
-import { errorEmitter } from '@/firebase/error-emitter';
+import { onValue, ref, query, Query } from 'firebase/database';
+import { useDatabase } from '@/firebase';
 
 export interface UseDatabaseValueResult<T> {
   data: T | null;
@@ -18,14 +12,14 @@ export interface UseDatabaseValueResult<T> {
 }
 
 export function useDatabaseValue<T = any>(
-  memoizedDbRef: DatabaseReference | null | undefined,
+  memoizedQuery: Query | null | undefined,
 ): UseDatabaseValueResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!memoizedDbRef) {
+    if (!memoizedQuery) {
       setData(null);
       setIsLoading(false);
       setError(null);
@@ -36,8 +30,8 @@ export function useDatabaseValue<T = any>(
     setError(null);
 
     const listener = onValue(
-      memoizedDbRef,
-      (snapshot: DataSnapshot) => {
+      memoizedQuery,
+      (snapshot) => {
         setData(snapshot.val() as T);
         setIsLoading(false);
       },
@@ -46,15 +40,19 @@ export function useDatabaseValue<T = any>(
         setError(error);
         setIsLoading(false);
         // Note: RealtimeDB security errors are not as detailed client-side.
-        // For better debugging, you might need server-side logging or use the profiler.
-        // We can emit a generic error here if needed.
+        // A more robust solution might involve a global error handler
+        // or a specific error boundary for components that use this hook.
       }
     );
 
     return () => {
-      off(memoizedDbRef, 'value', listener);
+      // Detach the listener when the component unmounts
+      // This is done by calling the function returned by onValue with no arguments,
+      // but the Firebase SDK overloads `off` for this purpose as well.
+      // In modern SDKs, the returned function itself is the unsubscriber.
+      listener();
     };
-  }, [memoizedDbRef]);
+  }, [memoizedQuery]);
 
   return { data, isLoading, error };
 }
