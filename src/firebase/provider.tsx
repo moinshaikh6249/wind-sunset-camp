@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
@@ -10,7 +9,6 @@ import type { Database, Query } from 'firebase/database';
 import { getDatabase, ref } from 'firebase/database';
 import { useDatabaseValue } from './database/use-database-value';
 import type { FirebaseStorage } from 'firebase/storage';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextValue {
   firebaseApp: FirebaseApp | null;
@@ -96,7 +94,6 @@ export function FirebaseProvider({
   return (
     <FirebaseContext.Provider value={contextValue}>
       {children}
-      <FirebaseErrorListener />
     </FirebaseContext.Provider>
   );
 }
