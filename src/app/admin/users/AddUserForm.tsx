@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/firebase";
+import { auth } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { useTransition } from "react";
 import { createUser } from "./actions";
 import { LoaderCircle } from "lucide-react";
@@ -33,7 +34,7 @@ type AddUserFormProps = {
 
 export function AddUserForm({ onUserAdded }: AddUserFormProps) {
   const { toast } = useToast();
-  const { user: adminUser } = useUser();
+  const [adminUser] = useAuthState(auth);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({

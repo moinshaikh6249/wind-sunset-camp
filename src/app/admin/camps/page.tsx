@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase, useStorage, useUser } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database, storage } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref, remove } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 import { useMemo, useState, useTransition } from 'react';
@@ -107,20 +107,14 @@ function CampTableRowSkeleton() {
 }
 
 export default function CampsPage() {
-  const database = useDatabase();
-  const storage = useStorage();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCamp, setEditingCamp] = useState<CampWithId | null>(null);
 
-  const campsRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'camps');
-  }, [database]);
-
-  const { data: campsData, isLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const campsRef = useMemo(() => ref(database, 'camps'), []);
+  const [campsData, isLoading] = useObjectVal<DbCamps>(campsRef);
 
   const camps = useMemo(() => {
     if (!campsData) return [];
@@ -138,7 +132,6 @@ export default function CampsPage() {
 
 
   const handleDeleteCamp = (camp: CampWithId) => {
-    if (!database) return;
     startTransition(async () => {
       try {
         const campDbRef = ref(database, `camps/${camp.id}`);

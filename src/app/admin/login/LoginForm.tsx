@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, useDatabase } from "@/firebase";
+import { auth, database } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { ref, get } from "firebase/database";
 
@@ -30,8 +30,6 @@ const formSchema = z.object({
 export function AdminLoginForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
-  const database = useDatabase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

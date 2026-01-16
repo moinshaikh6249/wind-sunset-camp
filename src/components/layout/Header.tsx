@@ -10,10 +10,11 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { SidebarTrigger } from "../ui/sidebar";
-import { useUser } from "@/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 export function Header() {
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">

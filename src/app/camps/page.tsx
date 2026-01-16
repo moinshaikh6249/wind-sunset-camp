@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, LoaderCircle, IndianRupee, Zap } from "lucide-react";
 import Link from "next/link";
-import { useDatabase, useMemoFirebase } from "@/firebase";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { database } from "@/lib/firebase";
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref } from "firebase/database";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,13 +70,8 @@ function CampCardSkeleton() {
 }
 
 export default function CampsPage() {
-  const database = useDatabase();
-  const campsRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'camps');
-  }, [database]);
-
-  const { data: campsData, isLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const campsRef = useMemo(() => ref(database, 'camps'), []);
+  const [campsData, isLoading] = useObjectVal<DbCamps>(campsRef);
 
   const upcomingCamps = useMemo(() => {
     if (!campsData) return [];

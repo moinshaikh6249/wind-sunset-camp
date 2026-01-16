@@ -4,10 +4,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import React, { useEffect, useState, useTransition, Suspense, useMemo } from "react";
+import React, { useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
-import { useUser, useDatabase } from "@/firebase";
+import { auth, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { useRouter } from "next/navigation";
 import { ref, push, set, query, update } from "firebase/database";
 
@@ -32,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -63,23 +64,19 @@ function BookingFormComponent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const initialCamp = searchParams.get("camp") || "";
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
-  const database = useDatabase();
 
-  const campsRef = useMemo(() => {
-    if (!database) return null;
-    return query(ref(database, 'camps'));
-  }, [database]);
+  const campsRef = useMemo(() => query(ref(database, 'camps')), []);
   
   const userProfileRef = useMemo(() => {
-    if (!database || !user) return null;
+    if (!user) return null;
     return ref(database, `users/${user.uid}`);
-  }, [database, user]);
+  }, [user]);
 
 
-  const { data: campsData, isLoading: campsLoading } = useDatabaseValue<DbCamps>(campsRef);
-  const { data: userProfile, isLoading: profileLoading } = useDatabaseValue<UserProfile>(userProfileRef);
+  const [campsData, campsLoading] = useObjectVal<DbCamps>(campsRef);
+  const [userProfile, profileLoading] = useObjectVal<UserProfile>(userProfileRef);
 
   const upcomingCamps = useMemo(() => campsData ? Object.values(campsData) : [], [campsData]);
 
@@ -115,7 +112,7 @@ function BookingFormComponent() {
 
 
   async function onSubmit(values: FormValues) {
-    if (!user || !database) {
+    if (!user) {
       toast({
         title: "Not Logged In",
         description: "You must be logged in to submit a booking.",

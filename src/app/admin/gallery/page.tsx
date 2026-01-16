@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase, useStorage } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database, storage } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref, remove } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 import { useMemo, useTransition, useState } from 'react';
@@ -54,17 +54,11 @@ function ImageCardSkeleton() {
 }
 
 export default function GalleryPage() {
-  const database = useDatabase();
-  const storage = useStorage();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
-  const galleryRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'galleryImages');
-  }, [database]);
-
-  const { data: galleryData, isLoading } = useDatabaseValue<DbGalleryImages>(galleryRef);
+  const galleryRef = useMemo(() => ref(database, 'galleryImages'), []);
+  const [galleryData, isLoading] = useObjectVal<DbGalleryImages>(galleryRef);
 
   const galleryImages = useMemo(() => {
     if (!galleryData) return [];
@@ -76,7 +70,6 @@ export default function GalleryPage() {
 
 
   const handleDeleteImage = (image: Image) => {
-    if (!database || !storage) return;
     startTransition(async () => {
       try {
         // Delete from Realtime Database

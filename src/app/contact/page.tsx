@@ -6,9 +6,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Mail, MapPin, Phone, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
-import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { auth, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { ref, push, set, update } from "firebase/database";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -42,15 +43,14 @@ type Message = {
 
 export default function ContactPage() {
   const { toast } = useToast();
-  const { user, isUserLoading } = useUser();
-  const database = useDatabase();
+  const [user, isUserLoading] = useAuthState(auth);
 
-  const userMessagesRef = useMemoFirebase(() => {
+  const userMessagesRef = useMemo(() => {
     if (!user) return null;
     return ref(database, `users/${user.uid}/messages`);
-  }, [user, database]);
+  }, [user]);
 
-  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+  const [messagesData, messagesLoading] = useObjectVal<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
 
   const sentMessages = useMemo(() => {
     if (!messagesData) return [];
@@ -77,7 +77,7 @@ export default function ContactPage() {
   }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!database || !user) {
+    if (!user) {
         toast({
             title: "Authentication Error",
             description: "You must be logged in to send a message.",

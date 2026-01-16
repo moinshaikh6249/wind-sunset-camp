@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, useDatabase, useStorage } from "@/firebase";
+import { auth, database, storage } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref as dbRef, set } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -39,9 +39,6 @@ const formSchema = z.object({
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
-  const database = useDatabase();
-  const storage = useStorage();
   const [avatarPreview, setAvatarPreview] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({

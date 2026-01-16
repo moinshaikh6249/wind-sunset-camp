@@ -4,7 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useUser, useStorage, useDatabase } from "@/firebase";
+import { auth, storage, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { ref as dbRef, set } from "firebase/database";
 import { Button } from "@/components/ui/button";
@@ -68,9 +69,7 @@ const isValidImageUrl = (url: string | null | undefined): boolean => {
 
 export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const { toast } = useToast();
-  const { user: adminUser } = useUser();
-  const storage = useStorage();
-  const database = useDatabase();
+  const [adminUser] = useAuthState(auth);
   const [isPending, startTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(campToEdit?.image?.imageUrl || null);
   
@@ -95,8 +94,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         date: campToEdit.date,
         location: campToEdit.location,
         price: campToEdit.price,
-        description: campToEdit.description,
-        activities: Array.isArray(campToEdit.activities) ? campToEdit.activities.join(', ') : campToEdit.activities,
+        description: Array.isArray(campToEdit.activities) ? campToEdit.activities.join(', ') : campToEdit.activities,
         imageUrl: campToEdit.image?.imageUrl || "",
         image: undefined,
       });
@@ -128,7 +126,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
     }, [imageUrlValue, form])
 
   function onSubmit(values: FormValues) {
-    if (!adminUser || !storage || !database) {
+    if (!adminUser) {
         toast({
             title: "Error",
             description: "Admin user, storage, or database service is not available.",

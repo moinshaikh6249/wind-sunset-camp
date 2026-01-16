@@ -1,10 +1,11 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database, auth } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref, update, push, remove } from 'firebase/database';
 import { useMemo, useState, useTransition } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { format } from 'date-fns';
 import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
 
@@ -98,17 +99,13 @@ function BookingTableRowSkeleton() {
 }
 
 export default function BookingsPage() {
-  const database = useDatabase();
-  const { user } = useUser();
+  const [user] = useAuthState(auth);
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   
-  const usersRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'users');
-  }, [database]);
+  const usersRef = useMemo(() => ref(database, 'users'), []);
 
-  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
 
   const bookings = useMemo(() => {
     if (!usersData) return [];
@@ -168,7 +165,7 @@ export default function BookingsPage() {
     const [dialogType, setDialogType] = useState<'cancel' | 'delete' | null>(null);
     
     const onApprove = () => {
-      if (!user || !database) return;
+      if (!user) return;
       startApproveTransition(async () => {
         const bookingStatusRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}/status`);
         await handleAction(
@@ -181,7 +178,7 @@ export default function BookingsPage() {
     };
     
     const onCancel = () => {
-        if (!user || !database) return;
+        if (!user) return;
         startCancelTransition(async () => {
             const updates: {[key: string]: any} = {};
             updates[`users/${booking.userId}/bookings/${booking.bookingId}/status`] = 'Canceled';
@@ -204,7 +201,7 @@ export default function BookingsPage() {
     };
 
     const onDelete = () => {
-        if(!user || !database) return;
+        if(!user) return;
         startDeleteTransition(async () => {
             const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
             await handleAction(
@@ -442,5 +439,3 @@ export default function BookingsPage() {
     </>
   );
 }
-
-    

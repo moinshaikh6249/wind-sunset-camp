@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref } from 'firebase/database';
 import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
@@ -56,15 +56,10 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 
 export default function ReportsPage() {
-  const database = useDatabase();
   const { theme } = useTheme();
 
-  const usersRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'users');
-  }, [database]);
-
-  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+  const usersRef = useMemo(() => ref(database, 'users'), []);
+  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
   
   const [primaryColor, mutedColor] = useMemo(() => {
         if (typeof window === 'undefined') return ["#000000", "#999999"];

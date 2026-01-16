@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase, useUser } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database, auth } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { ref } from 'firebase/database';
 import { useMemo, useTransition, useState } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -199,20 +200,15 @@ function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { n
 }
 
 export default function UsersPage() {
-  const database = useDatabase();
-  const { user: adminUser } = useUser();
+  const [adminUser] = useAuthState(auth);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [profileUser, setProfileUser] = useState<(DbUser & { name: string; joined: string }) | null>(null);
   
-  const usersRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'users');
-  }, [database]);
-
-  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+  const usersRef = useMemo(() => ref(database, 'users'), []);
+  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
 
   const users = useMemo(() => {
     if (!usersData) return [];

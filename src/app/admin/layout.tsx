@@ -1,6 +1,9 @@
+
 "use client";
 
-import { useUser, useAdmin } from "@/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useAdmin } from "@/hooks/use-admin";
+import { auth } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
@@ -14,7 +17,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   const { isAdmin, isAdminLoading } = useAdmin();
   const router = useRouter();
   const pathname = usePathname();

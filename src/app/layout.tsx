@@ -7,7 +7,6 @@ import { Poppins, Pacifico } from 'next/font/google';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppContent } from "./AppContent";
-import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -39,7 +38,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>
             <SidebarProvider defaultOpen={false}>
               <div className="flex flex-1">
                 <AppSidebar />
@@ -48,7 +46,6 @@ export default function RootLayout({
                 </AppContent>
               </div>
             </SidebarProvider>
-          </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
       </body>

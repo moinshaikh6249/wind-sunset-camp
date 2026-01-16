@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useDatabase, useMemoFirebase } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { database } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
 import { ref, update, remove } from 'firebase/database';
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
@@ -65,16 +65,11 @@ function MessageSkeleton() {
 }
 
 export default function MessagesPage() {
-  const database = useDatabase();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
 
-  const messagesRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'adminMessages');
-  }, [database]);
-
-  const { data: messagesData, isLoading } = useDatabaseValue<DbMessages>(messagesRef);
+  const messagesRef = useMemo(() => ref(database, 'adminMessages'), []);
+  const [messagesData, isLoading] = useObjectVal<DbMessages>(messagesRef);
 
   const messages = useMemo(() => {
     if (!messagesData) return [];
@@ -95,7 +90,6 @@ export default function MessagesPage() {
   }, [messages, searchQuery]);
 
   const handleToggleRead = async (message: ContactMessage) => {
-    if (!database) return;
     try {
       const updates: {[key: string]: any} = {};
       const newReadStatus = !message.read;
@@ -117,7 +111,6 @@ export default function MessagesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!database) return;
     try {
       // Note: This only deletes from the admin view.
       // A more robust system might also remove it from the user's view or archive it.

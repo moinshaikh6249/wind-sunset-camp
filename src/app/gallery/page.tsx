@@ -2,8 +2,8 @@
 'use client';
 
 import Image from "next/image";
-import { useDatabase, useMemoFirebase } from "@/firebase";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { database } from "@/lib/firebase";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { ref } from "firebase/database";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,13 +28,8 @@ function ImageSkeleton() {
 }
 
 export default function GalleryPage() {
-  const database = useDatabase();
-  const galleryRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'galleryImages');
-  }, [database]);
-
-  const { data: galleryData, isLoading } = useDatabaseValue<DbGalleryImages>(galleryRef);
+  const galleryRef = useMemo(() => ref(database, 'galleryImages'), []);
+  const [galleryData, isLoading] = useObjectVal<DbGalleryImages>(galleryRef);
 
   const galleryImages = useMemo(() => {
     if (!galleryData) return [];

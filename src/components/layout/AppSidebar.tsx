@@ -17,15 +17,16 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useDatabase, useMemoFirebase, useAdmin } from "@/firebase";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { auth, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
+import { useAdmin } from "@/hooks/use-admin";
 import { ref } from "firebase/database";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/firebase";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -48,15 +49,14 @@ type Message = {
 };
 
 function MessagesDialog() {
-  const { user } = useUser();
-  const database = useDatabase();
+  const [user] = useAuthState(auth);
 
-  const userMessagesRef = useMemoFirebase(() => {
-    if (!user || !database) return null;
+  const userMessagesRef = useMemo(() => {
+    if (!user) return null;
     return ref(database, `users/${user.uid}/messages`);
-  }, [user, database]);
+  }, [user]);
 
-  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+  const [messagesData, messagesLoading] = useObjectVal<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
 
   const sentMessages = useMemo(() => {
     if (!messagesData) return [];
@@ -108,19 +108,17 @@ function MessagesDialog() {
 }
 
 function UserProfileSection() {
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   const { isAdmin, isAdminLoading } = useAdmin();
-  const database = useDatabase();
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
 
-  const userProfileRef = useMemoFirebase(() => {
+  const userProfileRef = useMemo(() => {
     if (!user) return null;
     return ref(database, `users/${user.uid}`);
-  }, [database, user]);
+  }, [user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
+  const [userProfile, isProfileLoading] = useObjectVal(userProfileRef);
 
   const handleLogout = async () => {
     try {
@@ -198,7 +196,7 @@ function UserProfileSection() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpen, setOpenMobile } = useSidebar();
-  const { user } = useUser();
+  const [user] = useAuthState(auth);
   const { isAdmin } = useAdmin();
 
 

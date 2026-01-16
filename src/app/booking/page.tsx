@@ -2,12 +2,11 @@
 "use client";
 
 import { BookingForm } from "./BookingForm";
-import { useUser, useDatabase, useMemoFirebase } from "@/firebase";
+import { auth, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, Suspense } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref } from "firebase/database";
 import Image from "next/image";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
@@ -34,19 +33,18 @@ type DbCamps = {
 }
 
 function BookingPageContent() {
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const database = useDatabase();
 
   const campId = searchParams.get("camp");
 
-  const campRef = useMemoFirebase(() => {
-    if (!database || !campId) return null;
+  const campRef = useMemo(() => {
+    if (!campId) return null;
     return ref(database, `camps/${campId}`);
-  }, [database, campId]);
+  }, [campId]);
   
-  const { data: camp, isLoading: isCampLoading } = useDatabaseValue<Camp>(campRef);
+  const [camp, isCampLoading] = useObjectVal<Camp>(campRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {

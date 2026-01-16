@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useDatabase, useStorage } from "@/firebase";
+import { database, storage } from "@/lib/firebase";
 import { ref as dbRef, set, push } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,6 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function UploadImageForm() {
   const { toast } = useToast();
-  const database = useDatabase();
-  const storage = useStorage();
   const [isUploading, startUploadingTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -75,8 +73,6 @@ export function UploadImageForm() {
   }
 
   function onSubmit(values: FormValues) {
-    if (!database || !storage) return;
-
     startUploadingTransition(async () => {
       try {
         const file: File = values.image[0];

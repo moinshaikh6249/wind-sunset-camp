@@ -8,8 +8,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser, useDatabase, useMemoFirebase, useAuth, useAdmin } from "@/firebase";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { auth, database } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
+import { useAdmin } from "@/hooks/use-admin";
 import { ref } from "firebase/database";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,18 +27,16 @@ const navLinks = [
   ];
 
 function UserProfileSection() {
-    const { user, isUserLoading } = useUser();
+    const [user, isUserLoading] = useAuthState(auth);
     const { isAdmin, isAdminLoading } = useAdmin();
-    const database = useDatabase();
-    const auth = useAuth();
     const { toast } = useToast();
 
-    const userProfileRef = useMemoFirebase(() => {
+    const userProfileRef = React.useMemo(() => {
         if (!user) return null;
         return ref(database, `users/${user.uid}`);
-    }, [database, user]);
+    }, [user]);
 
-    const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
+    const [userProfile, isProfileLoading] = useObjectVal(userProfileRef);
 
     const handleLogout = async () => {
         try {

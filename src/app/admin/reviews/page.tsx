@@ -1,10 +1,11 @@
 
 'use client';
 
-import { useFirestore, useMemoFirebase, useUser, useAdmin } from "@/firebase";
-import { useCollection } from "@/firebase/firestore/use-collection";
+import { db } from "@/lib/firebase";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { useMemo, useTransition } from "react";
+import { useAdmin } from "@/hooks/use-admin";
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Trash2, Eye, EyeOff, Pin, PinOff, MessageSquare } from "lucide-react";
 
@@ -82,18 +83,14 @@ function ReviewCardSkeleton() {
 }
 
 export default function ReviewsPage() {
-  const firestore = useFirestore();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   const { isAdmin } = useAdmin();
   const [isPending, startTransition] = useTransition();
   
-  const reviewsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'reviews'), orderBy("createdAt", "desc"));
-  }, [firestore]);
-
-  const { data: reviewsData, isLoading } = useCollection<Review>(reviewsQuery);
+  const reviewsQuery = useMemo(() => query(collection(db, 'reviews'), orderBy("createdAt", "desc")), []);
+  const [reviewsSnapshot, isLoading] = useCollection(reviewsQuery);
+  const reviewsData = useMemo(() => reviewsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)), [reviewsSnapshot]);
   
   const sortedReviews = useMemo(() => {
       if (!reviewsData) return [];
@@ -131,8 +128,7 @@ export default function ReviewsPage() {
   };
   
   const onToggleVisibility = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
         () => updateDoc(reviewRef, { visible: !review.visible }),
         `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
@@ -141,8 +137,7 @@ export default function ReviewsPage() {
   }
 
   const onTogglePin = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
         () => updateDoc(reviewRef, { pinned: !review.pinned }),
         `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
@@ -151,8 +146,7 @@ export default function ReviewsPage() {
   }
 
   const onDelete = (review: Review) => {
-    if (!firestore) return;
-    const reviewRef = doc(firestore, 'reviews', review.id);
+    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
         () => deleteDoc(reviewRef),
         `Review by ${review.name} deleted.`,
@@ -274,5 +268,3 @@ export default function ReviewsPage() {
     </>
   );
 }
-
-    

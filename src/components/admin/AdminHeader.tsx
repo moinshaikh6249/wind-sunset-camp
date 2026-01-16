@@ -5,13 +5,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Sun, Moon, Tent, GalleryVertical, Mail, Star } from "lucide-react";
 import Link from "next/link";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useUser } from "@/firebase";
+import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
-import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -63,8 +63,7 @@ function MobileNav() {
 }
 
 function UserMenu() {
-    const { user } = useUser();
-    const auth = useAuth();
+    const [user] = useAuthState(auth);
     const { toast } = useToast();
     const router = useRouter();
 

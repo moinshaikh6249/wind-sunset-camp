@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
-import { useDatabase, useMemoFirebase } from "@/firebase";
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
+import { database } from "@/lib/firebase";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { ref, limitToFirst, query } from "firebase/database";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,14 +51,8 @@ function FeaturedCampSkeleton() {
 }
 
 export default function Home() {
-  const database = useDatabase();
-  const campsRef = useMemoFirebase(() => {
-    if (!database) return null;
-    // Query to get the first 3 camps
-    return query(ref(database, 'camps'), limitToFirst(3));
-  }, [database]);
-
-  const { data: campsData, isLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const campsQuery = useMemo(() => query(ref(database, 'camps'), limitToFirst(3)), []);
+  const [campsData, isLoading] = useObjectVal<DbCamps>(campsQuery);
 
   const featuredCamps = useMemo(() => {
     if (!campsData) return [];

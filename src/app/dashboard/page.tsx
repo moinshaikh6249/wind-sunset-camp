@@ -1,7 +1,9 @@
 
 "use client";
 
-import { useUser, useDatabase, useMemoFirebase, useStorage } from "@/firebase";
+import { auth, database, storage } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useObjectVal } from "react-firebase-hooks/database";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { signOut, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useDatabaseValue } from "@/firebase/database/use-database-value";
 import { ref as dbRef, remove, update, query } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -33,7 +34,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useAuth } from "@/firebase";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -74,28 +74,22 @@ const statusConfig = {
 
 
 export default function DashboardPage() {
-  const { user, isUserLoading } = useUser();
+  const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
   const { toast } = useToast();
-  const database = useDatabase();
-  const storage = useStorage();
-  const auth = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
 
-  const userProfileRef = useMemoFirebase(() => {
+  const userProfileRef = useMemo(() => {
     if (!user) return null;
     return dbRef(database, `users/${user.uid}`);
-  }, [database, user]);
+  }, [user]);
   
-  const campsRef = useMemoFirebase(() => {
-      if (!database) return null;
-      return query(dbRef(database, 'camps'));
-  }, [database]);
+  const campsRef = useMemo(() => query(dbRef(database, 'camps')), []);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
-  const { data: campsData, isLoading: areCampsLoading } = useDatabaseValue<DbCamps>(campsRef);
+  const [userProfile, isProfileLoading] = useObjectVal<any>(userProfileRef);
+  const [campsData, areCampsLoading] = useObjectVal<DbCamps>(campsRef);
 
   const bookings = userProfile?.bookings ? Object.entries(userProfile.bookings).map(([id, booking]) => ({ id, ...booking as any })) : [];
   const history = userProfile?.history ? Object.values(userProfile.history).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];

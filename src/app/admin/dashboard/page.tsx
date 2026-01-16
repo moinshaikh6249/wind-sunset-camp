@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useUser, useDatabase, useMemoFirebase } from '@/firebase';
-import { useDatabaseValue } from '@/firebase/database/use-database-value';
+import { auth, database } from '@/lib/firebase';
+import { useObjectVal } from 'react-firebase-hooks/database';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { ref } from 'firebase/database';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarCheck, Activity, UserPlus, LineChart, BarChart3, UserCheck } from 'lucide-react';
@@ -11,7 +12,7 @@ import { OverviewChart } from '@/components/admin/OverviewChart';
 import { RecentActivity, type Activity as ActivityType } from '@/components/admin/RecentActivity';
 import { UserSignupChart } from '@/components/admin/UserSignupChart';
 import { useMemo } from 'react';
-import { subDays, format, isWithinInterval, startOfMonth, getMonth } from 'date-fns';
+import { subDays, format, getMonth } from 'date-fns';
 
 type DbUser = {
   firstName: string;
@@ -27,15 +28,10 @@ type DbUsers = {
 };
 
 export default function AdminDashboardPage() {
-  const { user } = useUser();
-  const database = useDatabase();
-
-  const usersRef = useMemoFirebase(() => {
-    if (!database) return null;
-    return ref(database, 'users');
-  }, [database]);
-
-  const { data: usersData, isLoading } = useDatabaseValue<DbUsers>(usersRef);
+  const [user] = useAuthState(auth);
+  
+  const usersRef = useMemo(() => ref(database, 'users'), []);
+  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
 
   const stats = useMemo(() => {
     if (!usersData) {

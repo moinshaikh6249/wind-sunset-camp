@@ -5,8 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useMemo, useEffect } from "react";
-import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, where } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, where } from "firebase/firestore";
 import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -78,45 +80,24 @@ function ReviewSkeleton() {
 
 export default function ReviewsPage() {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const { user } = useUser();
+  const [user] = useAuthState(auth);
   const [hoverRating, setHoverRating] = useState(0);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!firestore) return;
-
-    const fetchReviews = async () => {
-      setIsLoading(true);
-      try {
-        const q = query(
-          collection(firestore, "reviews"),
-          where("visible", "==", true),
-          orderBy("createdAt", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-        const fetchedReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
-        
-        const pinnedReviews = fetchedReviews.filter(r => r.pinned);
-        const unpinnedReviews = fetchedReviews.filter(r => !r.pinned);
-
-        setReviews([...pinnedReviews, ...unpinnedReviews]);
-
-      } catch (error: any) {
-        console.error("Error fetching reviews:", error);
-        toast({
-          title: "Error loading reviews",
-          description: "Could not fetch reviews. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, [firestore, toast]);
+  
+  const [reviewsSnapshot, isLoading, error] = useCollection(
+    query(
+      collection(db, "reviews"),
+      where("visible", "==", true),
+      orderBy("createdAt", "desc")
+    )
+  );
+  
+  const reviews = useMemo(() => {
+    if (!reviewsSnapshot) return [];
+    const fetchedReviews = reviewsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+    const pinnedReviews = fetchedReviews.filter(r => r.pinned);
+    const unpinnedReviews = fetchedReviews.filter(r => !r.pinned);
+    return [...pinnedReviews, ...unpinnedReviews];
+  }, [reviewsSnapshot]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -135,10 +116,6 @@ export default function ReviewsPage() {
   }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) {
-        toast({ title: "Error", description: "Could not connect to the database.", variant: "destructive" });
-        return;
-    }
     if (!user) {
         toast({ title: "Not logged in", description: "You must be logged in to leave a review.", variant: "destructive" });
         return;
@@ -153,20 +130,7 @@ export default function ReviewsPage() {
             createdAt: serverTimestamp(),
         };
 
-        const docRef = await addDoc(collection(firestore, "reviews"), reviewData);
-
-        const newReview: Review = {
-            id: docRef.id,
-            ...reviewData,
-            createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } // Approximate timestamp
-        };
-
-        // Add the new review to the top of the list (if unpinned)
-        setReviews(prevReviews => {
-            const unpinned = prevReviews.filter(r => !r.pinned);
-            const pinned = prevReviews.filter(r => r.pinned);
-            return [ ...pinned, newReview, ...unpinned ];
-        });
+        await addDoc(collection(db, "reviews"), reviewData);
 
         toast({
             title: "Review Submitted!",
