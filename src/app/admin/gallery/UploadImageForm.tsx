@@ -28,9 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState } from "react";
-import { LoaderCircle, Upload, Wand2 } from "lucide-react";
+import { LoaderCircle, Upload } from "lucide-react";
 import Image from "next/image";
-import { getSuggestions } from "./actions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
@@ -46,7 +45,6 @@ export function UploadImageForm() {
   const database = useDatabase();
   const storage = useStorage();
   const [isUploading, startUploadingTransition] = useTransition();
-  const [isSuggesting, startSuggestionTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -115,43 +113,7 @@ export function UploadImageForm() {
     });
   }
 
-  const handleSuggestion = async () => {
-    const imageFiles = form.getValues("image");
-    if (!imageFiles || imageFiles.length === 0) {
-      toast({
-        title: "No Image Selected",
-        description: "Please select an image file first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const file = imageFiles[0];
-    const formData = new FormData();
-    formData.append('image', file);
-
-    startSuggestionTransition(async () => {
-      try {
-        const suggestions = await getSuggestions(formData);
-        if (suggestions) {
-          if(suggestions.description) form.setValue('description', suggestions.description);
-          if(suggestions.imageHint) form.setValue('imageHint', suggestions.imageHint);
-          toast({
-            title: "Suggestions Loaded",
-            description: "AI-powered suggestions have been filled in."
-          })
-        }
-      } catch (error: any) {
-        toast({
-          title: "Suggestion Failed",
-          description: error.message || "Could not get suggestions from AI.",
-          variant: "destructive",
-        })
-      }
-    });
-  }
-
-  const isPending = isUploading || isSuggesting;
+  const isPending = isUploading;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -192,11 +154,7 @@ export function UploadImageForm() {
                         <Image src={imagePreview} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
                     </div>
                 )}
-                <Button type="button" variant="outline" className="w-full" onClick={handleSuggestion} disabled={isPending || !imagePreview}>
-                    {isSuggesting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    Suggest with AI
-                </Button>
-
+                
                 <FormField
                 control={form.control}
                 name="description"

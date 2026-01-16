@@ -20,9 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
-import { LoaderCircle, Camera, Wand2 } from "lucide-react";
+import { LoaderCircle, Camera } from "lucide-react";
 import Image from "next/image";
-import { getCampSuggestions } from "./actions";
 
 const formSchema = z.object({
   name: z.string().min(3, "Camp name is required."),
@@ -73,7 +72,6 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   const storage = useStorage();
   const database = useDatabase();
   const [isPending, startTransition] = useTransition();
-  const [isSuggesting, startSuggestionTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(campToEdit?.image?.imageUrl || null);
   
   const form = useForm<FormValues>({
@@ -120,55 +118,6 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
       reader.readAsDataURL(file);
       form.setValue("imageUrl", ""); // Clear URL if file is selected
     }
-  };
-  
-  const handleSuggestion = async () => {
-    const campName = form.getValues("name");
-    if (!campName) {
-      toast({
-        title: "Camp Name Required",
-        description: "Please enter a camp name to get AI suggestions.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const imageFile = form.getValues("image");
-    if (!imageFile && !isValidImageUrl(form.getValues('imageUrl'))) {
-        toast({
-            title: "Image Required for Suggestion",
-            description: "Please upload or provide a valid image URL to get image-based suggestions.",
-            variant: "destructive"
-        });
-        return;
-    }
-
-    startSuggestionTransition(async () => {
-      try {
-        const formData = new FormData();
-        formData.append('campName', campName);
-        if (imageFile) {
-            formData.append('image', imageFile);
-        }
-        
-        const suggestions = await getCampSuggestions(formData);
-
-        if (suggestions) {
-          if (suggestions.description) form.setValue('description', suggestions.description);
-          if (suggestions.activities) form.setValue('activities', suggestions.activities.join(', '));
-          toast({
-            title: "Suggestions Loaded",
-            description: "AI suggestions have been filled in."
-          });
-        }
-      } catch (error: any) {
-        toast({
-          title: "Suggestion Failed",
-          description: error.message || "Could not get suggestions.",
-          variant: "destructive",
-        });
-      }
-    });
   };
 
   const imageUrlValue = form.watch("imageUrl");
@@ -269,7 +218,7 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
   }
 
   const showPreview = imagePreview && (imagePreview.startsWith('data:image/') || isValidImageUrl(imagePreview));
-  const isSubmitting = isPending || isSuggesting;
+  const isSubmitting = isPending;
 
   return (
     <Form {...form}>
@@ -324,10 +273,6 @@ export function CampForm({ campToEdit, onFormSubmit }: CampFormProps) {
         <div className="space-y-2">
             <div className="flex justify-between items-center">
                  <FormLabel>Description</FormLabel>
-                 <Button type="button" size="sm" variant="ghost" onClick={handleSuggestion} disabled={isSubmitting}>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    {isSuggesting ? 'Thinking...' : 'Suggest with AI'}
-                 </Button>
             </div>
             <FormField
             control={form.control}
