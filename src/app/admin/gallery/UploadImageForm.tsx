@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,7 +56,6 @@ export function UploadImageForm() {
   const imageUrlValue = form.watch("imageUrl");
 
   useEffect(() => {
-    // When the URL value changes, reset the error state
     if (imageUrlValue) {
         setPreviewError(false);
     }

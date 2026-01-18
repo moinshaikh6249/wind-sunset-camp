@@ -1,3 +1,4 @@
+
 'use client';
 
 import { db } from '@/lib/firebase';
@@ -29,12 +30,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { UploadImageForm } from './UploadImageForm';
 
-type Image = {
-  id: string;
+// This is the shape of the document in Firestore
+type GalleryImageDoc = {
   description: string;
   imageUrl: string;
   imageHint: string;
-  createdAt: any;
+  createdAt: any; // from serverTimestamp
+}
+
+// This is the shape of the data in our component
+type GalleryImage = GalleryImageDoc & {
+  id: string;
 }
 
 function ImageCardSkeleton() {
@@ -51,12 +57,12 @@ export default function GalleryPage() {
   const [isPending, startTransition] = useTransition();
 
   const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
-  const [galleryImages, isLoading] = useCollectionData<Image>(galleryQuery, { idField: 'id' });
+  // The generic now reflects the shape of the document *without* the id
+  const [galleryImages, isLoading] = useCollectionData<GalleryImageDoc>(galleryQuery, { idField: 'id' });
 
-  const handleDeleteImage = (image: Image) => {
+  const handleDeleteImage = (image: GalleryImage) => {
     startTransition(async () => {
       try {
-        // Delete from Firestore
         const imageDbRef = doc(db, `galleryImages/${image.id}`);
         await deleteDoc(imageDbRef);
         
@@ -126,7 +132,6 @@ export default function GalleryPage() {
        </Card>
     ));
   }
-
 
   return (
     <>

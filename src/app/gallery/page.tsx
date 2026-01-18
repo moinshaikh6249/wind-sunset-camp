@@ -6,27 +6,24 @@ import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection, query, orderBy } from "firebase/firestore";
 import { useEffect, useMemo } from "react";
 
-// Define the type based on the exact fields required.
-type GalleryImage = {
-  id: string;
+// This is the shape of the document in Firestore.
+type GalleryImageDoc = {
   imageUrl: string;
   description: string;
-  createdAt: any; // Keep `any` for serverTimestamp flexibility
+  imageHint: string;
+  createdAt: any;
 };
 
 export default function GalleryPage() {
-  // Create the Firestore query, ordered by createdAt descending.
   const galleryQuery = useMemo(() => 
     query(collection(db, "galleryImages"), orderBy("createdAt", "desc"))
   , []);
   
-  // Use the hook to fetch data.
-  const [images, isLoading] = useCollectionData<Omit<GalleryImage, 'id'>>(galleryQuery, { idField: 'id' });
+  const [images, isLoading] = useCollectionData<GalleryImageDoc>(galleryQuery, { idField: 'id' });
 
-  // Add console log for debugging, as requested.
   useEffect(() => {
     if (!isLoading) {
-      console.log("Gallery Images:", images);
+      console.log("Gallery Data:", images);
     }
   }, [images, isLoading]);
 
@@ -42,16 +39,13 @@ export default function GalleryPage() {
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Handle loading state */}
                 {isLoading ? (
                     <div className="col-span-full text-center py-12">
                         <p className="text-muted-foreground">Loading gallery...</p>
                     </div>
                 ) : images && images.length > 0 ? (
-                    // Render images if they exist
                     images.map((image) => (
                         <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
-                            {/* Use normal <img> tag with imageUrl */}
                             <img
                                 src={image.imageUrl}
                                 alt={image.description}
@@ -59,13 +53,11 @@ export default function GalleryPage() {
                                 loading="lazy"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                {/* Use description for the overlay text */}
                                 <p className="text-white text-sm drop-shadow-md">{image.description}</p>
                             </div>
                         </div>
                     ))
                 ) : (
-                    // Handle empty state
                     <div className="col-span-full text-center py-12">
                         <p className="text-muted-foreground">No images available</p>
                     </div>
