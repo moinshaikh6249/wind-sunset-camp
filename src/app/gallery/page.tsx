@@ -1,30 +1,34 @@
+
 'use client';
 
 import { db } from "@/lib/firebase";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection, query, orderBy } from "firebase/firestore";
-import { useMemo } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useMemo } from "react";
 
-type DbGalleryImage = {
+// Define the type based on the exact fields required.
+type GalleryImage = {
   id: string;
-  description: string;
   imageUrl: string;
-  imageHint: string;
-  createdAt: any;
+  description: string;
+  createdAt: any; // Keep `any` for serverTimestamp flexibility
 };
 
-function ImageSkeleton() {
-    return (
-        <div className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group">
-            <Skeleton className="w-full h-full" />
-        </div>
-    )
-}
-
 export default function GalleryPage() {
-  const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
-  const [galleryImages, isLoading] = useCollectionData<DbGalleryImage>(galleryQuery, { idField: 'id' });
+  // Create the Firestore query, ordered by createdAt descending.
+  const galleryQuery = useMemo(() => 
+    query(collection(db, "galleryImages"), orderBy("createdAt", "desc"))
+  , []);
+  
+  // Use the hook to fetch data.
+  const [images, isLoading] = useCollectionData<Omit<GalleryImage, 'id'>>(galleryQuery, { idField: 'id' });
+
+  // Add console log for debugging, as requested.
+  useEffect(() => {
+    if (!isLoading) {
+      console.log("Gallery Images:", images);
+    }
+  }, [images, isLoading]);
 
   return (
     <div className="bg-background woody-texture-background">
@@ -38,33 +42,32 @@ export default function GalleryPage() {
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Handle loading state */}
                 {isLoading ? (
-                    <>
-                        <ImageSkeleton />
-                        <ImageSkeleton />
-                        <ImageSkeleton />
-                        <ImageSkeleton />
-                        <ImageSkeleton />
-                        <ImageSkeleton />
-                    </>
-                ) : galleryImages && galleryImages.length > 0 ? (
-                    galleryImages.map((image) => (
+                    <div className="col-span-full text-center py-12">
+                        <p className="text-muted-foreground">Loading gallery...</p>
+                    </div>
+                ) : images && images.length > 0 ? (
+                    // Render images if they exist
+                    images.map((image) => (
                         <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
+                            {/* Use normal <img> tag with imageUrl */}
                             <img
-                            src={image.imageUrl}
-                            alt={image.description}
-                            className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                            data-ai-hint={image.imageHint}
-                            loading="lazy"
+                                src={image.imageUrl}
+                                alt={image.description}
+                                className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                                loading="lazy"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                            <p className="text-white text-sm drop-shadow-md">{image.description}</p>
+                                {/* Use description for the overlay text */}
+                                <p className="text-white text-sm drop-shadow-md">{image.description}</p>
                             </div>
                         </div>
                     ))
                 ) : (
+                    // Handle empty state
                     <div className="col-span-full text-center py-12">
-                        <p className="text-muted-foreground mb-4">The gallery is currently empty. Adventures await to be captured!</p>
+                        <p className="text-muted-foreground">No images available</p>
                     </div>
                 )}
             </div>
