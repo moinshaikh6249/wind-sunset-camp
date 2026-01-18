@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // Helper functions to check authentication and admin status.
     function isAuth() {
       return request.auth != null;
     }
@@ -11,34 +11,34 @@ service cloud.firestore {
       return isAuth() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Admins: Manually managed in Firebase Console. Read-only for other admins.
+    // Admins Collection: Read-only for other admins, no client-side writes.
     match /admins/{adminId} {
       allow read: if isAdmin();
-      allow write: if false; 
+      allow write: if false; // Admin documents should be managed via the Firebase Console.
     }
 
-    // Users: Can create their own profile. Can only read/update their own data. Admins can manage any user.
+    // Users Collection: Users can manage their own profile. Admins can manage any user.
     match /users/{userId} {
       allow create: if isAuth() && request.auth.uid == userId;
-      allow read, update: if isAuth() && request.auth.uid == userId || isAdmin();
+      allow read, update: if (isAuth() && request.auth.uid == userId) || isAdmin();
       allow delete: if isAdmin();
     }
-    
-    // Bookings: Anyone can create. Logged-in users can read their own. Admins can manage all.
+
+    // Bookings Collection: Authenticated users can create for themselves. Admins manage all.
     match /bookings/{bookingId} {
-      allow create: if true;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }
 
-    // Reviews: Public read. Authenticated users can create. Admins can manage.
+    // Reviews Collection: Public read. Authenticated users can create/manage their own. Admins manage all.
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update, delete: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
     }
-    
-    // Gallery & Camps: Public read. Admin-only write.
+
+    // Gallery and Camps: Public read, admin-only write access.
     match /galleryImages/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -48,7 +48,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Messages: Anyone can create. Admins can manage.
+    // Messages Collection: Anyone can submit a message. Only admins can read/manage them.
     match /messages/{messageId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
