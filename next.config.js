@@ -38,6 +38,12 @@ const nextConfig = {
         hostname: 'blog-assets.thedyrt.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.euroschoolindia.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
