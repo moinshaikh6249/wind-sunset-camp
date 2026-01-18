@@ -1,19 +1,14 @@
+
 'use client';
 
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Mail, Trash2, Archive, ArchiveRestore } from 'lucide-react';
+import { Mail, Trash2, Archive, ArchiveRestore, Circle, Inbox } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -33,6 +28,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
@@ -50,10 +54,17 @@ type ContactMessage = {
 
 function MessageSkeleton() {
   return (
-    <div className="flex flex-col space-y-3">
-      <Skeleton className="h-[50px] w-full rounded-lg" />
-      <Skeleton className="h-[50px] w-full rounded-lg" />
-      <Skeleton className="h-[50px] w-full rounded-lg" />
+    <div className="space-y-3">
+       {[...Array(4)].map((_, i) => (
+        <div key={i} className="flex items-center space-x-4 p-4 rounded-lg border">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+             <Skeleton className="h-4 w-1/5" />
+        </div>
+       ))}
     </div>
   )
 }
@@ -61,8 +72,8 @@ function MessageSkeleton() {
 export default function MessagesPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
-  // Read from the single, top-level 'messages' collection
   const messagesRef = useMemo(() => collection(db, 'messages'), []);
   const [messages, isLoading] = useCollectionData<ContactMessage>(messagesRef, { idField: 'id' });
 
@@ -90,6 +101,7 @@ export default function MessagesPage() {
       toast({
         title: `Message marked as ${!message.read ? 'read' : 'unread'}`,
       });
+      setSelectedMessage({...message, read: !message.read });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -107,6 +119,7 @@ export default function MessagesPage() {
         title: "Message Deleted",
         description: "The message has been removed from the inbox.",
       });
+      setSelectedMessage(null); // Close the dialog
     } catch (error: any) {
       toast({
         title: "Deletion Failed",
@@ -123,79 +136,99 @@ export default function MessagesPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Inbox</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Messages</CardTitle>
-          <CardDescription>
-            Messages submitted by users via the contact form.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <MessageSkeleton />
-          ) : filteredMessages.length > 0 ? (
-            <Accordion type="multiple" className="w-full">
-              {filteredMessages.map((message) => (
-                <AccordionItem value={message.id} key={message.id}>
-                  <AccordionTrigger 
-                    className={cn(
-                        "hover:no-underline font-medium p-4 rounded-lg hover:bg-muted/50",
-                        !message.read && "font-bold"
-                     )}
-                    >
-                    <div className="flex items-center gap-4 w-full">
-                        <div className="flex flex-col items-start gap-1 text-sm text-left">
-                            <div className="font-semibold">{message.name}</div>
-                            <div className="text-xs text-muted-foreground">{message.email}</div>
+      <Dialog onOpenChange={(open) => !open && setSelectedMessage(null)}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Messages</CardTitle>
+            <CardDescription>
+              Messages submitted by users via the contact form.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <MessageSkeleton />
+            ) : filteredMessages.length > 0 ? (
+              <div className="space-y-2">
+                {filteredMessages.map((message) => (
+                    <DialogTrigger asChild key={message.id}>
+                        <div 
+                            onClick={() => setSelectedMessage(message)}
+                            className={cn(
+                                "flex items-center gap-4 w-full p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50",
+                                !message.read && "bg-muted/60"
+                            )}
+                        >
+                            <Circle className={cn("h-2.5 w-2.5 flex-shrink-0", !message.read ? "text-accent fill-accent" : "text-muted-foreground/30")}/>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2">
+                                     <p className={cn("font-semibold truncate", !message.read && "font-bold")}>{message.name}</p>
+                                     <p className="text-xs text-muted-foreground truncate hidden sm:block">{message.email}</p>
+                                </div>
+                                <p className="text-sm text-muted-foreground truncate">{message.subject}</p>
+                            </div>
+                            <div className="text-xs text-muted-foreground text-right whitespace-nowrap ml-auto pl-4">
+                                {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+                            </div>
                         </div>
-                        <p className="flex-1 text-left px-4 truncate">{message.subject}</p>
-                        <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
-                            {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
-                        </div>
+                  </DialogTrigger>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">Inbox is empty</h3>
+                <p className="mt-2 text-sm text-muted-foreground">New contact messages will appear here.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {selectedMessage && (
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className={cn("text-xl", !selectedMessage.read && "font-extrabold")}>{selectedMessage.subject}</DialogTitle>
+                    <DialogDescription>
+                        From: {selectedMessage.name} ({selectedMessage.email})
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        Received: {formatDistanceToNow(new Date(selectedMessage.timestamp), { addSuffix: true })}
+                    </p>
+                    <div className="p-4 bg-muted/50 rounded-lg max-h-80 overflow-y-auto">
+                        <p className="whitespace-pre-wrap text-foreground">{selectedMessage.message}</p>
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-4 bg-muted/20 rounded-b-lg">
-                    <p className="mb-6 whitespace-pre-wrap">{message.message}</p>
-                    <div className="flex justify-end gap-2">
-                       <Button variant="outline" size="sm" onClick={() => handleToggleRead(message)}>
-                        {message.read ? <ArchiveRestore className="mr-2 h-4 w-4"/> : <Archive className="mr-2 h-4 w-4"/>}
-                        Mark as {message.read ? 'Unread' : 'Read'}
-                      </Button>
-                      <AlertDialog>
+                </div>
+                 <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleToggleRead(selectedMessage)}>
+                        {selectedMessage.read ? <ArchiveRestore className="mr-2 h-4 w-4"/> : <Archive className="mr-2 h-4 w-4"/>}
+                        Mark as {selectedMessage.read ? 'Unread' : 'Read'}
+                    </Button>
+                    <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
+                        <Button variant="destructive" size="sm">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </Button>
+                        </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
-                          <AlertDialogHeader>
+                        <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this message.
+                            This action cannot be undone. This will permanently delete this message.
                             </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(message.id)} className="bg-destructive hover:bg-destructive/90">
-                              Yes, delete it
+                            <AlertDialogAction onClick={() => handleDelete(selectedMessage.id)} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete it
                             </AlertDialogAction>
-                          </AlertDialogFooter>
+                        </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          ) : (
-            <div className="text-center py-16">
-              <Mail className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No Messages</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Your inbox is currently empty.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    </AlertDialog>
+                </div>
+            </DialogContent>
+        )}
+      </Dialog>
     </>
   );
 }
