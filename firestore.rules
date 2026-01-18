@@ -1,0 +1,74 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if the requesting user is an admin.
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admins Collection: Read-only for admins, no client-side writes.
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false; // Managed via server-side or console
+    }
+
+    // Users Collection: Users manage their own profile, admins have full access.
+    match /users/{userId} {
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      allow create: if request.auth.uid == userId; // For new signups
+      allow delete: if isAdmin();
+
+      // Bookings Subcollection: Users manage their own, admins have full access.
+      match /bookings/{bookingId} {
+        allow create: if request.auth.uid == userId && request.resource.data.userId == request.auth.uid;
+        allow read, delete: if request.auth.uid == userId || isAdmin();
+        allow update: if isAdmin(); // Only admins can change status (e.g., approve)
+      }
+
+      // History Subcollection: Append-only for users, admins have read access.
+      match /history/{activityId} {
+        allow read: if request.auth.uid == userId || isAdmin();
+        allow create: if request.auth.uid == userId;
+        allow update, delete: if false; // History is immutable
+      }
+
+      // Messages Subcollection: User's copy of sent messages.
+      match /messages/{messageId} {
+        allow read: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId;
+        // The read status is updated by admin via batch write, so admin needs update permission.
+        allow update: if isAdmin();
+        allow delete: if false; // Users cannot delete their sent message records.
+      }
+    }
+
+    // Camps Collection: Publicly readable, admin-only writes.
+    match /camps/{campId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Gallery Images Collection: Publicly readable, admin-only writes.
+    match /galleryImages/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reviews Collection: Publicly readable, auth'd users can create, admins can moderate.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admin Messages Collection: For contact form submissions.
+    match /adminMessages/{messageId} {
+      allow read, update, delete: if isAdmin();
+      // Any authenticated user can create a message.
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
