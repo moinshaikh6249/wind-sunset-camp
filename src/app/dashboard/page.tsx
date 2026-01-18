@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { doc, collection, query, deleteDoc, where } from "firebase/firestore";
+import { doc, collection, query, updateDoc, where } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,15 @@ import {
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+type Booking = {
+  id: string;
+  userId: string;
+  campName: string;
+  bookingDate: string;
+  numberOfPeople: number;
+  status: 'Pending' | 'Approved' | 'Canceled';
+};
 
 type Camp = {
     id: string;
@@ -86,7 +95,7 @@ export default function DashboardPage() {
     return query(collection(db, 'bookings'), where('userId', '==', user.uid));
   }, [user]);
 
-  const [bookings, areBookingsLoading] = useCollectionData(bookingsQuery, { idField: 'id' });
+  const [bookings, areBookingsLoading] = useCollectionData<Booking>(bookingsQuery, { idField: 'id' });
   
   const [history, areHistoryLoading] = useCollectionData(user ? query(collection(db, `users/${user.uid}/history`)) : null, { idField: 'id' });
 
@@ -119,21 +128,37 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!user) return;
+  const handleCancelBooking = async (booking: Booking) => {
+    if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to cancel a booking.", variant: "destructive" });
+        return;
+    }
+    
+    // Debugging logs
+    console.log("Attempting to cancel booking...");
+    console.log("Current User UID:", user.uid);
+    console.log("Booking Owner UID:", booking.userId);
+    console.log("Booking Doc ID:", booking.id);
+    
+    if (user.uid !== booking.userId) {
+        toast({ title: "Permission Denied", description: "You can only cancel your own bookings.", variant: "destructive" });
+        return;
+    }
+
     try {
-      const bookingRef = doc(db, `bookings/${bookingId}`);
-      await deleteDoc(bookingRef);
+      const bookingRef = doc(db, `bookings/${booking.id}`);
+      await updateDoc(bookingRef, { status: "Canceled" });
       toast({
         title: "Booking Canceled",
         description: "Your booking has been successfully canceled.",
       });
-    } catch (error) {
-      toast({
-        title: "Cancellation Failed",
-        description: "Could not cancel booking. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+        console.error("Cancellation Error:", error);
+        toast({
+            title: "Cancellation Failed",
+            description: error.message || "Could not cancel booking. Please try again.",
+            variant: "destructive",
+        });
     }
   };
   
@@ -218,7 +243,7 @@ export default function DashboardPage() {
                         <div>
                           <p className="font-semibold text-foreground">{activity.description}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                            {format(new Date(activity.timestamp), "PPpp")}
                           </p>
                         </div>
                       </li>
@@ -246,7 +271,7 @@ export default function DashboardPage() {
                   </div>
                 ) : bookings && bookings.length > 0 ? (
                   <ul className="space-y-4">
-                    {bookings.map((booking: any) => {
+                    {bookings.map((booking: Booking) => {
                       const campDetails = campsData ? campsData.find(c => c.id === booking.campId) : null;
                       const status = booking.status || 'Pending';
                       const currentStatusConfig = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending;
@@ -279,12 +304,12 @@ export default function DashboardPage() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will permanently cancel your booking for {booking.campName}. This action cannot be undone.
+                                      This will cancel your booking for {booking.campName}. This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleCancelBooking(booking.id)}>
+                                    <AlertDialogAction onClick={() => handleCancelBooking(booking)}>
                                       Yes, Cancel It
                                     </AlertDialogAction>
                                   </AlertDialogFooter>

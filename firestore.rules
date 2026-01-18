@@ -29,36 +29,33 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Camps Collection: Publicly readable, but only admins can create, update, or delete.
+    // Bookings Collection: Authenticated users can create bookings for themselves.
+    // They can only read or update their own bookings. Admins have full access.
+    match /bookings/{bookingId} {
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow read, update: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin(); // Only admins can hard-delete
+    }
+
+    // Camps & Gallery: Publicly readable, admin-only write access.
     match /camps/{campId} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    // GalleryImages Collection: Publicly readable, but only admins can manage content.
     match /galleryImages/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Bookings Collection: Authenticated users can create bookings for themselves. They can only
-    // read their own bookings. Admins have full access. Anonymous booking is disallowed.
-    match /bookings/{bookingId} {
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow update, delete: if isAdmin();
-    }
-
-    // Reviews Collection: Public read. Authenticated users can create and manage their own reviews. 
-    // Admins have full moderation control.
+    // Reviews Collection: Public read. Authenticated users can create their own reviews.
+    // Users can only manage their own reviews. Admins have full moderation control.
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
-    // Messages Collection: Anyone can submit a message (e.g., from a contact form).
-    // Only admins can read or delete them.
+    // Messages Collection: Anyone can submit a message. Only admins can manage them.
     match /messages/{messageId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
