@@ -62,8 +62,8 @@ export default function GalleryPage() {
     }
     
     return images.map((image, index) => (
-       <Card key={image.id} className="overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl animate-in fade-in" style={{ animationDelay: `${index * 50}ms`}}>
-          <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
+       <Card key={image.id} className="overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl animate-in fade-in rounded-2xl" style={{ animationDelay: `${index * 75}ms`}}>
+          <div className="aspect-video w-full overflow-hidden">
              <img
                 src={image.imageUrl}
                 alt={image.description}

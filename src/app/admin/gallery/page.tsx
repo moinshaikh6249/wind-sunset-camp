@@ -46,7 +46,7 @@ type GalleryImage = GalleryImageDoc & {
 function ImageCardSkeleton() {
     return (
         <div className="space-y-2">
-            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="aspect-video w-full rounded-lg" />
             <Skeleton className="h-4 w-3/4" />
         </div>
     )
@@ -94,7 +94,7 @@ export default function GalleryPage() {
         );
     }
     return galleryImages.map((image) => (
-       <Card key={image.id} className="group relative overflow-hidden">
+       <Card key={image.id} className="group relative overflow-hidden rounded-2xl">
             <div className="w-full aspect-video relative">
                 <img
                     src={image.imageUrl}
@@ -102,6 +102,11 @@ export default function GalleryPage() {
                     className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                     loading="lazy"
                 />
+                 {deletingId === image.id && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <LoaderCircle className="h-8 w-8 animate-spin text-white" />
+                    </div>
+                 )}
             </div>
             <CardContent className="p-3">
                 <p className="text-sm truncate text-muted-foreground" title={image.description}>{image.description}</p>
