@@ -8,9 +8,32 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, Suspense } from "react";
 import { doc } from "firebase/firestore";
 import Image from "next/image";
+import Link from "next/link";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+function AuthPrompt() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl text-gradient">Login to Book</CardTitle>
+      </CardHeader>
+      <CardContent className="text-center">
+        <p className="text-muted-foreground mb-6">You need to be logged in to book a camp.</p>
+        <div className="flex flex-col gap-4">
+            <Button asChild size="lg" className="w-full btn-glow">
+                <Link href="/login">Login</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+                <Link href="/signup">Sign Up</Link>
+            </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 type Camp = {
     id: string;
@@ -62,7 +85,7 @@ function BookingPageContent() {
             Book Your Adventure
           </h1>
           <p className="text-lg text-muted-foreground">
-            {user ? `Complete the form below to reserve your spot. You are booking as ${user.displayName || user.email}.` : "Fill out the form below to book your spot as a guest."}
+            {user ? `Complete the form below to reserve your spot. You are booking as ${user.displayName || user.email}.` : "Please log in or create an account to proceed with your booking."}
           </p>
         </div>
         
@@ -116,7 +139,7 @@ function BookingPageContent() {
                 ) : null}
             </div>
             <div className="lg:col-span-2">
-                <BookingForm />
+              {user ? <BookingForm /> : <AuthPrompt />}
             </div>
         </div>
       </div>

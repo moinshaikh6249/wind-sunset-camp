@@ -105,10 +105,22 @@ function BookingFormComponent() {
 
 
   async function onSubmit(values: FormValues) {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to submit a booking.",
+        variant: "destructive",
+      });
+      console.log("Booking submission failed: User is not authenticated at time of submission.");
+      return;
+    }
+
     if (!upcomingCamps) {
-        toast({ title: "Error", description: "Camps not loaded yet.", variant: "destructive" });
+        toast({ title: "Error", description: "Camps data is not ready. Please wait a moment and try again.", variant: "destructive" });
         return;
     }
+
+    console.log("Booking submission initiated by user:", user.uid);
 
     try {
       const camp = upcomingCamps.find(c => c.id === values.campId);
@@ -117,7 +129,7 @@ function BookingFormComponent() {
       }
       
       const bookingData = {
-        userId: user?.uid || null, // Store UID if user is logged in
+        userId: user.uid, // Set from authenticated user
         fullName: values.fullName,
         email: values.email,
         phone: values.phone,
@@ -128,35 +140,35 @@ function BookingFormComponent() {
         status: "Pending" as const,
       };
 
-      // Ensure bookings are always written to the top-level 'bookings' collection
+      console.log("Attempting to save booking data:", JSON.stringify(bookingData, null, 2));
+
       const bookingsRef = collection(db, "bookings");
-      await addDoc(bookingsRef, bookingData);
+      const docRef = await addDoc(bookingsRef, bookingData);
+      
+      console.log("Firestore success: Document written with ID: ", docRef.id);
 
       // If user is logged in, add a history entry to their profile
-      if (user) {
-        const historyRef = collection(db, `users/${user.uid}/history`);
-        await addDoc(historyRef, {
-            type: 'booking',
-            description: `Booked ${camp.name}`,
-            timestamp: new Date().toISOString(),
-        });
+      const historyRef = collection(db, `users/${user.uid}/history`);
+      await addDoc(historyRef, {
+          type: 'booking',
+          description: `Booked ${camp.name}`,
+          timestamp: new Date().toISOString(),
+      });
 
-        // Optionally update the user's phone number if it has changed
-        if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
-            await updateDoc(userProfileRef, { phone: values.phone });
-        }
+      if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
+          await updateDoc(userProfileRef, { phone: values.phone });
       }
 
       toast({
         title: "Booking Submitted!",
         description: `We've received your booking for ${camp.name}. It is now pending approval.`,
       });
-      router.push(user ? '/dashboard' : '/'); // Redirect to dashboard if logged in, else home
+      router.push('/dashboard');
     } catch (error: any) {
-      console.error("Booking submission error:", error);
+      console.error("Firestore booking submission error:", error);
       toast({
         title: "Booking Failed",
-        description: error.message || "An unexpected error occurred. Please check your connection and try again.",
+        description: error.message || "An unexpected error occurred. Please check your permissions and try again.",
         variant: "destructive",
       });
     }
@@ -164,7 +176,7 @@ function BookingFormComponent() {
 
   const isFormReady = !campsLoading && !profileLoading;
 
-  if (!isFormReady && !isUserLoading) {
+  if (isUserLoading) {
     return (
         <div className="flex justify-center items-center h-96">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -189,7 +201,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Appleseed" {...field} />
+                    <Input placeholder="Jane Appleseed" {...field} readOnly={isReadonly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -202,7 +214,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="jane@example.com" {...field} />
+                    <Input placeholder="jane@example.com" {...field} readOnly={isReadonly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
