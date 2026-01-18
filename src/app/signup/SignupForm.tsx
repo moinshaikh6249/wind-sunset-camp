@@ -125,6 +125,8 @@ export function SignupForm() {
       }
 
     } catch (error: any) {
+      console.error(error);
+      alert(error.message);
       let errorMessage = "An unexpected error occurred during sign up.";
       switch (error.code) {
         case 'auth/email-already-in-use':
