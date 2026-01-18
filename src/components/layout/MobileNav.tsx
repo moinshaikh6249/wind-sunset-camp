@@ -8,8 +8,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser, useAdmin, useDatabaseValue, useDatabase, useAuth } from "@/firebase";
-import { ref } from "firebase/database";
+import { useUser, useFirestore, useAuth } from "@/firebase";
+import { useAdmin } from "@/hooks/use-admin";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -27,15 +29,15 @@ function UserProfileSection() {
     const { user, isUserLoading } = useUser();
     const { isAdmin, isAdminLoading } = useAdmin();
     const { toast } = useToast();
-    const database = useDatabase();
+    const firestore = useFirestore();
     const auth = useAuth();
 
     const userProfileRef = React.useMemo(() => {
-        if (!user || !database) return null;
-        return ref(database, `users/${user.uid}`);
-    }, [user, database]);
+        if (!user || !firestore) return null;
+        return doc(firestore, `users/${user.uid}`);
+    }, [user, firestore]);
 
-    const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
+    const [userProfile, isProfileLoading] = useDocumentData(userProfileRef);
 
     const handleLogout = async () => {
         if (!auth) return;

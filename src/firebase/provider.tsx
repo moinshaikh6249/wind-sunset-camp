@@ -40,24 +40,6 @@ export const useUser = () => {
   return { user, isUserLoading: loading, error };
 };
 
-export function useAdmin() {
-  const { user, isUserLoading } = useUser();
-  const database = useDatabase();
-
-  // Create a memoized reference to the admin path in the database
-  const adminRef = useMemo(() => {
-    if (!database || !user) return null;
-    return ref(database, `admins/${user.uid}`);
-  }, [database, user]);
-
-  // Use the useDatabaseValue hook to get the admin status
-  const { data: isAdminData, isLoading: isAdminLoading, error } = useDatabaseValue<boolean>(adminRef);
-  
-  const isAdmin = !!isAdminData;
-
-  return { isAdmin, isAdminLoading: isUserLoading || isAdminLoading, error };
-}
-
 // Custom hook to memoize Firebase queries
 export const useMemoFirebase = <T extends Query | null>(
   getQuery: () => T,

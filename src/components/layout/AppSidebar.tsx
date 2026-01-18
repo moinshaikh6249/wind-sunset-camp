@@ -17,7 +17,8 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useAdmin, useFirestore, useAuth } from "@/firebase";
+import { useUser, useFirestore, useAuth } from "@/firebase";
+import { useAdmin } from "@/hooks/use-admin";
 import { collection } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";

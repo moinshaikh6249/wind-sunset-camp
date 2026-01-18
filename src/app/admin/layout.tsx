@@ -1,15 +1,12 @@
 
 "use client";
 
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useAdmin } from "@/hooks/use-admin";
-import { auth } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import { SearchProvider } from "@/context/SearchProvider";
 
 export default function AdminLayout({
@@ -17,15 +14,14 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, isUserLoading] = useAuthState(auth);
-  const { isAdmin, isAdminLoading } = useAdmin();
+  const { user, isAdmin, isAdminLoading } = useAdmin();
   const router = useRouter();
   const pathname = usePathname();
 
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (isUserLoading || isAdminLoading) {
+    if (isAdminLoading) {
       return; 
     }
     if (isLoginPage) {
@@ -36,15 +32,11 @@ export default function AdminLayout({
       return;
     }
     // For all other admin pages:
-    if (!user) {
-      router.replace("/admin/login");
-      return;
-    }
-    if (user && !isAdmin) {
+    if (!user || !isAdmin) {
       // If user is not an admin, redirect them away.
-      router.replace("/dashboard");
+      router.replace("/admin/login");
     }
-  }, [user, isUserLoading, isAdmin, isAdminLoading, router, isLoginPage, pathname]);
+  }, [user, isAdmin, isAdminLoading, router, isLoginPage, pathname]);
 
   // If on the login page, just render the content without the admin layout.
   if (isLoginPage) {
@@ -52,7 +44,7 @@ export default function AdminLayout({
   }
 
   // For all other admin pages, show loading or protect the content.
-  if (isUserLoading || isAdminLoading || !isAdmin || !user) {
+  if (isAdminLoading || !isAdmin || !user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
