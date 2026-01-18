@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from '@/lib/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
 import { Trash2, LoaderCircle } from 'lucide-react';
@@ -58,8 +58,17 @@ export default function GalleryPage() {
 
   const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
   
-  // Use idField to include the document ID in each object, which is crucial for deletion.
-  const [galleryImages, isLoading] = useCollectionData<GalleryImage>(galleryQuery, { idField: 'id' });
+  // Use useCollection and manually map the docs to include the ID
+  const [gallerySnapshot, isLoading] = useCollection(galleryQuery);
+  
+  const galleryImages = useMemo(() => {
+    if (!gallerySnapshot) return [];
+    // Manually map docs to ensure 'id' is included, which is critical for deletion.
+    return gallerySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as GalleryImageDoc),
+    })) as GalleryImage[];
+  }, [gallerySnapshot]);
 
   const handleDeleteImage = async (image: GalleryImage) => {
     if (!image || !image.id) {
@@ -68,11 +77,11 @@ export default function GalleryPage() {
             description: "Invalid image data. Cannot delete.",
             variant: "destructive",
         });
-        console.error("Attempted to delete an image without a valid ID.", image);
+        console.error("Missing image id:", image);
         return;
     }
     
-    console.log("Deleting image ID:", image.id);
+    console.log("Deleting Firestore document:", image.id);
     setDeletingId(image.id);
 
     try {
