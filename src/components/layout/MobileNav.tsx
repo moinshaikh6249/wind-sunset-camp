@@ -31,6 +31,8 @@ function UserProfileSection() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const auth = useAuth();
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => { setMounted(true) }, []);
 
     const userProfileRef = React.useMemo(() => {
         if (!user || !firestore) return null;
@@ -56,7 +58,7 @@ function UserProfileSection() {
         }
     };
     
-    if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
+    if (!mounted || isUserLoading || isAdminLoading || (user && isProfileLoading)) {
         return (
              <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-10 w-10 text-xl animate-pulse bg-muted"></Avatar>

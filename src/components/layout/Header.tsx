@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import { Menu, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,13 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useUser } from "@/firebase";
+import { Skeleton } from "../ui/skeleton";
 
 export function Header() {
   const { user, isUserLoading } = useUser();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -23,7 +28,9 @@ export function Header() {
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <ThemeToggle />
-          {!isUserLoading && (
+          {!mounted || isUserLoading ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+          ) : (
              <Button asChild variant="ghost" size="icon">
                 <Link href={user ? "/dashboard" : "/login"}>
                     <User />

@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 
@@ -115,6 +115,8 @@ function UserProfileSection() {
   const router = useRouter();
   const firestore = useFirestore();
   const auth = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true) }, []);
 
   const userProfileRef = useMemo(() => {
     if (!user || !firestore) return null;
@@ -141,7 +143,7 @@ function UserProfileSection() {
     }
   };
   
-  if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
+  if (!mounted || isUserLoading || isAdminLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
         <Skeleton className="h-10 w-full" />
