@@ -1,4 +1,3 @@
-
 'use client';
 
 import { auth, db } from '@/lib/firebase';
@@ -144,6 +143,7 @@ export default function AdminDashboardPage() {
           icon={CalendarCheck}
           description="Total number of bookings"
           isLoading={isLoading}
+          color="green"
         />
         <StatCard
           title="Total Users"
@@ -151,6 +151,7 @@ export default function AdminDashboardPage() {
           icon={Users}
           description="Total registered users"
           isLoading={isLoading}
+          color="blue"
         />
         <StatCard
           title="Active Users"
@@ -158,6 +159,7 @@ export default function AdminDashboardPage() {
           icon={UserCheck}
           description="Users with at least one booking"
           isLoading={isLoading}
+          color="purple"
         />
          <StatCard
           title="New Signups (24h)"
@@ -165,6 +167,7 @@ export default function AdminDashboardPage() {
           icon={UserPlus}
           description="New users in the last 24 hours"
           isLoading={isLoading}
+          color="orange"
         />
       </div>
 
