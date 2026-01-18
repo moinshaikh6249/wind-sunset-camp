@@ -26,12 +26,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useTransition, useState } from "react";
-import { LoaderCircle, Upload } from "lucide-react";
+import { useTransition, useState, useEffect } from "react";
+import { LoaderCircle, Upload, ImageOff } from "lucide-react";
 import Image from "next/image";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
-  imageUrl: z.string().url("Please provide a valid image URL."),
+  imageUrl: z.string().min(1, "Please provide a valid image URL."),
   description: z.string().min(5, "Description is required."),
   imageHint: z.string().min(2, "Image hint is required (e.g., 'mountain lake')."),
 });
@@ -42,6 +43,7 @@ export function UploadImageForm() {
   const { toast } = useToast();
   const [isSubmitting, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,6 +55,14 @@ export function UploadImageForm() {
   });
 
   const imageUrlValue = form.watch("imageUrl");
+
+  useEffect(() => {
+    // When the URL value changes, reset the error state
+    if (imageUrlValue) {
+        setPreviewError(false);
+    }
+  }, [imageUrlValue]);
+
 
   const resetForm = () => {
     form.reset();
@@ -95,68 +105,85 @@ export function UploadImageForm() {
           <Upload className="mr-2 h-4 w-4" /> Add Image
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New Image</DialogTitle>
           <DialogDescription>
             Add a new photo to the public camp gallery by providing its URL.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-            <FormField
-            control={form.control}
-            name="imageUrl"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Image URL</FormLabel>
-                <FormControl>
-                    <Input placeholder="https://example.com/image.png" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            {imageUrlValue && (
-                <div className="w-full relative">
-                    <p className="text-sm font-medium mb-2">Preview:</p>
-                    <Image src={imageUrlValue} alt="Image preview" width={400} height={300} className="rounded-md object-contain" />
-                </div>
-            )}
-            
-            <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                    <Textarea placeholder="A beautiful sunset over the lake..." {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="imageHint"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Image Hint</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., sunset lake" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        
-            <Button type="submit" className="w-full" disabled={isPending}>
-            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Adding...' : 'Add to Gallery'}
-            </Button>
-        </form>
-        </Form>
+        <ScrollArea className="max-h-[80vh] p-4 -mx-6">
+          <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-2">
+              <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Image URL</FormLabel>
+                  <FormControl>
+                      <Input placeholder="https://... or data:image/..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+              {imageUrlValue && (
+                  <div className="w-full relative space-y-2">
+                      <p className="text-sm font-medium">Preview:</p>
+                      {previewError ? (
+                        <div className="flex items-center justify-center h-[200px] w-full bg-muted rounded-md text-muted-foreground text-sm">
+                           <ImageOff className="h-6 w-6 mr-2"/>
+                           Invalid image URL or preview not available.
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-[200px] rounded-md border overflow-hidden">
+                            <Image 
+                                src={imageUrlValue} 
+                                alt="Image preview" 
+                                fill
+                                className="object-cover"
+                                onError={() => setPreviewError(true)}
+                            />
+                        </div>
+                      )}
+                  </div>
+              )}
+              
+              <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                      <Textarea placeholder="A beautiful sunset over the lake..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+              <FormField
+              control={form.control}
+              name="imageHint"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Image Hint</FormLabel>
+                  <FormControl>
+                      <Input placeholder="e.g., sunset lake" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+          
+              <Button type="submit" className="w-full" disabled={isPending}>
+              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Adding...' : 'Add to Gallery'}
+              </Button>
+          </form>
+          </Form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
