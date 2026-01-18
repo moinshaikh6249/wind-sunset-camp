@@ -38,7 +38,7 @@ type GalleryImageDoc = {
   createdAt: any; // from serverTimestamp
 }
 
-// This is the shape of the data in our component
+// This is the shape of the data in our component, including the Firestore document ID
 type GalleryImage = GalleryImageDoc & {
   id: string;
 }
@@ -57,13 +57,15 @@ export default function GalleryPage() {
   const [isPending, startTransition] = useTransition();
 
   const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
-  // The generic now reflects the shape of the document *without* the id
-  const [galleryImages, isLoading] = useCollectionData<GalleryImageDoc>(galleryQuery, { idField: 'id' });
+  
+  // Use idField to include the document ID in each object, which is crucial for deletion.
+  // The hook returns data typed as GalleryImage, which includes the `id`.
+  const [galleryImages, isLoading] = useCollectionData<GalleryImage>(galleryQuery, { idField: 'id' });
 
   const handleDeleteImage = (image: GalleryImage) => {
     startTransition(async () => {
       try {
-        const imageDbRef = doc(db, `galleryImages/${image.id}`);
+        const imageDbRef = doc(db, 'galleryImages', image.id);
         await deleteDoc(imageDbRef);
         
         toast({
@@ -87,7 +89,7 @@ export default function GalleryPage() {
     if (!galleryImages || galleryImages.length === 0) {
         return (
             <p className="col-span-full text-center text-muted-foreground">
-                No images in the gallery yet.
+                No images in the gallery yet. Use the "Add Image" button to upload.
             </p>
         );
     }
@@ -113,7 +115,7 @@ export default function GalleryPage() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete the image from the gallery.
+                                This will permanently delete the image from the gallery. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -144,7 +146,7 @@ export default function GalleryPage() {
         <CardHeader>
           <CardTitle>Manage Gallery</CardTitle>
           <CardDescription>
-            Add, view, and delete images from your public gallery.
+            Add, view, and delete images from your public gallery. Changes here will be reflected live for users.
           </CardDescription>
         </CardHeader>
         <CardContent>

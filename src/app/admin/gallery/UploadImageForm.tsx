@@ -70,7 +70,9 @@ export function UploadImageForm() {
     startTransition(async () => {
       try {
         await addDoc(collection(db, 'galleryImages'), {
-          ...values,
+          imageUrl: values.imageUrl,
+          description: values.description,
+          imageHint: values.imageHint,
           createdAt: serverTimestamp(),
         });
 
@@ -105,9 +107,9 @@ export function UploadImageForm() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add New Image</DialogTitle>
+          <DialogTitle>Add New Image to Gallery</DialogTitle>
           <DialogDescription>
-            Add a new photo to the public camp gallery by providing its URL.
+            Add a new photo to the public gallery by providing its URL and a description.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[80vh] p-4 -mx-6">
