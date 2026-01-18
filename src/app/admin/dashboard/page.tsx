@@ -132,7 +132,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
        <div className="animate-fade-slide-in" style={{ animationDelay: '100ms' }}>
-        <h2 className="text-3xl font-bold tracking-tight text-glow-white">Welcome back, {displayName}!</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-heading-color animate-text-glow">Welcome back, {displayName}!</h2>
         <p className="text-muted-foreground mt-2">
             Here&apos;s a quick overview of your camp&apos;s performance.
         </p>
@@ -229,5 +229,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

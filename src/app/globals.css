@@ -280,10 +280,7 @@
   .animate-flicker {
     animation: flicker 2.5s infinite alternate;
   }
-  .animate-text-glow {
-      animation: text-glow-pulse 2.5s infinite alternate;
-  }
-
+  
   @keyframes flicker {
     from { 
       opacity: 1; 
@@ -299,28 +296,15 @@
 
   @keyframes text-glow-pulse {
     from {
-        text-shadow: var(--heading-shadow);
-        opacity: 1;
+      text-shadow: 0 0 8px hsla(var(--heading-color), 0.6);
     }
     to {
-        text-shadow: 0 0 10px hsla(var(--heading-color), 0.8), var(--heading-shadow);
-        opacity: 0.9;
+      text-shadow: 0 0 16px hsla(var(--heading-color), 0.9), 0 0 2px hsla(var(--heading-color), 0.7);
     }
   }
 
-  .dark .animate-text-glow {
-      animation: dark-text-glow-pulse 2.5s infinite alternate;
-  }
-  
-  @keyframes dark-text-glow-pulse {
-    from {
-        text-shadow: var(--heading-shadow);
-        opacity: 1;
-    }
-    to {
-        text-shadow: 0 0 12px hsla(var(--heading-color), 1), var(--heading-shadow);
-        opacity: 0.85;
-    }
+  .animate-text-glow {
+    animation: text-glow-pulse 2.5s ease-in-out infinite alternate;
   }
 
   .glass-card {
@@ -365,5 +349,3 @@
       animation: fade-slide-in 0.6s ease-out forwards;
   }
 }
-
-    
