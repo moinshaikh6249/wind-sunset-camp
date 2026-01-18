@@ -17,7 +17,7 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useAdmin, useDatabase, useDatabaseValue } from "@/firebase";
+import { useUser, useAdmin, useDatabase, useDatabaseValue, useAuth } from "@/firebase";
 import { ref } from "firebase/database";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
@@ -111,6 +111,7 @@ function UserProfileSection() {
   const { toast } = useToast();
   const router = useRouter();
   const database = useDatabase();
+  const auth = useAuth();
 
   const userProfileRef = useMemo(() => {
     if (!user || !database) return null;
@@ -137,7 +138,6 @@ function UserProfileSection() {
     }
   };
   
-  const auth = useAuth();
   if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
