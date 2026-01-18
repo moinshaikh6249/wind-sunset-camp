@@ -23,6 +23,96 @@ const pacifico = Pacifico({
   weight: '400',
 });
 
+export const metadata: Metadata = {
+  metadataBase: new URL("https://sunset-camp-demo.web.app"),
+  title: {
+    default: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
+    template: `%s | Wind & Sunset Camp`,
+  },
+  description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
+  keywords: ["pawna lake camping", "lonavala camping", "sunset camping", "tent stay pawna", "weekend camping near pune", "night camping lonavala"],
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    title: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
+    description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
+    url: "https://sunset-camp-demo.web.app",
+    siteName: "Wind & Sunset Camp",
+    images: [
+      {
+        url: 'https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyfOclFDJ7lrz7J87beByt8hpTc9sap7JIxvwwLrAynzzbYKwjdKg5oBsMQ2n3xTR7yCHOHlg_NIU2DEwMGqQSDd5bQ4lyMXvQqcb222iB_Ncb8xXJLXGqc3X9hvvBcf3l4EdFNeZFkNgBM=w408-h306-k-no',
+        width: 408,
+        height: 306,
+        alt: 'A view of the campsite at Wind & Sunset Camp',
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
+    description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
+    images: ['https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyfOclFDJ7lrz7J87beByt8hpTc9sap7JIxvwwLrAynzzbYKwjdKg5oBsMQ2n3xTR7yCHOHlg_NIU2DEwMGqQSDd5bQ4lyMXvQqcb222iB_Ncb8xXJLXGqc3X9hvvBcf3l4EdFNeZFkNgBM=w408-h306-k-no'],
+  },
+  alternates: {
+    canonical: '/',
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: 'Wind & Sunset Camp',
+  image: 'https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyfOclFDJ7lrz7J87beByt8hpTc9sap7JIxvwwLrAynzzbYKwjdKg5oBsMQ2n3xTR7yCHOHlg_NIU2DEwMGqQSDd5bQ4lyMXvQqcb222iB_Ncb8xXJLXGqc3X9hvvBcf3l4EdFNeZFkNgBM=w408-h306-k-no',
+  '@id': 'https://sunset-camp-demo.web.app',
+  url: 'https://sunset-camp-demo.web.app',
+  telephone: '8080334787',
+  priceRange: '₹₹',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Gevhande Jawan Shiv, Thankursai Ajivali Road, Pawana Nagar, Post',
+    addressLocality: 'Gevhande Khadak',
+    postalCode: '410506',
+    addressRegion: 'MH',
+    addressCountry: 'IN',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 18.623101,
+    longitude: 73.498934,
+  },
+  openingHoursSpecification: {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ],
+    opens: '00:00',
+    closes: '23:59',
+  },
+};
+
+
 export default function RootLayout({
   children,
 }: {
@@ -31,6 +121,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${pacifico.variable}`}>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
@@ -55,36 +149,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-export const metadata: Metadata = {
-  metadataBase: new URL("https://sunset-camp-demo.web.app"),
-  title: {
-    default: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
-    template: `%s | Wind & Sunset Camp`,
-  },
-  description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
-  keywords: ["pawna lake camping", "lonavala camping", "sunset camping", "tent stay pawna", "weekend camping near pune", "night camping lonavala"],
-  viewport: "width=device-width, initial-scale=1",
-  openGraph: {
-    title: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
-    description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
-    url: "https://sunset-camp-demo.web.app",
-    siteName: "Wind & Sunset Camp",
-    images: [
-      {
-        url: 'https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyfOclFDJ7lrz7J87beByt8hpTc9sap7JIxvwwLrAynzzbYKwjdKg5oBsMQ2n3xTR7yCHOHlg_NIU2DEwMGqQSDd5bQ4lyMXvQqcb222iB_Ncb8xXJLXGqc3X9hvvBcf3l4EdFNeZFkNgBM=w408-h306-k-no',
-        width: 408,
-        height: 306,
-        alt: 'A view of the campsite at Wind & Sunset Camp',
-      },
-    ],
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Wind & Sunset Camp – Best Camping Near Pawna Lake, Lonavala",
-    description: "Experience luxury camping near Pawna Lake with Wind & Sunset Camp. Bonfire, tents, food & sunset views. Book your perfect getaway today.",
-    images: ['https://lh3.googleusercontent.com/gps-cs-s/AG0ilSyfOclFDJ7lrz7J87beByt8hpTc9sap7JIxvwwLrAynzzbYKwjdKg5oBsMQ2n3xTR7yCHOHlg_NIU2DEwMGqQSDd5bQ4lyMXvQqcb222iB_Ncb8xXJLXGqc3X9hvvBcf3l4EdFNeZFkNgBM=w408-h306-k-no'],
-  },
-};
