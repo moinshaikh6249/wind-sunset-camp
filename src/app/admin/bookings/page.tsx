@@ -1,4 +1,3 @@
-
 'use client';
 
 import { db, auth } from '@/lib/firebase';
@@ -46,7 +45,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import type { Booking } from './types';
@@ -156,6 +154,14 @@ export default function BookingsPage() {
     const onApprove = () => {
       if (!user) return;
       startApproveTransition(async () => {
+        if (!booking?.id) {
+          toast({
+            title: "Approval Failed",
+            description: "Booking ID is missing. Cannot proceed.",
+            variant: "destructive",
+          });
+          return;
+        }
         const bookingRef = doc(db, 'bookings', booking.id);
         await handleAction(
           () => updateDoc(bookingRef, { status: 'Approved' }),
@@ -169,6 +175,14 @@ export default function BookingsPage() {
     const onCancel = () => {
         if (!user) return;
         startCancelTransition(async () => {
+          if (!booking?.id) {
+            toast({
+              title: "Cancellation Failed",
+              description: "Booking ID is missing. Cannot proceed.",
+              variant: "destructive",
+            });
+            return;
+          }
           const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => updateDoc(bookingRef, { status: 'Canceled' }),
