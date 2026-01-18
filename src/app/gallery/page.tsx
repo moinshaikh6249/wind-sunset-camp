@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/firebase";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { collection } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -11,6 +11,7 @@ type DbGalleryImage = {
   description: string;
   imageUrl: string;
   imageHint: string;
+  createdAt: any;
 };
 
 function ImageSkeleton() {
@@ -22,8 +23,8 @@ function ImageSkeleton() {
 }
 
 export default function GalleryPage() {
-  const galleryRef = useMemo(() => collection(db, 'galleryImages'), []);
-  const [galleryImages, isLoading] = useCollectionData<DbGalleryImage>(galleryRef, { idField: 'id' });
+  const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
+  const [galleryImages, isLoading] = useCollectionData<DbGalleryImage>(galleryQuery, { idField: 'id' });
 
   return (
     <div className="bg-background woody-texture-background">
