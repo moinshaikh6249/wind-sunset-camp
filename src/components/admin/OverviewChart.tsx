@@ -24,7 +24,7 @@ export function OverviewChart({ data, isLoading }: OverviewChartProps) {
     }, [theme]);
 
     if (isLoading) {
-        return <Skeleton className="h-[350px] w-full" />
+        return <Skeleton className="h-[350px] w-full shimmer-bg" />
     }
 
 
@@ -58,3 +58,5 @@ export function OverviewChart({ data, isLoading }: OverviewChartProps) {
     </ResponsiveContainer>
   )
 }
+
+    

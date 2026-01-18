@@ -24,7 +24,7 @@ export function UserSignupChart({ data, isLoading }: UserSignupChartProps) {
     }, [theme]);
 
     if (isLoading) {
-      return <Skeleton className="h-[250px] w-full" />
+      return <Skeleton className="h-[250px] w-full shimmer-bg" />
     }
     
   return (
@@ -56,3 +56,5 @@ export function UserSignupChart({ data, isLoading }: UserSignupChartProps) {
     </div>
   )
 }
+
+    

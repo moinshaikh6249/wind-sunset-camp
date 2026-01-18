@@ -130,13 +130,15 @@ export default function AdminDashboardPage() {
   const displayName = user?.displayName || user?.email || 'Admin';
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-       <h2 className="text-3xl font-bold tracking-tight">Welcome back, {displayName}!</h2>
-       <p className="text-muted-foreground">
-          Here&apos;s a quick overview of your camp&apos;s performance.
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+       <div className="animate-fade-slide-in" style={{ animationDelay: '100ms' }}>
+        <h2 className="text-3xl font-bold tracking-tight text-glow-white">Welcome back, {displayName}!</h2>
+        <p className="text-muted-foreground mt-2">
+            Here&apos;s a quick overview of your camp&apos;s performance.
         </p>
+       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-fade-slide-in" style={{ animationDelay: '200ms' }}>
         <StatCard
           title="Active Bookings"
           value={stats.activeBookings.toLocaleString()}
@@ -171,8 +173,8 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 animate-fade-slide-in" style={{ animationDelay: '300ms' }}>
+        <Card className="lg:col-span-4 glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LineChart className="h-5 w-5 text-muted-foreground" />
@@ -183,7 +185,7 @@ export default function AdminDashboardPage() {
             <OverviewChart data={stats.bookingsChartData} isLoading={isLoading} />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 glass-card">
           <CardHeader>
              <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
@@ -199,8 +201,8 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 animate-fade-slide-in" style={{ animationDelay: '400ms' }}>
+        <Card className="lg:col-span-4 glass-card">
           <CardHeader>
              <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-muted-foreground" />
@@ -214,7 +216,7 @@ export default function AdminDashboardPage() {
             <RecentActivity activities={stats.recentActivities} isLoading={isLoading} />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 glass-card">
           <CardHeader>
             <CardTitle>Future Content</CardTitle>
           </CardHeader>
@@ -227,3 +229,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
