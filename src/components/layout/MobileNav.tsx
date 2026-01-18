@@ -8,10 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { auth, database } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
-import { useAdmin } from "@/hooks/use-admin";
+import { useUser, useAdmin, useDatabaseValue, useDatabase, useAuth } from "@/firebase";
 import { ref } from "firebase/database";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -27,18 +24,21 @@ const navLinks = [
   ];
 
 function UserProfileSection() {
-    const [user, isUserLoading] = useAuthState(auth);
+    const { user, isUserLoading } = useUser();
     const { isAdmin, isAdminLoading } = useAdmin();
     const { toast } = useToast();
+    const database = useDatabase();
+    const auth = useAuth();
 
     const userProfileRef = React.useMemo(() => {
-        if (!user) return null;
+        if (!user || !database) return null;
         return ref(database, `users/${user.uid}`);
-    }, [user]);
+    }, [user, database]);
 
-    const [userProfile, isProfileLoading] = useObjectVal(userProfileRef);
+    const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
     const handleLogout = async () => {
+        if (!auth) return;
         try {
             await signOut(auth);
             toast({

@@ -17,10 +17,7 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { auth, database } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
-import { useAdmin } from "@/hooks/use-admin";
+import { useUser, useAdmin, useDatabase, useDatabaseValue } from "@/firebase";
 import { ref } from "firebase/database";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
@@ -49,14 +46,15 @@ type Message = {
 };
 
 function MessagesDialog() {
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
+  const database = useDatabase();
 
   const userMessagesRef = useMemo(() => {
-    if (!user) return null;
+    if (!user || !database) return null;
     return ref(database, `users/${user.uid}/messages`);
-  }, [user]);
+  }, [user, database]);
 
-  const [messagesData, messagesLoading] = useObjectVal<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
 
   const sentMessages = useMemo(() => {
     if (!messagesData) return [];
@@ -108,19 +106,21 @@ function MessagesDialog() {
 }
 
 function UserProfileSection() {
-  const [user, isUserLoading] = useAuthState(auth);
+  const { user, isUserLoading } = useUser();
   const { isAdmin, isAdminLoading } = useAdmin();
   const { toast } = useToast();
   const router = useRouter();
+  const database = useDatabase();
 
   const userProfileRef = useMemo(() => {
-    if (!user) return null;
+    if (!user || !database) return null;
     return ref(database, `users/${user.uid}`);
-  }, [user]);
+  }, [user, database]);
 
-  const [userProfile, isProfileLoading] = useObjectVal(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast({
@@ -136,7 +136,8 @@ function UserProfileSection() {
       });
     }
   };
-
+  
+  const auth = useAuth();
   if (isUserLoading || isAdminLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
@@ -196,7 +197,7 @@ function UserProfileSection() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpen, setOpenMobile } = useSidebar();
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
   const { isAdmin } = useAdmin();
 
 
