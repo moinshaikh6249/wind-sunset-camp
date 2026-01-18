@@ -1,64 +1,64 @@
-
 {
-  "users": {
-    "USER_AUTHENTICATION_ID": {
-      "email": "jane@example.com",
-      "firstName": "Jane",
-      "lastName": "Appleseed",
-      "phone": "123-456-7890",
-      "bookings": {
-        "2024-07-20T12:30:00.123Z": {
-          "bookingDate": "2024-07-20T12:30:00.123Z",
-          "campId": "summer-adventure-2024",
-          "campName": "Summer Adventure Camp",
-          "numberOfPeople": 2,
-          "userId": "USER_AUTHENTICATION_ID"
-        },
-        "2024-08-10T18:00:00.456Z": {
-          "bookingDate": "2024-08-10T18:00:00.456Z",
-          "campId": "mountain-explorer-2024",
-          "campName": "Mountain Explorer",
-          "numberOfPeople": 1,
-          "userId": "USER_AUTHENTICATION_ID"
-        }
-      },
-      "history": {
-        "-Nq...": {
-          "type": "signup",
-          "description": "Account created",
-          "timestamp": "2024-07-20T12:25:00.123Z"
-        },
-        "-Nq...": {
-          "type": "booking",
-          "description": "Booked Summer Adventure Camp",
-          "timestamp": "2024-07-20T12:30:00.123Z"
-        }
-      }
+  "admins": {
+    "SUPER_ADMIN_UID": {
+      "email": "superadmin@example.com",
+      "role": "super-admin",
+      "createdAt": "2024-01-01T10:00:00.000Z"
+    },
+    "ADMIN_UID": {
+      "email": "admin@example.com",
+      "role": "admin",
+      "createdAt": "2024-01-02T10:00:00.000Z"
     }
   },
-  "admins": {
-    "ADMIN_USER_AUTHENTICATION_ID": true
+  "users": {
+    "USER_UID_123": {
+      "fullName": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "phone": "123-456-7890",
+      "createdAt": "2024-07-25T14:30:00.000Z"
+    }
   },
-  "camps": {
-    "summer-adventure-2024": {
-      "id": "summer-adventure-2024",
-      "name": "Summer Adventure Camp",
-      "date": "July 15-20, 2024",
-      "location": "Whispering Pines Forest",
-      "description": "A classic summer camp experience with hiking, bonfires, and lake swimming.",
-      "image": {
-        "id": "gallery-1",
-        "imageUrl": "https://images.unsplash.com/...",
-        "imageHint": "mountain lake"
-      }
+  "bookings": {
+    "BOOKING_ID_ABC": {
+      "fullName": "John Smith",
+      "email": "john.smith@example.com",
+      "phone": "987-654-3210",
+      "campName": "Summer Adventure Camp",
+      "peopleCount": 2,
+      "status": "pending",
+      "createdAt": "2024-07-26T10:00:00.000Z"
     }
   },
   "galleryImages": {
-    "gallery-1": {
-      "id": "gallery-1",
-      "description": "A serene mountain lake reflecting the sunrise.",
-      "imageUrl": "https://images.unsplash.com/...",
-      "imageHint": "mountain lake"
+    "GALLERY_ID_XYZ": {
+      "imageUrl": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4",
+      "description": "A beautiful tent under the stars.",
+      "createdAt": "2024-07-20T18:00:00.000Z"
+    }
+  },
+  "camps": {
+    "CAMP_ID_101": {
+      "title": "Mountain Explorer",
+      "price": 499,
+      "description": "Explore the serene mountains and enjoy a weekend of peace and adventure.",
+      "createdAt": "2024-07-15T09:00:00.000Z"
+    }
+  },
+  "reviews": {
+    "REVIEW_ID_789": {
+      "userId": "USER_UID_123",
+      "rating": 5,
+      "comment": "Had an absolutely amazing time! The views were breathtaking and the staff was so friendly.",
+      "createdAt": "2024-07-28T12:00:00.000Z"
+    }
+  },
+  "messages": {
+    "MESSAGE_ID_456": {
+      "name": "Alex Ray",
+      "email": "alex.ray@example.com",
+      "message": "I have a question about group discounts for the Mountain Explorer camp. Can you provide more details?",
+      "createdAt": "2024-07-27T16:45:00.000Z"
     }
   }
 }

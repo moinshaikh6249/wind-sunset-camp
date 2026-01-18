@@ -1,18 +1,35 @@
 {
   "entities": {
-    "UserProfile": {
+    "Admin": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserProfile",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator with special privileges.",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "super-admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
       "description": "Represents a user profile for the Sunset Camp application.",
       "properties": {
-        "firstName": {
+        "fullName": {
           "type": "string",
-          "description": "The user's first name."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The user's last name."
+          "description": "The user's full name."
         },
         "email": {
           "type": "string",
@@ -23,97 +40,43 @@
           "type": "string",
           "description": "The user's phone number."
         },
-        "photoURL": {
+        "createdAt": {
           "type": "string",
-          "description": "URL of the user's profile picture.",
-          "format": "uri"
-        },
-        "history": {
-          "type": "array",
-          "description": "A log of the user's activities.",
-          "items": {
-            "$ref": "#/entities/UserActivity"
-          }
-        },
-        "messages": {
-          "type": "object",
-          "description": "Messages sent by the user.",
-          "additionalProperties": {
-            "$ref": "#/entities/UserMessage"
-          }
+          "format": "date-time"
         }
       },
-      "required": [
-        "firstName",
-        "email"
-      ]
+      "required": ["fullName", "email", "createdAt"]
     },
     "Booking": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Booking",
       "type": "object",
-      "description": "Represents a camp booking made by a user.",
+      "description": "Represents a camp booking.",
       "properties": {
-        "userId": {
-          "type": "string",
-          "description": "The UID of the user who made the booking."
-        },
-        "campId": {
-          "type": "string",
-          "description": "The ID of the booked camp."
-        },
-        "campName": {
-          "type": "string",
-          "description": "The name of the booked camp."
-        },
-        "numberOfPeople": {
-          "type": "number",
-          "description": "The number of people in the booking."
-        },
-        "bookingDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date the booking was made."
-        },
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "campName": { "type": "string" },
+        "peopleCount": { "type": "number" },
         "status": {
           "type": "string",
-          "description": "The current status of the booking.",
-          "enum": ["Pending", "Approved", "Canceled"]
-        }
+          "enum": ["pending", "confirmed", "cancelled"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "userId",
-        "campId",
-        "campName",
-        "numberOfPeople",
-        "bookingDate"
-      ]
+      "required": ["fullName", "email", "campName", "peopleCount", "createdAt"]
     },
-    "UserActivity": {
+    "GalleryImage": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserActivity",
+      "title": "GalleryImage",
       "type": "object",
-      "description": "Represents a single activity performed by a user.",
+      "description": "Represents an image in the gallery.",
       "properties": {
-        "type": {
-          "type": "string",
-          "description": "The type of activity (e.g., 'signup', 'booking')."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the activity."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The ISO 8601 timestamp of when the activity occurred."
-        }
+        "imageUrl": { "type": "string", "format": "uri" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "type",
-        "description",
-        "timestamp"
-      ]
+      "required": ["imageUrl", "description", "createdAt"]
     },
     "Camp": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -121,86 +84,12 @@
       "type": "object",
       "description": "Represents an upcoming camp.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "price": {
-          "type": "number"
-        },
-        "activities": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "image": {
-          "$ref": "#/entities/Image"
-        }
+        "title": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "name", "date", "location", "description", "image", "price", "activities"]
-    },
-    "Image": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Image",
-      "type": "object",
-      "description": "Represents an image with metadata.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "imageUrl": {
-          "type": "string",
-          "format": "uri"
-        },
-        "imageHint": {
-          "type": "string"
-        }
-      },
-      "required": ["id", "imageUrl", "imageHint"]
-    },
-    "ContactMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ContactMessage",
-      "type": "object",
-      "description": "Represents a message submitted through the contact form, stored in a central location for admins.",
-      "properties": {
-        "messageId": { "type": "string" },
-        "userId": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "subject": { "type": "string" },
-        "message": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "read": { "type": "boolean" }
-      },
-      "required": ["messageId", "userId", "name", "email", "subject", "message", "timestamp"]
-    },
-    "UserMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserMessage",
-      "type": "object",
-      "description": "Represents a message summary stored under a user's profile.",
-      "properties": {
-        "subject": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "read": { "type": "boolean" }
-      },
-      "required": ["subject", "timestamp", "read"]
+      "required": ["title", "price", "description", "createdAt"]
     },
     "Review": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -208,97 +97,55 @@
       "type": "object",
       "description": "Represents a user-submitted review.",
       "properties": {
-        "name": { "type": "string" },
-        "rating": { "type": "number" },
+        "userId": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
         "comment": { "type": "string" },
-        "visible": { "type": "boolean" },
-        "pinned": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "rating", "comment", "visible", "pinned", "createdAt"]
+      "required": ["userId", "rating", "comment", "createdAt"]
     },
-    "Admin": {
+    "Message": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Admin",
+      "title": "Message",
       "type": "object",
-      "description": "Represents an administrator user with special privileges.",
+      "description": "Represents a message submitted through the contact form.",
       "properties": {
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "role": {
-          "type": "string",
-          "enum": ["admin"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "role", "createdAt"]
+      "required": ["name", "email", "message", "createdAt"]
     }
   },
-  "auth": {
-    "providers": [
-      "password"
-    ],
-    "customClaims": null
-  },
   "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Stores admin user roles and permissions."
+    },
     "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
-      },
-      "description": "Stores user profile information. The document ID is the user's Firebase Auth UID."
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores public user profile information."
     },
-    "/users/{userId}/bookings/{bookingId}": {
-      "schema": {
-        "$ref": "#/entities/Booking"
-      },
-      "description": "Stores the camp bookings for a specific user."
-    },
-     "/users/{userId}/messages/{messageId}": {
-      "schema": {
-        "$ref": "#/entities/UserMessage"
-      },
-      "description": "Stores a summary of messages sent by a specific user."
-    },
-    "/users/{userId}/history/{activityId}": {
-      "schema": {
-        "$ref": "#/entities/UserActivity"
-      },
-      "description": "Stores a log of user activities."
-    },
-    "/camps/{campId}": {
-      "schema": {
-        "$ref": "#/entities/Camp"
-      },
-      "description": "Stores details about upcoming camps."
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Stores all camp bookings from all users."
     },
     "/galleryImages/{imageId}": {
-      "schema": {
-        "$ref": "#/entities/Image"
-      },
-      "description": "Stores images for the public"
+      "schema": { "$ref": "#/entities/GalleryImage" },
+      "description": "Stores images for the public gallery."
     },
-    "/adminMessages/{messageId}": {
-      "schema": {
-        "$ref": "#/entities/ContactMessage"
-      },
-      "description": "A centralized collection of all user messages for admin access."
+    "/camps/{campId}": {
+      "schema": { "$ref": "#/entities/Camp" },
+      "description": "Stores details about upcoming camps."
     },
     "/reviews/{reviewId}": {
-      "schema": {
-        "$ref": "#/entities/Review"
-      },
-      "description": "Stores user-submitted reviews for the camp."
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Stores user-submitted reviews."
     },
-    "/admins/{adminId}": {
-      "schema": {
-        "$ref": "#/entities/Admin"
-      },
-      "description": "Stores a list of administrators. The document ID is the admin's Firebase Auth UID."
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "A centralized collection of all user messages from the contact form."
     }
   }
 }

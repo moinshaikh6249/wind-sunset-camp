@@ -1,74 +1,84 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the requesting user is an admin.
-    function isAdmin() {
-      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    // Helper functions
+    function isLoggedIn() {
+      return request.auth != null;
     }
 
-    // Admins Collection: Read-only for admins, no client-side writes.
+    function isOwner(userId) {
+      return isLoggedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isLoggedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isSuperAdmin() {
+      return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super-admin';
+    }
+
+    // Admins Collection
+    // - Super-admins can manage other admins.
+    // - Regular admins can read the list.
+    // - No client-side creation by non-super-admins.
     match /admins/{adminId} {
       allow read: if isAdmin();
-      allow write: if false; // Managed via server-side or console
+      allow write: if isSuperAdmin();
     }
 
-    // Users Collection: Users manage their own profile, admins have full access.
+    // Users Collection
+    // - Users can create their own account document.
+    // - Users can read/update their own data.
+    // - Admins can manage all user documents.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId || isAdmin();
-      allow create: if request.auth.uid == userId; // For new signups
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
-
-      // Bookings Subcollection: Users manage their own, admins have full access.
-      match /bookings/{bookingId} {
-        allow create: if request.auth.uid == userId && request.resource.data.userId == request.auth.uid;
-        allow read, delete: if request.auth.uid == userId || isAdmin();
-        allow update: if isAdmin(); // Only admins can change status (e.g., approve)
-      }
-
-      // History Subcollection: Append-only for users, admins have read access.
-      match /history/{activityId} {
-        allow read: if request.auth.uid == userId || isAdmin();
-        allow create: if request.auth.uid == userId;
-        allow update, delete: if false; // History is immutable
-      }
-
-      // Messages Subcollection: User's copy of sent messages.
-      match /messages/{messageId} {
-        allow read: if request.auth.uid == userId;
-        allow create: if request.auth.uid == userId;
-        // The read status is updated by admin via batch write, so admin needs update permission.
-        allow update: if isAdmin();
-        allow delete: if false; // Users cannot delete their sent message records.
-      }
     }
-
-    // Camps Collection: Publicly readable, admin-only writes.
-    match /camps/{campId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    
+    // Bookings Collection
+    // - Anyone can create a booking.
+    // - Only admins can read/manage bookings.
+    match /bookings/{bookingId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
-
-    // Gallery Images Collection: Publicly readable, admin-only writes.
+    
+    // Gallery Images Collection
+    // - Publicly readable.
+    // - Admin-only writes.
     match /galleryImages/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Reviews Collection: Publicly readable, auth'd users can create, admins can moderate.
+    // Camps Collection
+    // - Publicly readable.
+    // - Admin-only writes.
+    match /camps/{campId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reviews Collection
+    // - Publicly readable.
+    // - Authenticated users can create reviews for themselves.
+    // - Admins can moderate (update/delete).
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // Admin Messages Collection: For contact form submissions.
-    match /adminMessages/{messageId} {
-      allow read, update, delete: if isAdmin();
-      // Any authenticated user can create a message.
-      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+    // Messages Collection
+    // - Anyone can create a message (contact form).
+    // - Only admins can read/manage messages.
+    match /messages/{messageId} {
+        allow create: if true;
+        allow read, update, delete: if isAdmin();
     }
   }
 }
