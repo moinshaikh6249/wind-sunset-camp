@@ -7,48 +7,58 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
     function isAdmin() {
       return isAuth() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Admins Collection: Read-only for other admins, no client-side writes.
+    // Admins Collection: Read-only for other admins. Client-side writes are disabled
+    // to prevent privilege escalation. Manage admins from the Firebase Console.
     match /admins/{adminId} {
       allow read: if isAdmin();
-      allow write: if false; // Admin documents should be managed via the Firebase Console.
+      allow write: if false;
     }
 
-    // Users Collection: Users can manage their own profile. Admins can manage any user.
+    // Users Collection: Users can create and manage their own profile. Admins can manage any user.
     match /users/{userId} {
-      allow create: if isAuth() && request.auth.uid == userId;
-      allow read, update: if (isAuth() && request.auth.uid == userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Bookings Collection: Authenticated users can create for themselves. Admins manage all.
+    // Camps Collection: Publicly readable, but only admins can create, update, or delete.
+    match /camps/{campId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // GalleryImages Collection: Publicly readable, but only admins can manage content.
+    match /galleryImages/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Bookings Collection: Authenticated users can create bookings for themselves. They can only
+    // read their own bookings. Admins have full access. Anonymous booking is disallowed.
     match /bookings/{bookingId} {
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }
 
-    // Reviews Collection: Public read. Authenticated users can create/manage their own. Admins manage all.
+    // Reviews Collection: Public read. Authenticated users can create and manage their own reviews. 
+    // Admins have full moderation control.
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
-    // Gallery and Camps: Public read, admin-only write access.
-    match /galleryImages/{imageId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /camps/{campId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Messages Collection: Anyone can submit a message. Only admins can read/manage them.
+    // Messages Collection: Anyone can submit a message (e.g., from a contact form).
+    // Only admins can read or delete them.
     match /messages/{messageId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
