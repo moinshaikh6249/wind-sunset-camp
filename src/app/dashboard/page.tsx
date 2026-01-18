@@ -5,15 +5,15 @@ import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollectionData, useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { signOut, updateProfile } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { doc, collection, query, deleteDoc, updateDoc } from "firebase/firestore";
+import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { doc, collection, query, deleteDoc, where } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +33,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -80,7 +80,14 @@ export default function DashboardPage() {
   
   const [userProfile, isProfileLoading] = useDocumentData<any>(userProfileRef);
   const [campsData, areCampsLoading] = useCollectionData<Camp>(collection(db, 'camps'), { idField: 'id' });
-  const [bookings, areBookingsLoading] = useCollectionData(user ? collection(db, `users/${user.uid}/bookings`) : null, { idField: 'id' });
+  
+  const bookingsQuery = useMemo(() => {
+    if (!user) return null;
+    return query(collection(db, 'bookings'), where('userId', '==', user.uid));
+  }, [user]);
+
+  const [bookings, areBookingsLoading] = useCollectionData(bookingsQuery, { idField: 'id' });
+  
   const [history, areHistoryLoading] = useCollectionData(user ? query(collection(db, `users/${user.uid}/history`)) : null, { idField: 'id' });
 
   const sortedHistory = useMemo(() => {
@@ -115,7 +122,7 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!user) return;
     try {
-      const bookingRef = doc(db, `users/${user.uid}/bookings/${bookingId}`);
+      const bookingRef = doc(db, `bookings/${bookingId}`);
       await deleteDoc(bookingRef);
       toast({
         title: "Booking Canceled",
@@ -242,7 +249,7 @@ export default function DashboardPage() {
                     {bookings.map((booking: any) => {
                       const campDetails = campsData ? campsData.find(c => c.id === booking.campId) : null;
                       const status = booking.status || 'Pending';
-                      const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
+                      const currentStatusConfig = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending;
                       const Icon = currentStatusConfig.icon;
 
                       return (

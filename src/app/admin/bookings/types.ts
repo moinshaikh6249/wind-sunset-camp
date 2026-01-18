@@ -1,35 +1,16 @@
 
 export type BookingStatus = 'Pending' | 'Approved' | 'Canceled';
 
-export type DbBooking = {
-  bookingDate: string;
-  campId: string;
-  campName: string;
-  numberOfPeople: number;
-  userId: string;
-  status?: BookingStatus; // Status can be optional in the DB, but we default to 'Pending'
-};
-
-export type DbUser = {
-  firstName: string;
-  lastName?: string;
+// This is the shape of a document in the top-level /bookings collection
+export type Booking = {
+  id: string; // Document ID from Firestore
+  userId?: string; // UID of the user if they were logged in
+  fullName: string;
   email: string;
-  bookings?: { [bookingId: string]: DbBooking };
-};
-
-export type DbUsers = {
-  [uid: string]: DbUser;
-};
-
-// This type represents a booking after it has been aggregated with user details
-export type AggregatedBooking = {
-  userId: string;
-  bookingId: string;
-  customerName: string;
-  customerEmail: string;
-  bookingDate: string;
+  phone: string;
   campId: string;
   campName: string;
   numberOfPeople: number;
-  status: BookingStatus; // In our code, status will always be defined
+  bookingDate: string; // ISO string format
+  status: BookingStatus;
 };

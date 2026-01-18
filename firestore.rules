@@ -1,87 +1,66 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isLoggedIn() {
+    // Helper Functions
+    function isAuth() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isLoggedIn() && request.auth.uid == userId;
-    }
-
     function isAdmin() {
-      return isLoggedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isAuth() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    function isSuperAdmin() {
-      return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super-admin';
-    }
-
-    // Admins Collection
-    // - Super-admins can manage other admins (only from server/console).
-    // - Regular admins can read the list.
-    // - No client-side writes are allowed for security.
+    // Admins can read their own roles, but clients cannot write to the admins collection.
+    // This must be done manually in the Firebase Console or via a trusted server environment.
     match /admins/{adminId} {
       allow read: if isAdmin();
-      allow write: if false; // All admin management must be done server-side or manually
+      allow write: if false; 
     }
 
-    // Users Collection
-    // - Users can create their own account document during signup.
-    // - Users can read/update their own data.
-    // - Admins can manage all user documents.
+    // Users can create their own profile on signup.
+    // They can only read or update their own data. Admins can manage any user.
     match /users/{userId} {
-      allow create: if isOwner(userId);
-      allow read, update: if isOwner(userId) || isAdmin();
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow read, update: if isAuth() && request.auth.uid == userId || isAdmin();
       allow delete: if isAdmin();
     }
     
-    // Bookings Collection
-    // - Anyone can create a booking (for guest checkout).
-    // - Logged-in users can create bookings and must provide their UID.
-    // - Users can only read their own bookings.
-    // - Only admins can read all, update, or delete bookings.
+    // Anyone (including guests) can create a booking.
+    // Logged-in users can read their own bookings.
+    // Admins can read, update, and delete any booking.
     match /bookings/{bookingId} {
       allow create: if true;
-      allow read: if isAdmin() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Anyone can read reviews that are marked as visible.
+    // Only authenticated users can create reviews for themselves.
+    // Admins can update or delete any review.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
     
-    // Gallery Images Collection
-    // - Publicly readable.
-    // - Admin-only writes.
+    // Anyone can read public camp and gallery data.
+    // Only admins can write to these collections.
     match /galleryImages/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Camps Collection
-    // - Publicly readable.
-    // - Admin-only writes.
     match /camps/{campId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Reviews Collection
-    // - Publicly readable.
-    // - Authenticated users can create reviews for themselves.
-    // - Admins can moderate (update/delete).
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
-    }
-
-    // Messages Collection
-    // - Anyone can create a message (contact form).
-    // - Only admins can read/manage messages.
+    // Anyone can submit a message through the contact form.
+    // Only admins can read or delete messages.
     match /messages/{messageId} {
-        allow create: if true;
-        allow read, update, delete: if isAdmin();
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

@@ -3,7 +3,7 @@
 
 import { db, auth } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, collectionGroup, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { format } from 'date-fns';
@@ -46,13 +46,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
-import type { BookingStatus, AggregatedBooking } from './types';
+import type { Booking } from './types';
 import { useSearch } from '@/context/SearchProvider';
 
-const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, className: string }> = {
+const statusConfig: Record<Booking['status'], { label: string; icon: React.FC<any>, className: string }> = {
     Approved: {
       label: "Approved",
       icon: CheckCircle,
@@ -103,46 +102,24 @@ export default function BookingsPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   
-  // This is not efficient, but for the sake of a direct conversion.
-  // A better approach would be a collection group query on bookings.
-  // However, that requires getting user details separately for each booking.
-  const [usersData, usersLoading] = useCollectionData(collection(db, 'users'));
+  const bookingsRef = useMemo(() => collection(db, 'bookings'), []);
+  const [bookings, isLoading] = useCollectionData<Booking>(bookingsRef, { idField: 'id' });
 
-  const bookings = useMemo(() => {
-    if (!usersData) return [];
-    
-    const allBookings: AggregatedBooking[] = [];
-    
-    usersData.forEach((userEntry: any) => {
-      if (userEntry.bookings) {
-        Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]: [string, any]) => {
-          allBookings.push({
-            ...bookingData,
-            status: bookingData.status ?? 'Pending', 
-            bookingId,
-            customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
-            customerEmail: userEntry.email,
-          });
-        });
-      }
-    });
+  const sortedBookings = useMemo(() => {
+    if (!bookings) return [];
+    return [...bookings].sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
+  }, [bookings]);
 
-    allBookings.sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
-    
-    return allBookings;
-  }, [usersData]);
-
-  const isLoading = usersLoading;
 
   const filteredBookings = useMemo(() => {
-    if (!searchQuery) return bookings;
+    if (!searchQuery) return sortedBookings;
     const lowercasedQuery = searchQuery.toLowerCase();
-    return bookings.filter(booking => 
-        booking.customerName.toLowerCase().includes(lowercasedQuery) ||
-        booking.customerEmail.toLowerCase().includes(lowercasedQuery) ||
+    return sortedBookings.filter(booking => 
+        booking.fullName.toLowerCase().includes(lowercasedQuery) ||
+        booking.email.toLowerCase().includes(lowercasedQuery) ||
         booking.campName.toLowerCase().includes(lowercasedQuery)
     );
-  }, [bookings, searchQuery]);
+  }, [sortedBookings, searchQuery]);
 
   const handleAction = async (action: () => Promise<any>, successTitle: string, successDescription: string, errorTitle: string) => {
     try {
@@ -160,7 +137,7 @@ export default function BookingsPage() {
     }
   };
 
-  function ActionMenu({ booking }: { booking: AggregatedBooking }) {
+  function ActionMenu({ booking }: { booking: Booking }) {
     const [isApprovePending, startApproveTransition] = useTransition();
     const [isCancelPending, startCancelTransition] = useTransition();
     const [isDeletePending, startDeleteTransition] = useTransition();
@@ -169,7 +146,7 @@ export default function BookingsPage() {
     const onApprove = () => {
       if (!user) return;
       startApproveTransition(async () => {
-        const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
+        const bookingRef = doc(db, 'bookings', booking.id);
         await handleAction(
           () => updateDoc(bookingRef, { status: 'Approved' }),
           "Booking Approved",
@@ -182,7 +159,7 @@ export default function BookingsPage() {
     const onCancel = () => {
         if (!user) return;
         startCancelTransition(async () => {
-          const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
+          const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => updateDoc(bookingRef, { status: 'Canceled' }),
                 "Booking Canceled",
@@ -195,7 +172,7 @@ export default function BookingsPage() {
     const onDelete = () => {
         if(!user) return;
         startDeleteTransition(async () => {
-            const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
+            const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => deleteDoc(bookingRef),
                 "Booking Deleted",
@@ -252,7 +229,7 @@ export default function BookingsPage() {
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action will mark the booking as Canceled for 
-                            <span className="font-semibold"> {booking.customerName} </span>
+                            <span className="font-semibold"> {booking.fullName} </span>
                             at <span className="font-semibold">{booking.campName}</span>.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -274,7 +251,7 @@ export default function BookingsPage() {
                         <AlertDialogTitle>Delete this booking permanently?</AlertDialogTitle>
                         <AlertDialogDescription>
                            This action cannot be undone. This will permanently delete the booking for
-                            <span className="font-semibold"> {booking.customerName} </span>
+                            <span className="font-semibold"> {booking.fullName} </span>
                             at <span className="font-semibold">{booking.campName}</span>.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -309,8 +286,8 @@ export default function BookingsPage() {
       headers.join(','),
       ...filteredBookings.map(booking => {
         const row = [
-          `"${booking.customerName.replace(/"/g, '""')}"`,
-          booking.customerEmail,
+          `"${booking.fullName.replace(/"/g, '""')}"`,
+          booking.email,
           `"${booking.campName.replace(/"/g, '""')}"`,
           format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss'),
           booking.numberOfPeople,
@@ -360,11 +337,11 @@ export default function BookingsPage() {
         const Icon = currentStatusConfig.icon;
 
         return (
-        <TableRow key={booking.bookingId}>
+        <TableRow key={booking.id}>
             <TableCell>
-                <div className="font-medium">{booking.customerName}</div>
+                <div className="font-medium">{booking.fullName}</div>
                 <div className="hidden text-sm text-muted-foreground md:inline">
-                    {booking.customerEmail}
+                    {booking.email}
                 </div>
             </TableCell>
              <TableCell>

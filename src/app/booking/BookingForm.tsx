@@ -11,7 +11,7 @@ import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollectionData, useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter } from "next/navigation";
-import { doc, collection, addDoc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, collection, addDoc, updateDoc } from "firebase/firestore";
 
 
 import { Button } from "@/components/ui/button";
@@ -106,14 +106,6 @@ function BookingFormComponent() {
 
 
   async function onSubmit(values: FormValues) {
-    if (!user) {
-      toast({
-        title: "Not Logged In",
-        description: "You must be logged in to submit a booking.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (!upcomingCamps) {
         toast({ title: "Error", description: "Camps not loaded yet.", variant: "destructive" });
         return;
@@ -126,50 +118,60 @@ function BookingFormComponent() {
       }
       
       const bookingData = {
-        userId: user.uid,
+        userId: user?.uid || null, // Store UID if user is logged in
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
         campId: values.campId,
         campName: camp.name,
         numberOfPeople: values.numberOfPeople,
         bookingDate: new Date().toISOString(),
-        status: "Pending",
+        status: "Pending" as const,
       };
 
-      const bookingsRef = collection(db, `users/${user.uid}/bookings`);
+      const bookingsRef = collection(db, "bookings");
       await addDoc(bookingsRef, bookingData);
 
-      const historyRef = collection(db, `users/${user.uid}/history`);
-      await addDoc(historyRef, {
-        type: 'booking',
-        description: `Booked ${camp.name}`,
-        timestamp: new Date().toISOString(),
-      });
-      
-      if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
-          await updateDoc(userProfileRef, { phone: values.phone });
+      // If user is logged in, add a history entry
+      if (user) {
+        const historyRef = collection(db, `users/${user.uid}/history`);
+        await addDoc(historyRef, {
+            type: 'booking',
+            description: `Booked ${camp.name}`,
+            timestamp: new Date().toISOString(),
+        });
+
+        if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
+            await updateDoc(userProfileRef, { phone: values.phone });
+        }
       }
 
       toast({
         title: "Booking Submitted!",
         description: `We've received your booking for ${camp.name}. It is now pending approval.`,
       });
-      router.push('/dashboard');
+      router.push(user ? '/dashboard' : '/'); // Redirect to dashboard if logged in, else home
     } catch (error: any) {
       console.error("Booking submission error:", error);
       toast({
         title: "Booking Failed",
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred. Please check your connection and try again.",
         variant: "destructive",
       });
     }
   }
 
-  if (isUserLoading || campsLoading || profileLoading) {
+  const isFormReady = !campsLoading && !profileLoading;
+
+  if (!isFormReady && isUserLoading) {
     return (
         <div className="flex justify-center items-center h-96">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
   }
+
+  const isReadonly = !!user;
 
   return (
     <Card>
@@ -186,7 +188,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Appleseed" {...field} readOnly />
+                    <Input placeholder="Jane Appleseed" {...field} readOnly={isReadonly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -199,7 +201,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="jane@example.com" {...field} readOnly />
+                    <Input placeholder="jane@example.com" {...field} readOnly={isReadonly} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -227,18 +229,18 @@ function BookingFormComponent() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Which camp are you interested in?</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a camp" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {upcomingCamps && upcomingCamps.map((camp) => (
+                      {upcomingCamps ? upcomingCamps.map((camp) => (
                         <SelectItem key={camp.id} value={camp.id}>
                           {camp.name}
                         </SelectItem>
-                      ))}
+                      )) : <SelectItem value="loading" disabled>Loading camps...</SelectItem>}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -260,7 +262,7 @@ function BookingFormComponent() {
             />
 
             <div className="space-y-4">
-              <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
+              <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting || !isFormReady}>
                 {form.formState.isSubmitting ? "Submitting..." : "Submit Booking"}
               </Button>
             </div>
