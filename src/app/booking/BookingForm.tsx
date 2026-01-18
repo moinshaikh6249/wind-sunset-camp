@@ -120,52 +120,65 @@ function BookingFormComponent() {
         return;
     }
 
-    console.log("Booking submission initiated by user:", user.uid);
+    const camp = upcomingCamps.find(c => c.id === values.campId);
+    if (!camp) {
+      toast({ title: "Error", description: "Selected camp not found.", variant: "destructive" });
+      return;
+    }
+      
+    const bookingData = {
+      userId: user.uid, // Set from authenticated user
+      fullName: values.fullName,
+      email: values.email,
+      phone: values.phone,
+      campId: values.campId,
+      campName: camp.name,
+      numberOfPeople: values.numberOfPeople,
+      bookingDate: new Date().toISOString(),
+      status: "Pending" as const,
+    };
+
+    console.log("Attempting to create booking for user:", user.uid);
+    console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
 
     try {
-      const camp = upcomingCamps.find(c => c.id === values.campId);
-      if (!camp) {
-        throw new Error("Selected camp not found.");
-      }
-      
-      const bookingData = {
-        userId: user.uid, // Set from authenticated user
-        fullName: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        campId: values.campId,
-        campName: camp.name,
-        numberOfPeople: values.numberOfPeople,
-        bookingDate: new Date().toISOString(),
-        status: "Pending" as const,
-      };
-
-      console.log("Attempting to save booking data:", JSON.stringify(bookingData, null, 2));
-
+      // Step 1: Create the main booking document. This is the critical operation.
       const bookingsRef = collection(db, "bookings");
       const docRef = await addDoc(bookingsRef, bookingData);
+      console.log("✅ Booking creation successful. Document ID:", docRef.id);
       
-      console.log("Firestore success: Document written with ID: ", docRef.id);
-
-      // If user is logged in, add a history entry to their profile
-      const historyRef = collection(db, `users/${user.uid}/history`);
-      await addDoc(historyRef, {
-          type: 'booking',
-          description: `Booked ${camp.name}`,
-          timestamp: new Date().toISOString(),
-      });
-
-      if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
-          await updateDoc(userProfileRef, { phone: values.phone });
-      }
-
+      // Step 2: Show success toast immediately after the critical operation succeeds.
       toast({
         title: "Booking Submitted!",
         description: `We've received your booking for ${camp.name}. It is now pending approval.`,
       });
+
+      // Step 3: Perform non-critical, secondary writes.
+      // These are in a separate try/catch so their failure doesn't cause a false negative on the UI.
+      try {
+        // Add a history entry to the user's profile
+        const historyRef = collection(db, `users/${user.uid}/history`);
+        await addDoc(historyRef, {
+            type: 'booking',
+            description: `Booked ${camp.name}`,
+            timestamp: new Date().toISOString(),
+        });
+
+        // If the user's phone number was updated, save it to their profile.
+        if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
+            await updateDoc(userProfileRef, { phone: values.phone });
+        }
+      } catch (secondaryError: any) {
+        // Log for debugging, but don't show a user-facing failure message for the booking.
+        console.warn("⚠️ A non-critical write operation failed after booking creation:", secondaryError);
+      }
+      
+      // Step 4: Navigate to the dashboard.
       router.push('/dashboard');
+
     } catch (error: any) {
-      console.error("Firestore booking submission error:", error);
+      // This will now only catch critical failures from the main booking creation.
+      console.error("❌ Firestore booking creation FAILED:", error);
       toast({
         title: "Booking Failed",
         description: error.message || "An unexpected error occurred. Please check your permissions and try again.",
