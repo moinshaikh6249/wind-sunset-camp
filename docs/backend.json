@@ -53,6 +53,10 @@
       "type": "object",
       "description": "Represents a camp booking.",
       "properties": {
+        "userId": { 
+          "type": "string",
+          "description": "The UID of the user who made the booking, if authenticated."
+        },
         "fullName": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "phone": { "type": "string" },
@@ -121,15 +125,15 @@
   "firestore": {
     "/admins/{adminId}": {
       "schema": { "$ref": "#/entities/Admin" },
-      "description": "Stores admin user roles and permissions."
+      "description": "Stores admin user roles and permissions. Document ID must match the admin's Firebase Auth UID."
     },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
-      "description": "Stores public user profile information."
+      "description": "Stores public user profile information. Document ID must match the user's Firebase Auth UID."
     },
     "/bookings/{bookingId}": {
       "schema": { "$ref": "#/entities/Booking" },
-      "description": "Stores all camp bookings from all users."
+      "description": "Stores all camp bookings. If made by a logged-in user, the userId field should be populated."
     },
     "/galleryImages/{imageId}": {
       "schema": { "$ref": "#/entities/GalleryImage" },

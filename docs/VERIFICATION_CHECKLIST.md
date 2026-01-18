@@ -20,11 +20,7 @@ This checklist helps you verify that the Firestore security rules are working as
 - [ ] **Admin User:** Try to `read`.
   - **Expected:** Succeed.
 - [ ] **Admin User:** Try to `write` (create/update/delete).
-  - **Expected:** Fail.
-- [ ] **Super-Admin User:** Try to `read`.
-  - **Expected:** Succeed.
-- [ ] **Super-Admin User:** Try to `write` (create/update/delete another admin).
-  - **Expected:** Succeed.
+  - **Expected:** Fail. (Client-side writes are disabled for all).
 
 ---
 
@@ -45,18 +41,24 @@ This checklist helps you verify that the Firestore security rules are working as
 
 - [ ] **Unauthenticated User:** Try to `create` a booking.
   - **Expected:** Succeed.
+- [ ] **Authenticated User:** Try to `create` a booking.
+  - **Expected:** Succeed.
 - [ ] **Unauthenticated User:** Try to `read`, `update`, or `delete` a booking.
   - **Expected:** Fail.
-- [ ] **Authenticated, Non-Admin User:** Try to `read`, `update`, or `delete` a booking.
+- [ ] **Authenticated User:** Try to `read` a booking where `userId` matches `request.auth.uid`.
+  - **Expected:** Succeed.
+- [ ] **Authenticated User:** Try to `read` a booking where `userId` is different.
+  - **Expected:** Fail.
+- [ ] **Authenticated, Non-Admin User:** Try to `update` or `delete` a booking.
   - **Expected:** Fail.
 - [ ] **Admin User:** Try to `read`, `update`, and `delete` any booking.
   - **Expected:** Succeed.
 
 ---
 
-### `galleryImages`, `camps`, `reviews` (Public Read)
+### `galleryImages`, `camps` (Public Read)
 
-- [ ] **Unauthenticated User:** Try to `read` from `/galleryImages`, `/camps`, and `/reviews`.
+- [ ] **Unauthenticated User:** Try to `read` from `/galleryImages` and `/camps`.
   - **Expected:** Succeed.
 - [ ] **Unauthenticated User:** Try to `write` to any of these collections.
   - **Expected:** Fail.
@@ -67,8 +69,12 @@ This checklist helps you verify that the Firestore security rules are working as
 
 ---
 
-### `reviews` Collection (Specific Writes)
+### `reviews` Collection (Public Read, Authenticated Write)
 
+- [ ] **Unauthenticated User:** Try to `read` from `/reviews`.
+  - **Expected:** Succeed.
+- [ ] **Unauthenticated User:** Try to `create` a review.
+  - **Expected:** Fail.
 - [ ] **Authenticated User:** Try to `create` a review where `userId` field matches `request.auth.uid`.
   - **Expected:** Succeed.
 - [ ] **Authenticated User:** Try to `create` a review where `userId` field is a different UID.

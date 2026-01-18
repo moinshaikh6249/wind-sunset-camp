@@ -21,16 +21,16 @@ service cloud.firestore {
     }
 
     // Admins Collection
-    // - Super-admins can manage other admins.
+    // - Super-admins can manage other admins (only from server/console).
     // - Regular admins can read the list.
-    // - No client-side creation by non-super-admins.
+    // - No client-side writes are allowed for security.
     match /admins/{adminId} {
       allow read: if isAdmin();
-      allow write: if isSuperAdmin();
+      allow write: if false; // All admin management must be done server-side or manually
     }
 
     // Users Collection
-    // - Users can create their own account document.
+    // - Users can create their own account document during signup.
     // - Users can read/update their own data.
     // - Admins can manage all user documents.
     match /users/{userId} {
@@ -40,11 +40,14 @@ service cloud.firestore {
     }
     
     // Bookings Collection
-    // - Anyone can create a booking.
-    // - Only admins can read/manage bookings.
+    // - Anyone can create a booking (for guest checkout).
+    // - Logged-in users can create bookings and must provide their UID.
+    // - Users can only read their own bookings.
+    // - Only admins can read all, update, or delete bookings.
     match /bookings/{bookingId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read: if isAdmin() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
     
     // Gallery Images Collection

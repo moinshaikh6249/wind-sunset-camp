@@ -21,13 +21,23 @@
   },
   "bookings": {
     "BOOKING_ID_ABC": {
-      "fullName": "John Smith",
-      "email": "john.smith@example.com",
-      "phone": "987-654-3210",
+      "userId": "USER_UID_123",
+      "fullName": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "phone": "123-456-7890",
       "campName": "Summer Adventure Camp",
       "peopleCount": 2,
       "status": "pending",
       "createdAt": "2024-07-26T10:00:00.000Z"
+    },
+    "BOOKING_ID_GUEST_XYZ": {
+      "fullName": "John Smith (Guest)",
+      "email": "john.smith@example.com",
+      "phone": "987-654-3210",
+      "campName": "Mountain Explorer",
+      "peopleCount": 4,
+      "status": "pending",
+      "createdAt": "2024-07-27T11:00:00.000Z"
     }
   },
   "galleryImages": {
