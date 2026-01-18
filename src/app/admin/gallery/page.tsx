@@ -1,4 +1,3 @@
-
 'use client';
 
 import { db } from '@/lib/firebase';
@@ -7,7 +6,6 @@ import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useMemo, useTransition } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -89,12 +87,11 @@ export default function GalleryPage() {
     }
     return galleryImages.map((image) => (
        <Card key={image.id} className="group relative overflow-hidden">
-            <Image
+            <img
                 src={image.imageUrl}
                 alt={image.description}
-                width={400}
-                height={300}
                 className="object-cover w-full h-40 transition-transform duration-300 group-hover:scale-110"
+                loading="lazy"
             />
             <CardContent className="p-3">
                 <p className="text-sm truncate text-muted-foreground">{image.description}</p>

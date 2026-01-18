@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +27,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
 import { LoaderCircle, Upload, ImageOff } from "lucide-react";
-import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
@@ -138,11 +136,10 @@ export function UploadImageForm() {
                         </div>
                       ) : (
                         <div className="relative w-full h-[200px] rounded-md border overflow-hidden">
-                            <Image 
+                            <img 
                                 src={imageUrlValue} 
                                 alt="Image preview" 
-                                fill
-                                className="object-cover"
+                                className="w-full h-full object-cover"
                                 onError={() => setPreviewError(true)}
                             />
                         </div>

@@ -1,7 +1,5 @@
-
 'use client';
 
-import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection } from "firebase/firestore";
@@ -51,13 +49,12 @@ export default function GalleryPage() {
                 ) : galleryImages && galleryImages.length > 0 ? (
                     galleryImages.map((image) => (
                         <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
-                            <Image
+                            <img
                             src={image.imageUrl}
                             alt={image.description}
-                            fill
-                            className="object-cover transform group-hover:scale-110 transition-transform duration-500"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                             data-ai-hint={image.imageHint}
+                            loading="lazy"
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                             <p className="text-white text-sm drop-shadow-md">{image.description}</p>
