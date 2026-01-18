@@ -62,7 +62,19 @@ export default function GalleryPage() {
   const [galleryImages, isLoading] = useCollectionData<GalleryImage>(galleryQuery, { idField: 'id' });
 
   const handleDeleteImage = async (image: GalleryImage) => {
+    if (!image || !image.id) {
+        toast({
+            title: "Deletion Failed",
+            description: "Invalid image data. Cannot delete.",
+            variant: "destructive",
+        });
+        console.error("Attempted to delete an image without a valid ID.", image);
+        return;
+    }
+    
+    console.log("Deleting image ID:", image.id);
     setDeletingId(image.id);
+
     try {
       const imageDbRef = doc(db, 'galleryImages', image.id);
       await deleteDoc(imageDbRef);
