@@ -3,8 +3,8 @@
 
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, doc, deleteDoc } from 'firebase/firestore';
-import { useMemo, useTransition, useState } from 'react';
+import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { useMemo, useTransition } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -36,6 +36,7 @@ type Image = {
   description: string;
   imageUrl: string;
   imageHint: string;
+  createdAt: any;
 }
 
 function ImageCardSkeleton() {
@@ -51,8 +52,8 @@ export default function GalleryPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
-  const galleryRef = useMemo(() => collection(db, 'galleryImages'), []);
-  const [galleryImages, isLoading] = useCollectionData<Image>(galleryRef, { idField: 'id' });
+  const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
+  const [galleryImages, isLoading] = useCollectionData<Image>(galleryQuery, { idField: 'id' });
 
   const handleDeleteImage = (image: Image) => {
     startTransition(async () => {
@@ -141,7 +142,7 @@ export default function GalleryPage() {
         <CardHeader>
           <CardTitle>Manage Gallery</CardTitle>
           <CardDescription>
-            Upload, view, and delete images from your public gallery.
+            Add, view, and delete images from your public gallery.
           </CardDescription>
         </CardHeader>
         <CardContent>
