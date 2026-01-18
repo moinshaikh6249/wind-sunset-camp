@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -226,7 +225,7 @@ export default function ReviewsPage() {
                                             <FormItem>
                                             <FormLabel>Your Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="John D." {...field} />
+                                                <Input placeholder="John D." {...field} readOnly={!!user?.displayName} />
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>

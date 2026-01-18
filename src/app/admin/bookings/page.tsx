@@ -1,4 +1,3 @@
-
 'use client';
 
 import { db, auth } from '@/lib/firebase';
@@ -102,6 +101,7 @@ export default function BookingsPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   
+  // Ensure the query points to the top-level 'bookings' collection
   const bookingsRef = useMemo(() => collection(db, 'bookings'), []);
   const [bookings, isLoading] = useCollectionData<Booking>(bookingsRef, { idField: 'id' });
 

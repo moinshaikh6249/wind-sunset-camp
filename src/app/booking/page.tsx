@@ -1,12 +1,11 @@
-
 "use client";
 
 import { BookingForm } from "./BookingForm";
 import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData } from "react-firebase-hooks/firestore";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useMemo, Suspense } from "react";
 import { doc } from "firebase/firestore";
 import Image from "next/image";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
@@ -30,7 +29,6 @@ type Camp = {
 
 function BookingPageContent() {
   const [user, isUserLoading] = useAuthState(auth);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const campId = searchParams.get("camp");
@@ -42,14 +40,7 @@ function BookingPageContent() {
   
   const [camp, isCampLoading] = useDocumentData<Camp>(campRef);
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      const redirectUrl = campId ? `/login?redirect=/booking?camp=${campId}` : '/login?redirect=/booking';
-      router.push(redirectUrl);
-    }
-  }, [user, isUserLoading, router, campId]);
-
-  if (isUserLoading || !user || (campId && isCampLoading)) {
+  if (isUserLoading || (campId && isCampLoading)) {
     return (
       <div className="container mx-auto px-4 py-16 md:py-24 text-center">
         <LoaderCircle className="h-12 w-12 animate-spin text-primary mx-auto mb-6" />
@@ -71,7 +62,7 @@ function BookingPageContent() {
             Book Your Adventure
           </h1>
           <p className="text-lg text-muted-foreground">
-            Complete the form below to reserve your spot. You are booking as {user.displayName || user.email}.
+            {user ? `Complete the form below to reserve your spot. You are booking as ${user.displayName || user.email}.` : "Fill out the form below to book your spot as a guest."}
           </p>
         </div>
         

@@ -3,12 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Mail, MapPin, Phone, CheckCircle, Clock, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { Mail, MapPin, Phone, ExternalLink, Clock } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollectionData } from "react-firebase-hooks/firestore";
-import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -22,9 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -32,13 +28,6 @@ const formSchema = z.object({
   subject: z.string().min(5, { message: "Subject must be at least 5 characters." }),
   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
 });
-
-type Message = {
-  id: string;
-  subject: string;
-  timestamp: string;
-  read: boolean;
-};
 
 // WhatsApp Icon Component
 const WhatsAppIcon = () => (
@@ -51,20 +40,7 @@ const WhatsAppIcon = () => (
 
 export default function ContactPageContent() {
   const { toast } = useToast();
-  const [user, isUserLoading] = useAuthState(auth);
-
-  const userMessagesRef = useMemo(() => {
-    if (!user) return null;
-    return collection(db, `users/${user.uid}/messages`);
-  }, [user]);
-
-  const [messagesData, messagesLoading] = useCollectionData<Omit<Message, 'id'>>(userMessagesRef, { idField: 'id' });
-
-  const sentMessages = useMemo(() => {
-    if (!messagesData) return [];
-    return [...messagesData]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [messagesData]);
+  const [user] = useAuthState(auth);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,42 +60,25 @@ export default function ContactPageContent() {
   }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
-        toast({
-            title: "Authentication Error",
-            description: "You must be logged in to send a message.",
-            variant: "destructive",
-        });
-        return;
-    }
     try {
-        const timestamp = new Date().toISOString();
-        const batch = writeBatch(db);
-        
-        const adminMessageRef = doc(collection(db, 'adminMessages'));
-        batch.set(adminMessageRef, {
+        const messageData = {
             ...values,
-            timestamp,
+            timestamp: new Date().toISOString(),
             read: false,
-            userId: user.uid,
-            messageId: adminMessageRef.id,
-        });
+            userId: user?.uid || null, // Store UID if user is logged in
+        };
 
-        const userMessageRef = doc(db, `users/${user.uid}/messages/${adminMessageRef.id}`);
-        batch.set(userMessageRef, {
-            subject: values.subject, 
-            timestamp,
-            read: false,
-        });
-
-        await batch.commit();
+        // Write to the single top-level 'messages' collection
+        await addDoc(collection(db, 'messages'), messageData);
 
         toast({
             title: "Message Sent!",
             description: "Thanks for reaching out. We'll get back to you soon.",
         });
+
+        // Reset only subject and message, keep user details if logged in
         form.reset({
-            ...form.getValues(),
+            ...values,
             subject: "",
             message: "",
         });
@@ -146,94 +105,55 @@ export default function ContactPageContent() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column: Form and Messages */}
+          {/* Left Column: Form */}
           <div className="space-y-8">
              <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
                 <CardHeader>
                     <CardTitle>Send us a Message</CardTitle>
                     <CardDescription>
-                         {isUserLoading ? "Loading..." : (user ? "Fill out the form and we'll get back to you." : "Please log in to send a message.")}
+                         Fill out the form and we'll get back to you as soon as possible.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {isUserLoading ? (
-                        <div className="h-64 flex items-center justify-center">Loading form...</div>
-                    ) : user ? (
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <FormField control={form.control} name="name" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Full Name</FormLabel>
-                                            <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                    <FormField control={form.control} name="email" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email Address</FormLabel>
-                                            <FormControl><Input placeholder="you@example.com" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                </div>
-                                <FormField control={form.control} name="subject" render={({ field }) => (
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <FormField control={form.control} name="name" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Subject</FormLabel>
-                                        <FormControl><Input placeholder="Question about the Summer Camp" {...field} /></FormControl>
+                                        <FormLabel>Full Name</FormLabel>
+                                        <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                                <FormField control={form.control} name="message" render={({ field }) => (
+                                <FormField control={form.control} name="email" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Your Message</FormLabel>
-                                        <FormControl><Textarea rows={6} placeholder="Tell us more..." {...field} /></FormControl>
+                                        <FormLabel>Email Address</FormLabel>
+                                        <FormControl><Input placeholder="you@example.com" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                                <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
-                                    {form.formState.isSubmitting ? "Sending..." : "Send Message"}
-                                </Button>
-                            </form>
-                        </Form>
-                    ) : (
-                         <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                             <p className="text-muted-foreground mb-4">You need an account to send messages.</p>
-                             <Button asChild><Link href="/login?redirect=/contact">Login or Sign Up</Link></Button>
-                         </div>
-                    )}
+                            </div>
+                            <FormField control={form.control} name="subject" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Subject</FormLabel>
+                                    <FormControl><Input placeholder="Question about the Summer Camp" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="message" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Your Message</FormLabel>
+                                    <FormControl><Textarea rows={6} placeholder="Tell us more..." {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
+                                {form.formState.isSubmitting ? "Sending..." : "Send Message"}
+                            </Button>
+                        </form>
+                    </Form>
                 </CardContent>
             </Card>
-
-             {user && (
-                 <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
-                    <CardHeader>
-                        <CardTitle>Your Sent Messages</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {messagesLoading ? (
-                            <p>Loading messages...</p>
-                        ) : sentMessages.length > 0 ? (
-                            <ul className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                {sentMessages.map(msg => (
-                                    <li key={msg.id} className="border-b pb-3 last:border-b-0">
-                                        <p className="font-semibold">{msg.subject}</p>
-                                        <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                            <span>{formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}</span>
-                                            <div className={cn("flex items-center gap-1.5", msg.read ? "text-green-600" : "text-amber-600")}>
-                                                {msg.read ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                                                {msg.read ? "Read" : "Sent"}
-                                            </div>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-muted-foreground">You have not sent any messages yet.</p>
-                        )}
-                    </CardContent>
-                 </Card>
-             )}
           </div>
 
           {/* Right Column: Contact Info & Map */}

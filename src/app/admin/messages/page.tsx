@@ -1,9 +1,8 @@
-
 'use client';
 
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Mail, Trash2, Archive, ArchiveRestore } from 'lucide-react';
@@ -46,7 +45,7 @@ type ContactMessage = {
   message: string;
   timestamp: string;
   read: boolean;
-  userId: string;
+  userId: string | null;
 };
 
 function MessageSkeleton() {
@@ -63,7 +62,8 @@ export default function MessagesPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
 
-  const messagesRef = useMemo(() => collection(db, 'adminMessages'), []);
+  // Read from the single, top-level 'messages' collection
+  const messagesRef = useMemo(() => collection(db, 'messages'), []);
   const [messages, isLoading] = useCollectionData<ContactMessage>(messagesRef, { idField: 'id' });
 
   const sortedMessages = useMemo(() => {
@@ -77,26 +77,18 @@ export default function MessagesPage() {
     return sortedMessages.filter(msg => 
         msg.name.toLowerCase().includes(lowercasedQuery) ||
         msg.email.toLowerCase().includes(lowercasedQuery) ||
-        msg.subject.toLowerCase().includes(lowercasedQuery) ||
+        (msg.subject && msg.subject.toLowerCase().includes(lowercasedQuery)) ||
         msg.message.toLowerCase().includes(lowercasedQuery)
     );
   }, [sortedMessages, searchQuery]);
 
   const handleToggleRead = async (message: ContactMessage) => {
     try {
-      const newReadStatus = !message.read;
-      const batch = writeBatch(db);
-      
-      const adminMessageRef = doc(db, `adminMessages/${message.id}`);
-      batch.update(adminMessageRef, { read: newReadStatus });
-      
-      const userMessageRef = doc(db, `users/${message.userId}/messages/${message.id}`);
-      batch.update(userMessageRef, { read: newReadStatus });
-
-      await batch.commit();
+      const messageRef = doc(db, `messages/${message.id}`);
+      await updateDoc(messageRef, { read: !message.read });
 
       toast({
-        title: `Message marked as ${newReadStatus ? 'read' : 'unread'}`,
+        title: `Message marked as ${!message.read ? 'read' : 'unread'}`,
       });
     } catch (error: any) {
       toast({
@@ -109,11 +101,11 @@ export default function MessagesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const messageRef = doc(db, `adminMessages/${id}`);
+      const messageRef = doc(db, `messages/${id}`);
       await deleteDoc(messageRef);
       toast({
         title: "Message Deleted",
-        description: "The message has been removed from the admin inbox.",
+        description: "The message has been removed from the inbox.",
       });
     } catch (error: any) {
       toast({
@@ -135,7 +127,7 @@ export default function MessagesPage() {
         <CardHeader>
           <CardTitle>Contact Messages</CardTitle>
           <CardDescription>
-            Messages submitted by users.
+            Messages submitted by users via the contact form.
           </CardDescription>
         </CardHeader>
         <CardContent>

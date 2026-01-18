@@ -11,53 +11,44 @@ service cloud.firestore {
       return isAuth() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Admins can read their own roles, but clients cannot write to the admins collection.
-    // This must be done manually in the Firebase Console or via a trusted server environment.
+    // Admins: Manually managed in Firebase Console. Read-only for other admins.
     match /admins/{adminId} {
       allow read: if isAdmin();
       allow write: if false; 
     }
 
-    // Users can create their own profile on signup.
-    // They can only read or update their own data. Admins can manage any user.
+    // Users: Can create their own profile. Can only read/update their own data. Admins can manage any user.
     match /users/{userId} {
       allow create: if isAuth() && request.auth.uid == userId;
       allow read, update: if isAuth() && request.auth.uid == userId || isAdmin();
       allow delete: if isAdmin();
     }
     
-    // Anyone (including guests) can create a booking.
-    // Logged-in users can read their own bookings.
-    // Admins can read, update, and delete any booking.
+    // Bookings: Anyone can create. Logged-in users can read their own. Admins can manage all.
     match /bookings/{bookingId} {
       allow create: if true;
       allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }
 
-    // Anyone can read reviews that are marked as visible.
-    // Only authenticated users can create reviews for themselves.
-    // Admins can update or delete any review.
+    // Reviews: Public read. Authenticated users can create. Admins can manage.
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
     
-    // Anyone can read public camp and gallery data.
-    // Only admins can write to these collections.
+    // Gallery & Camps: Public read. Admin-only write.
     match /galleryImages/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
     match /camps/{campId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Anyone can submit a message through the contact form.
-    // Only admins can read or delete messages.
+    // Messages: Anyone can create. Admins can manage.
     match /messages/{messageId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();

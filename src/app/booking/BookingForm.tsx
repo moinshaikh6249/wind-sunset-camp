@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,10 +128,11 @@ function BookingFormComponent() {
         status: "Pending" as const,
       };
 
+      // Ensure bookings are always written to the top-level 'bookings' collection
       const bookingsRef = collection(db, "bookings");
       await addDoc(bookingsRef, bookingData);
 
-      // If user is logged in, add a history entry
+      // If user is logged in, add a history entry to their profile
       if (user) {
         const historyRef = collection(db, `users/${user.uid}/history`);
         await addDoc(historyRef, {
@@ -141,6 +141,7 @@ function BookingFormComponent() {
             timestamp: new Date().toISOString(),
         });
 
+        // Optionally update the user's phone number if it has changed
         if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
             await updateDoc(userProfileRef, { phone: values.phone });
         }
@@ -163,7 +164,7 @@ function BookingFormComponent() {
 
   const isFormReady = !campsLoading && !profileLoading;
 
-  if (!isFormReady && isUserLoading) {
+  if (!isFormReady && !isUserLoading) {
     return (
         <div className="flex justify-center items-center h-96">
             <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -188,7 +189,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Appleseed" {...field} readOnly={isReadonly} />
+                    <Input placeholder="Jane Appleseed" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -201,7 +202,7 @@ function BookingFormComponent() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="jane@example.com" {...field} readOnly={isReadonly} />
+                    <Input placeholder="jane@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

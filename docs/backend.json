@@ -64,7 +64,7 @@
         "peopleCount": { "type": "number" },
         "status": {
           "type": "string",
-          "enum": ["pending", "confirmed", "cancelled"]
+          "enum": ["Pending", "Approved", "Canceled"]
         },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -133,7 +133,7 @@
     },
     "/bookings/{bookingId}": {
       "schema": { "$ref": "#/entities/Booking" },
-      "description": "Stores all camp bookings. If made by a logged-in user, the userId field should be populated."
+      "description": "Stores all camp bookings from guests and registered users."
     },
     "/galleryImages/{imageId}": {
       "schema": { "$ref": "#/entities/GalleryImage" },
