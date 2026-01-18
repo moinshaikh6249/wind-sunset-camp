@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from '@/lib/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
@@ -75,7 +75,15 @@ export default function MessagesPage() {
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
   const messagesRef = useMemo(() => collection(db, 'messages'), []);
-  const [messages, isLoading] = useCollectionData<ContactMessage>(messagesRef, { idField: 'id' });
+  const [messagesSnapshot, isLoading] = useCollection(messagesRef);
+
+  const messages = useMemo(() => {
+    if (!messagesSnapshot) return [];
+    return messagesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<ContactMessage, 'id'>),
+    })) as ContactMessage[];
+  }, [messagesSnapshot]);
 
   const sortedMessages = useMemo(() => {
     if (!messages) return [];
@@ -94,6 +102,16 @@ export default function MessagesPage() {
   }, [sortedMessages, searchQuery]);
 
   const handleToggleRead = async (message: ContactMessage) => {
+    console.log("Attempting to toggle read status for message object:", message);
+    console.log("Message ID:", message.id);
+    if (!message?.id) {
+        toast({
+            title: "Operation Failed",
+            description: "Message ID is missing. Cannot update status.",
+            variant: "destructive",
+        });
+        return;
+    }
     try {
       const messageRef = doc(db, `messages/${message.id}`);
       await updateDoc(messageRef, { read: !message.read });
@@ -112,6 +130,16 @@ export default function MessagesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    console.log("Attempting to delete message with ID:", id);
+    console.log("Message object:", selectedMessage);
+    if (!id) {
+        toast({
+            title: "Deletion Failed",
+            description: "Message ID is missing. Cannot delete.",
+            variant: "destructive",
+        });
+        return;
+    }
     try {
       const messageRef = doc(db, `messages/${id}`);
       await deleteDoc(messageRef);
@@ -152,7 +180,12 @@ export default function MessagesPage() {
                 {filteredMessages.map((message) => (
                     <DialogTrigger asChild key={message.id}>
                         <div 
-                            onClick={() => setSelectedMessage(message)}
+                            onClick={() => {
+                                setSelectedMessage(message);
+                                if (!message.read) {
+                                    handleToggleRead({ ...message, read: false });
+                                }
+                            }}
                             className={cn(
                                 "flex items-center gap-4 w-full p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50",
                                 !message.read && "bg-muted/60"
