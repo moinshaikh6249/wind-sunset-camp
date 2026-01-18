@@ -1,8 +1,8 @@
 'use client';
 
 import { db, auth } from '@/lib/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { format } from 'date-fns';
@@ -102,9 +102,17 @@ export default function BookingsPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   
-  // Ensure the query points to the top-level 'bookings' collection
-  const bookingsRef = useMemo(() => collection(db, 'bookings'), []);
-  const [bookings, isLoading] = useCollectionData<Booking>(bookingsRef, { idField: 'id' });
+  const bookingsQuery = useMemo(() => query(collection(db, 'bookings')), []);
+  const [bookingsSnapshot, isLoading] = useCollection(bookingsQuery);
+  
+  const bookings = useMemo(() => {
+    if (!bookingsSnapshot) return [];
+    // Manually map docs to ensure 'id' is included, which is critical for actions.
+    return bookingsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Booking, 'id'>),
+    })) as Booking[];
+  }, [bookingsSnapshot]);
 
   const sortedBookings = useMemo(() => {
     if (!bookings) return [];
@@ -163,6 +171,8 @@ export default function BookingsPage() {
           });
           return;
         }
+        console.log("Approving Booking ID:", booking.id);
+        console.log("Booking object:", booking);
         const bookingRef = doc(db, 'bookings', booking.id);
         await handleAction(
           () => updateDoc(bookingRef, { status: 'Approved' }),
@@ -184,6 +194,8 @@ export default function BookingsPage() {
             });
             return;
           }
+          console.log("Canceling Booking ID:", booking.id);
+          console.log("Booking object:", booking);
           const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => updateDoc(bookingRef, { status: 'Canceled' }),
@@ -205,6 +217,8 @@ export default function BookingsPage() {
                 });
                 return;
             }
+            console.log("Deleting Booking ID:", booking.id);
+            console.log("Booking object:", booking);
             const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => deleteDoc(bookingRef),
