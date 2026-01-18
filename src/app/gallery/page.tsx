@@ -2,9 +2,9 @@
 'use client';
 
 import Image from "next/image";
-import { database } from "@/lib/firebase";
-import { useObjectVal } from "react-firebase-hooks/database";
-import { ref } from "firebase/database";
+import { db } from "@/lib/firebase";
+import { useCollectionData } from "react-firebase-hooks/firestore";
+import { collection } from "firebase/firestore";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -15,10 +15,6 @@ type DbGalleryImage = {
   imageHint: string;
 };
 
-type DbGalleryImages = {
-    [id: string]: DbGalleryImage;
-}
-
 function ImageSkeleton() {
     return (
         <div className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group">
@@ -28,13 +24,8 @@ function ImageSkeleton() {
 }
 
 export default function GalleryPage() {
-  const galleryRef = useMemo(() => ref(database, 'galleryImages'), []);
-  const [galleryData, isLoading] = useObjectVal<DbGalleryImages>(galleryRef);
-
-  const galleryImages = useMemo(() => {
-    if (!galleryData) return [];
-    return Object.values(galleryData);
-  }, [galleryData]);
+  const galleryRef = useMemo(() => collection(db, 'galleryImages'), []);
+  const [galleryImages, isLoading] = useCollectionData<DbGalleryImage>(galleryRef, { idField: 'id' });
 
   return (
     <div className="bg-background woody-texture-background">
@@ -57,7 +48,7 @@ export default function GalleryPage() {
                         <ImageSkeleton />
                         <ImageSkeleton />
                     </>
-                ) : galleryImages.length > 0 ? (
+                ) : galleryImages && galleryImages.length > 0 ? (
                     galleryImages.map((image) => (
                         <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
                             <Image

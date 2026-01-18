@@ -1,9 +1,9 @@
 
 "use client";
 
-import { auth, database, storage } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
+import { useCollectionData, useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { signOut, updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, LogOut, Tent, Trash2, History, UserPlus, CalendarPlus, Calendar, MapPin, Users, Camera, LoaderCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { ref as dbRef, remove, update, query } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, collection, query, deleteDoc, updateDoc } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,10 +44,6 @@ type Camp = {
     location: string;
 };
 
-type DbCamps = {
-    [id: string]: Camp;
-}
-
 const activityIcons: { [key: string]: React.ReactNode } = {
   'signup': <UserPlus className="h-5 w-5 text-green-500" />,
   'booking': <CalendarPlus className="h-5 w-5 text-blue-500" />,
@@ -77,22 +72,21 @@ export default function DashboardPage() {
   const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
 
   const userProfileRef = useMemo(() => {
     if (!user) return null;
-    return dbRef(database, `users/${user.uid}`);
+    return doc(db, `users/${user.uid}`);
   }, [user]);
   
-  const campsRef = useMemo(() => query(dbRef(database, 'camps')), []);
+  const [userProfile, isProfileLoading] = useDocumentData<any>(userProfileRef);
+  const [campsData, areCampsLoading] = useCollectionData<Camp>(collection(db, 'camps'), { idField: 'id' });
+  const [bookings, areBookingsLoading] = useCollectionData(user ? collection(db, `users/${user.uid}/bookings`) : null, { idField: 'id' });
+  const [history, areHistoryLoading] = useCollectionData(user ? query(collection(db, `users/${user.uid}/history`)) : null, { idField: 'id' });
 
-  const [userProfile, isProfileLoading] = useObjectVal<any>(userProfileRef);
-  const [campsData, areCampsLoading] = useObjectVal<DbCamps>(campsRef);
-
-  const bookings = userProfile?.bookings ? Object.entries(userProfile.bookings).map(([id, booking]) => ({ id, ...booking as any })) : [];
-  const history = userProfile?.history ? Object.values(userProfile.history).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];
+  const sortedHistory = useMemo(() => {
+      if (!history) return [];
+      return [...history].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [history]);
 
 
   useEffect(() => {
@@ -121,8 +115,8 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!user) return;
     try {
-      const bookingRef = dbRef(database, `users/${user.uid}/bookings/${bookingId}`);
-      await remove(bookingRef);
+      const bookingRef = doc(db, `users/${user.uid}/bookings/${bookingId}`);
+      await deleteDoc(bookingRef);
       toast({
         title: "Booking Canceled",
         description: "Your booking has been successfully canceled.",
@@ -135,46 +129,8 @@ export default function DashboardPage() {
       });
     }
   };
-
-  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    setIsUploading(true);
-
-    try {
-      const filePath = `profile-pictures/${user.uid}/${file.name}`;
-      const fileRef = storageRef(storage, filePath);
-      const uploadResult = await uploadBytes(fileRef, file);
-      const photoURL = await getDownloadURL(uploadResult.ref);
-
-      // Update Firebase Auth profile
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL });
-      }
-
-      // Update Realtime Database
-      if(userProfileRef) {
-        await update(userProfileRef, { photoURL });
-      }
-
-      toast({
-        title: "Profile Picture Updated",
-        description: "Your new picture has been saved.",
-      });
-    } catch (error: any) {
-      console.error("Profile picture update error:", error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Could not update your profile picture.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
   
-  const isLoading = isUserLoading || isProfileLoading || areCampsLoading;
+  const isLoading = isUserLoading || isProfileLoading || areCampsLoading || areBookingsLoading || areHistoryLoading;
 
   if (isLoading || !user) {
     return (
@@ -203,23 +159,6 @@ export default function DashboardPage() {
                       <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
                       <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
                     </Avatar>
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer mb-4"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {isUploading ? (
-                        <LoaderCircle className="h-8 w-8 text-white animate-spin" />
-                      ) : (
-                        <Camera className="h-8 w-8 text-white" />
-                      )}
-                    </div>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="image/png, image/jpeg, image/gif"
-                      onChange={handleProfilePictureChange} 
-                    />
                  </div>
                 <CardTitle className="font-headline text-3xl text-heading-color">{displayName || "User Profile"}</CardTitle>
                 <CardDescription>Welcome back to your adventure hub!</CardDescription>
@@ -262,9 +201,9 @@ export default function DashboardPage() {
                 <CardDescription>Recent activities on your account.</CardDescription>
               </CardHeader>
               <CardContent>
-                {history.length > 0 ? (
+                {sortedHistory.length > 0 ? (
                   <ul className="space-y-4">
-                    {history.map((activity: any, index: number) => (
+                    {sortedHistory.map((activity: any, index: number) => (
                       <li key={index} className="flex items-start gap-4">
                         <div className="mt-1">
                             {activityIcons[activity.type] || <History className="h-5 w-5 text-muted-foreground" />}
@@ -300,8 +239,8 @@ export default function DashboardPage() {
                   </div>
                 ) : bookings && bookings.length > 0 ? (
                   <ul className="space-y-4">
-                    {bookings.map(booking => {
-                      const campDetails = campsData ? campsData[booking.campId] : null;
+                    {bookings.map((booking: any) => {
+                      const campDetails = campsData ? campsData.find(c => c.id === booking.campId) : null;
                       const status = booking.status || 'Pending';
                       const currentStatusConfig = statusConfig[status] || statusConfig.Pending;
                       const Icon = currentStatusConfig.icon;

@@ -1,10 +1,10 @@
 
 'use client';
 
-import { auth, database } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
+import { auth, db } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { ref } from 'firebase/database';
+import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarCheck, Activity, UserPlus, LineChart, BarChart3, UserCheck } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
@@ -23,15 +23,10 @@ type DbUser = {
   bookings?: { [key: string]: { campName: string; bookingDate: string } };
 };
 
-type DbUsers = {
-  [uid: string]: DbUser;
-};
-
 export default function AdminDashboardPage() {
   const [user] = useAuthState(auth);
   
-  const usersRef = useMemo(() => ref(database, 'users'), []);
-  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
+  const [usersData, isLoading] = useCollectionData<DbUser>(collection(db, 'users'));
 
   const stats = useMemo(() => {
     if (!usersData) {
@@ -46,7 +41,7 @@ export default function AdminDashboardPage() {
       };
     }
 
-    const usersArray = Object.entries(usersData);
+    const usersArray = usersData;
     const totalUsers = usersArray.length;
     
     let activeBookings = 0;
@@ -67,7 +62,7 @@ export default function AdminDashboardPage() {
 
     const recentActivities: ActivityType[] = [];
 
-    for (const [uid, userData] of usersArray) {
+    for (const userData of usersArray) {
       if (userData.bookings) {
         const bookingCount = Object.keys(userData.bookings).length;
         if (bookingCount > 0) {

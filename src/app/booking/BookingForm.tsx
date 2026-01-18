@@ -7,11 +7,11 @@ import { z } from "zod";
 import React, { useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
-import { auth, database } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
+import { useCollectionData, useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter } from "next/navigation";
-import { ref, push, set, query, update } from "firebase/database";
+import { doc, collection, addDoc, updateDoc, setDoc } from "firebase/firestore";
 
 
 import { Button } from "@/components/ui/button";
@@ -50,10 +50,6 @@ type Camp = {
     name: string;
 };
 
-type DbCamps = {
-    [id: string]: Camp;
-}
-
 type UserProfile = {
     firstName?: string;
     lastName?: string;
@@ -67,18 +63,16 @@ function BookingFormComponent() {
   const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
 
-  const campsRef = useMemo(() => query(ref(database, 'camps')), []);
+  const campsRef = useMemo(() => collection(db, 'camps'), []);
   
   const userProfileRef = useMemo(() => {
     if (!user) return null;
-    return ref(database, `users/${user.uid}`);
+    return doc(db, `users/${user.uid}`);
   }, [user]);
 
 
-  const [campsData, campsLoading] = useObjectVal<DbCamps>(campsRef);
-  const [userProfile, profileLoading] = useObjectVal<UserProfile>(userProfileRef);
-
-  const upcomingCamps = useMemo(() => campsData ? Object.values(campsData) : [], [campsData]);
+  const [upcomingCamps, campsLoading] = useCollectionData<Camp>(campsRef, { idField: 'id' });
+  const [userProfile, profileLoading] = useDocumentData<UserProfile>(userProfileRef);
 
 
   const form = useForm<FormValues>({
@@ -120,6 +114,10 @@ function BookingFormComponent() {
       });
       return;
     }
+    if (!upcomingCamps) {
+        toast({ title: "Error", description: "Camps not loaded yet.", variant: "destructive" });
+        return;
+    }
 
     try {
       const camp = upcomingCamps.find(c => c.id === values.campId);
@@ -136,20 +134,18 @@ function BookingFormComponent() {
         status: "Pending",
       };
 
-      const bookingsRef = ref(database, `users/${user.uid}/bookings`);
-      const newBookingRef = push(bookingsRef);
-      await set(newBookingRef, bookingData);
+      const bookingsRef = collection(db, `users/${user.uid}/bookings`);
+      await addDoc(bookingsRef, bookingData);
 
-      const historyRef = ref(database, `users/${user.uid}/history`);
-      const newHistoryRef = push(historyRef);
-      await set(newHistoryRef, {
+      const historyRef = collection(db, `users/${user.uid}/history`);
+      await addDoc(historyRef, {
         type: 'booking',
         description: `Booked ${camp.name}`,
         timestamp: new Date().toISOString(),
       });
       
       if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
-          await update(userProfileRef, { phone: values.phone });
+          await updateDoc(userProfileRef, { phone: values.phone });
       }
 
       toast({
@@ -238,7 +234,7 @@ function BookingFormComponent() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {upcomingCamps.map((camp) => (
+                      {upcomingCamps && upcomingCamps.map((camp) => (
                         <SelectItem key={camp.id} value={camp.id}>
                           {camp.name}
                         </SelectItem>

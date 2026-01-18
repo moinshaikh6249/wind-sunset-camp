@@ -18,9 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, database } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { ref, get } from "firebase/database";
+import { doc, getDoc } from "firebase/firestore";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -44,9 +44,9 @@ export function AdminLoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
-      // Check admin status from Realtime Database
-      const adminRef = ref(database, `admins/${user.uid}`);
-      const adminSnapshot = await get(adminRef);
+      // Check admin status from Firestore
+      const adminRef = doc(db, `admins/${user.uid}`);
+      const adminSnapshot = await getDoc(adminRef);
 
       if (adminSnapshot.exists()) {
         toast({

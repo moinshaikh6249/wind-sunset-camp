@@ -2,12 +2,12 @@
 "use client";
 
 import { BookingForm } from "./BookingForm";
-import { auth, database } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
+import { useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, Suspense } from "react";
-import { ref } from "firebase/database";
+import { doc } from "firebase/firestore";
 import Image from "next/image";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,10 +28,6 @@ type Camp = {
     };
 };
 
-type DbCamps = {
-    [id: string]: Camp;
-}
-
 function BookingPageContent() {
   const [user, isUserLoading] = useAuthState(auth);
   const router = useRouter();
@@ -41,10 +37,10 @@ function BookingPageContent() {
 
   const campRef = useMemo(() => {
     if (!campId) return null;
-    return ref(database, `camps/${campId}`);
+    return doc(db, `camps/${campId}`);
   }, [campId]);
   
-  const [camp, isCampLoading] = useObjectVal<Camp>(campRef);
+  const [camp, isCampLoading] = useDocumentData<Camp>(campRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {

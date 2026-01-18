@@ -1,9 +1,9 @@
 
 'use client';
 
-import { database } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { collection } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,10 +31,6 @@ type DbUser = {
   history?: { [historyId: string]: HistoryItem };
 };
 
-type DbUsers = {
-  [uid: string]: DbUser;
-};
-
 const COLORS = {
   Approved: '#22c55e', // green-500
   Pending: '#f59e0b',  // amber-500
@@ -58,8 +54,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 export default function ReportsPage() {
   const { theme } = useTheme();
 
-  const usersRef = useMemo(() => ref(database, 'users'), []);
-  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
+  const [usersData, isLoading] = useCollectionData<DbUser>(collection(db, 'users'));
   
   const [primaryColor, mutedColor] = useMemo(() => {
         if (typeof window === 'undefined') return ["#000000", "#999999"];
@@ -83,7 +78,7 @@ export default function ReportsPage() {
     const bookingStatusCount = { Approved: 0, Pending: 0, Canceled: 0 };
     const signupCounts: { [key: string]: number } = {};
 
-    Object.values(usersData).forEach(user => {
+    usersData.forEach(user => {
       if (user.bookings) {
         Object.values(user.bookings).forEach(booking => {
           bookingsByCamp[booking.campName] = (bookingsByCamp[booking.campName] || 0) + 1;

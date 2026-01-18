@@ -6,10 +6,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Mail, MapPin, Phone, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
-import { auth, database } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useObjectVal } from "react-firebase-hooks/database";
-import { ref, push, set, update } from "firebase/database";
+import { useCollectionData } from "react-firebase-hooks/firestore";
+import { collection, addDoc, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -47,15 +47,14 @@ export default function ContactPage() {
 
   const userMessagesRef = useMemo(() => {
     if (!user) return null;
-    return ref(database, `users/${user.uid}/messages`);
+    return collection(db, `users/${user.uid}/messages`);
   }, [user]);
 
-  const [messagesData, messagesLoading] = useObjectVal<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+  const [messagesData, messagesLoading] = useCollectionData<Omit<Message, 'id'>>(userMessagesRef, { idField: 'id' });
 
   const sentMessages = useMemo(() => {
     if (!messagesData) return [];
-    return Object.entries(messagesData)
-      .map(([id, msg]) => ({ id, ...msg }))
+    return [...messagesData]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [messagesData]);
 
@@ -86,27 +85,28 @@ export default function ContactPage() {
         return;
     }
     try {
-        const messageId = push(ref(database)).key;
-        if (!messageId) throw new Error("Could not create message ID.");
-
         const timestamp = new Date().toISOString();
-        const messageData = {
-          ...values,
-          timestamp,
-          read: false,
-          userId: user.uid,
-          messageId,
-        };
+        const batch = writeBatch(db);
         
-        const updates: {[key: string]: any} = {};
-        updates[`users/${user.uid}/messages/${messageId}`] = { 
+        // Add to admin messages
+        const adminMessageRef = doc(collection(db, 'adminMessages'));
+        batch.set(adminMessageRef, {
+            ...values,
+            timestamp,
+            read: false,
+            userId: user.uid,
+            messageId: adminMessageRef.id,
+        });
+
+        // Add to user's sent messages
+        const userMessageRef = doc(db, `users/${user.uid}/messages/${adminMessageRef.id}`);
+        batch.set(userMessageRef, {
             subject: values.subject, 
             timestamp,
             read: false,
-        };
-        updates[`adminMessages/${messageId}`] = messageData;
+        });
 
-        await update(ref(database), updates);
+        await batch.commit();
 
         toast({
             title: "Message Sent!",

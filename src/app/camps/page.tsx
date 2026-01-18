@@ -13,9 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, LoaderCircle, IndianRupee, Zap } from "lucide-react";
 import Link from "next/link";
-import { database } from "@/lib/firebase";
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref } from "firebase/database";
+import { db } from "@/lib/firebase";
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { collection } from "firebase/firestore";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -35,10 +35,6 @@ type Camp = {
         imageHint: string;
     };
 };
-
-type DbCamps = {
-    [id: string]: Camp;
-}
 
 const isValidImageUrl = (url: string | null | undefined): boolean => {
     if (!url) return false;
@@ -70,13 +66,8 @@ function CampCardSkeleton() {
 }
 
 export default function CampsPage() {
-  const campsRef = useMemo(() => ref(database, 'camps'), []);
-  const [campsData, isLoading] = useObjectVal<DbCamps>(campsRef);
-
-  const upcomingCamps = useMemo(() => {
-    if (!campsData) return [];
-    return Object.values(campsData);
-  }, [campsData]);
+  const campsRef = useMemo(() => collection(db, 'camps'), []);
+  const [upcomingCamps, isLoading] = useCollectionData<Camp>(campsRef, { idField: 'id' });
 
 
   return (
@@ -99,7 +90,7 @@ export default function CampsPage() {
                 <CampCardSkeleton />
                 <CampCardSkeleton />
             </>
-          ) : upcomingCamps.length > 0 ? (
+          ) : upcomingCamps && upcomingCamps.length > 0 ? (
             upcomingCamps.map((camp) => {
               const imageUrl = isValidImageUrl(camp.image?.imageUrl) 
                 ? camp.image.imageUrl 

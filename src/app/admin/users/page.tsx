@@ -1,10 +1,10 @@
 
 'use client';
 
-import { database, auth } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
+import { db, auth } from '@/lib/firebase';
+import { useCollection, useCollectionData } from 'react-firebase-hooks/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { ref } from 'firebase/database';
+import { collection, query, doc } from 'firebase/firestore';
 import { useMemo, useTransition, useState } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { MoreHorizontal, UserPlus, X, Calendar, Activity, Info, Tent, Mail } from 'lucide-react';
@@ -85,10 +85,6 @@ type DbUser = {
   bookings?: { [key: string]: Booking };
 };
 
-type DbUsers = {
-  [uid: string]: Omit<DbUser, 'uid'>;
-};
-
 function UserTableRowSkeleton() {
     return (
         <TableRow>
@@ -118,10 +114,15 @@ function UserTableRowSkeleton() {
 }
 
 function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { name: string; joined: string }) | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
-  if (!user) return null;
+  const [bookings] = useCollectionData(user ? collection(db, 'users', user.uid, 'bookings') : null);
+  const [history] = useCollectionData(user ? query(collection(db, 'users', user.uid, 'history'), ) : null);
 
-  const bookings = user.bookings ? Object.entries(user.bookings).map(([id, booking]) => ({ id, ...booking })) : [];
-  const history = user.history ? Object.values(user.history).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) : [];
+  const sortedHistory = useMemo(() => {
+    if (!history) return [];
+    return [...history].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [history]);
+  
+  if (!user) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -152,12 +153,12 @@ function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { n
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2"><Tent className="h-5 w-5 text-accent"/> Bookings ({bookings.length})</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2"><Tent className="h-5 w-5 text-accent"/> Bookings ({bookings?.length || 0})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {bookings.length > 0 ? (
+                    {bookings && bookings.length > 0 ? (
                         <ul className="space-y-3">
-                            {bookings.map(booking => (
+                            {bookings.map((booking: any) => (
                                 <li key={booking.id} className="border-b pb-2">
                                     <p className="font-semibold">{booking.campName}</p>
                                     <div className="text-sm text-muted-foreground">{format(new Date(booking.bookingDate), "PP")} - <Badge variant="outline">{booking.status || "Pending"}</Badge></div>
@@ -173,9 +174,9 @@ function UserProfileDialog({ user, isOpen, onOpenChange }: { user: (DbUser & { n
                     <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-accent"/> Activity Log</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {history.length > 0 ? (
+                    {sortedHistory && sortedHistory.length > 0 ? (
                         <ul className="space-y-4">
-                            {history.map((item, index) => (
+                            {sortedHistory.map((item: any, index) => (
                                 <li key={index} className="flex items-start gap-3">
                                     <div className="mt-1">
                                         {item.type === 'signup' && <UserPlus className="h-4 w-4 text-green-500" />}
@@ -205,21 +206,19 @@ export default function UsersPage() {
   const [isPending, startTransition] = useTransition();
   const { searchQuery } = useSearch();
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
-  const [profileUser, setProfileUser] = useState<(DbUser & { name: string; joined: string }) | null>(null);
+  const [profileUser, setProfileUser] = useState<(DbUser & { name: string; joined: string; }) | null>(null);
   
-  const usersRef = useMemo(() => ref(database, 'users'), []);
-  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
+  const [usersData, isLoading] = useCollectionData<Omit<DbUser, 'uid'>>(collection(db, 'users'), { idField: 'uid'});
 
   const users = useMemo(() => {
     if (!usersData) return [];
-    return Object.entries(usersData).map(([uid, userData]) => {
+    return usersData.map((userData) => {
         const signupActivity = userData.history 
             ? Object.values(userData.history).find(h => h.type === 'signup')
             : null;
         
         return {
             ...userData,
-            uid,
             name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
             joined: signupActivity ? signupActivity.timestamp : 'N/A'
         } as DbUser & { name: string; joined: string };

@@ -1,9 +1,9 @@
 
 'use client';
 
-import { database } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref, update, remove } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { collection, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Mail, Trash2, Archive, ArchiveRestore } from 'lucide-react';
@@ -15,7 +15,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -50,10 +49,6 @@ type ContactMessage = {
   userId: string;
 };
 
-type DbMessages = {
-  [id: string]: Omit<ContactMessage, 'id'>;
-};
-
 function MessageSkeleton() {
   return (
     <div className="flex flex-col space-y-3">
@@ -68,35 +63,37 @@ export default function MessagesPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
 
-  const messagesRef = useMemo(() => ref(database, 'adminMessages'), []);
-  const [messagesData, isLoading] = useObjectVal<DbMessages>(messagesRef);
+  const messagesRef = useMemo(() => collection(db, 'adminMessages'), []);
+  const [messages, isLoading] = useCollectionData<ContactMessage>(messagesRef, { idField: 'id' });
 
-  const messages = useMemo(() => {
-    if (!messagesData) return [];
-    return Object.entries(messagesData)
-      .map(([id, message]) => ({ id, ...message }))
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [messagesData]);
+  const sortedMessages = useMemo(() => {
+    if (!messages) return [];
+    return [...messages].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [messages]);
   
   const filteredMessages = useMemo(() => {
-    if (!searchQuery) return messages;
+    if (!searchQuery) return sortedMessages;
     const lowercasedQuery = searchQuery.toLowerCase();
-    return messages.filter(msg => 
+    return sortedMessages.filter(msg => 
         msg.name.toLowerCase().includes(lowercasedQuery) ||
         msg.email.toLowerCase().includes(lowercasedQuery) ||
         msg.subject.toLowerCase().includes(lowercasedQuery) ||
         msg.message.toLowerCase().includes(lowercasedQuery)
     );
-  }, [messages, searchQuery]);
+  }, [sortedMessages, searchQuery]);
 
   const handleToggleRead = async (message: ContactMessage) => {
     try {
-      const updates: {[key: string]: any} = {};
       const newReadStatus = !message.read;
-      updates[`adminMessages/${message.id}/read`] = newReadStatus;
-      updates[`users/${message.userId}/messages/${message.id}/read`] = newReadStatus;
+      const batch = writeBatch(db);
+      
+      const adminMessageRef = doc(db, `adminMessages/${message.id}`);
+      batch.update(adminMessageRef, { read: newReadStatus });
+      
+      const userMessageRef = doc(db, `users/${message.userId}/messages/${message.id}`);
+      batch.update(userMessageRef, { read: newReadStatus });
 
-      await update(ref(database), updates);
+      await batch.commit();
 
       toast({
         title: `Message marked as ${newReadStatus ? 'read' : 'unread'}`,
@@ -112,10 +109,8 @@ export default function MessagesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      // Note: This only deletes from the admin view.
-      // A more robust system might also remove it from the user's view or archive it.
-      const messageRef = ref(database, `adminMessages/${id}`);
-      await remove(messageRef);
+      const messageRef = doc(db, `adminMessages/${id}`);
+      await deleteDoc(messageRef);
       toast({
         title: "Message Deleted",
         description: "The message has been removed from the admin inbox.",

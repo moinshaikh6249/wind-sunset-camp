@@ -1,10 +1,9 @@
 
 'use client';
 
-import { database, storage } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref, remove } from 'firebase/database';
-import { ref as storageRef, deleteObject } from 'firebase/storage';
+import { db } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { collection, doc, deleteDoc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from 'react';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -58,8 +57,7 @@ import { CampForm, type CampWithId } from './CampForm';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-type DbCamps = {
-  [id: string]: {
+type DbCamp = {
     id: string;
     name: string;
     date: string;
@@ -70,7 +68,6 @@ type DbCamps = {
         imageUrl: string;
         imageHint: string;
     };
-  }
 };
 
 const isValidImageUrl = (url: string | null | undefined): boolean => {
@@ -113,15 +110,11 @@ export default function CampsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCamp, setEditingCamp] = useState<CampWithId | null>(null);
 
-  const campsRef = useMemo(() => ref(database, 'camps'), []);
-  const [campsData, isLoading] = useObjectVal<DbCamps>(campsRef);
-
-  const camps = useMemo(() => {
-    if (!campsData) return [];
-    return Object.values(campsData);
-  }, [campsData]);
+  const campsRef = useMemo(() => collection(db, 'camps'), []);
+  const [camps, isLoading] = useCollectionData<DbCamp>(campsRef);
 
   const filteredCamps = useMemo(() => {
+    if (!camps) return [];
     if (!searchQuery) return camps;
     const lowercasedQuery = searchQuery.toLowerCase();
     return camps.filter(camp => 
@@ -134,20 +127,8 @@ export default function CampsPage() {
   const handleDeleteCamp = (camp: CampWithId) => {
     startTransition(async () => {
       try {
-        const campDbRef = ref(database, `camps/${camp.id}`);
-        await remove(campDbRef);
-
-        if (camp.image?.imageUrl && camp.image.imageUrl.includes('firebasestorage.googleapis.com')) {
-            try {
-                const imageStorageRef = storageRef(storage, camp.image.imageUrl);
-                await deleteObject(imageStorageRef);
-            } catch (storageError: any) {
-                // If the file doesn't exist in storage, we can ignore the error
-                if (storageError.code !== 'storage/object-not-found') {
-                     console.error(`Failed to delete image from storage: ${camp.image.imageUrl}`, storageError);
-                }
-            }
-        }
+        const campDbRef = doc(db, `camps/${camp.id}`);
+        await deleteDoc(campDbRef);
         
         toast({
           title: "Camp Deleted",
@@ -177,7 +158,7 @@ export default function CampsPage() {
     if (isLoading) {
       return [...Array(3)].map((_, i) => <CampTableRowSkeleton key={i} />);
     }
-    if (filteredCamps.length === 0) {
+    if (!filteredCamps || filteredCamps.length === 0) {
         return (
             <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
@@ -222,7 +203,7 @@ export default function CampsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => handleEditCamp(camp)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleEditCamp(camp as CampWithId)}>Edit</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <AlertDialogTrigger asChild>
                             <DropdownMenuItem className="text-destructive" onSelect={e => e.preventDefault()}>Delete</DropdownMenuItem>
@@ -242,7 +223,7 @@ export default function CampsPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                          className="bg-destructive hover:bg-destructive/90"
-                         onClick={() => handleDeleteCamp(camp)}
+                         onClick={() => handleDeleteCamp(camp as CampWithId)}
                          disabled={isPending}
                         >
                         {isPending ? "Deleting..." : "Yes, delete camp"}

@@ -6,9 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Mountain, Sun, UsersRound } from "lucide-react";
-import { database } from "@/lib/firebase";
-import { useObjectVal } from "react-firebase-hooks/database";
-import { ref, limitToFirst, query } from "firebase/database";
+import { db } from "@/lib/firebase";
+import { useCollectionData } from "react-firebase-hooks/firestore";
+import { collection, limit, query } from "firebase/firestore";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,11 +25,6 @@ type Camp = {
         imageHint: string;
     };
 };
-
-type DbCamps = {
-    [id: string]: Camp;
-}
-
 
 function FeaturedCampSkeleton() {
     return (
@@ -51,13 +46,8 @@ function FeaturedCampSkeleton() {
 }
 
 export default function Home() {
-  const campsQuery = useMemo(() => query(ref(database, 'camps'), limitToFirst(3)), []);
-  const [campsData, isLoading] = useObjectVal<DbCamps>(campsQuery);
-
-  const featuredCamps = useMemo(() => {
-    if (!campsData) return [];
-    return Object.values(campsData);
-  }, [campsData]);
+  const campsQuery = useMemo(() => query(collection(db, 'camps'), limit(3)), []);
+  const [featuredCamps, isLoading] = useCollectionData<Camp>(campsQuery);
 
   return (
     <div className="flex flex-col">
@@ -175,7 +165,7 @@ export default function Home() {
                     <FeaturedCampSkeleton />
                     <FeaturedCampSkeleton />
                 </>
-            ) : featuredCamps.map((camp) => (
+            ) : featuredCamps && featuredCamps.map((camp) => (
               <Card
                 key={camp.id}
                 className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col transform hover:-translate-y-2 hover:rotate-1 bg-background w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"

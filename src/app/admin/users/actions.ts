@@ -2,7 +2,7 @@
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
-import { getDatabase } from 'firebase-admin/database';
+import { getFirestore } from 'firebase-admin/firestore';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -43,7 +43,7 @@ export async function createUser(idToken: string, values: z.infer<typeof createU
     try {
         const app = initializeAdminApp();
         const auth = getAuth(app);
-        const db = getDatabase(app);
+        const db = getFirestore(app);
 
         // Step 1: Create the user in Firebase Authentication.
         const userRecord = await auth.createUser({
@@ -52,8 +52,8 @@ export async function createUser(idToken: string, values: z.infer<typeof createU
             displayName: `${firstName} ${lastName || ''}`.trim(),
         });
 
-        // Step 2: Add the user's profile to the Realtime Database.
-        const userRef = db.ref(`users/${userRecord.uid}`);
+        // Step 2: Add the user's profile to Firestore.
+        const userRef = db.collection('users').doc(userRecord.uid);
         await userRef.set({
             firstName,
             lastName: lastName || '',
@@ -62,8 +62,8 @@ export async function createUser(idToken: string, values: z.infer<typeof createU
             phone: "", // Default empty phone
         });
 
-        // Step 3: Add a signup event to the user's history log.
-        const historyRef = db.ref(`users/${userRecord.uid}/history/${Date.now()}`);
+        // Step 3: Add a signup event to the user's history log subcollection.
+        const historyRef = userRef.collection('history').doc();
         await historyRef.set({
             type: 'signup',
             description: 'Account created by admin',
@@ -89,14 +89,14 @@ export async function deleteUser(idToken: string, uid: string) {
     try {
         const app = initializeAdminApp();
         const auth = getAuth(app);
-        const db = getDatabase(app);
+        const db = getFirestore(app);
 
         // Delete from Firebase Authentication
         await auth.deleteUser(uid);
 
-        // Delete from Realtime Database
-        const userRef = db.ref(`users/${uid}`);
-        await userRef.remove();
+        // Delete from Firestore
+        const userRef = db.collection('users').doc(uid);
+        await userRef.delete();
         
         revalidatePath('/admin/users');
     } catch (error: any) {

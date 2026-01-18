@@ -17,8 +17,9 @@ import {
 import { Button } from "../ui/button";
 import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useAdmin, useDatabase, useDatabaseValue, useAuth } from "@/firebase";
-import { ref } from "firebase/database";
+import { useUser, useAdmin, useFirestore, useAuth } from "@/firebase";
+import { collection } from "firebase/firestore";
+import { useCollectionData } from "react-firebase-hooks/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import { signOut } from "firebase/auth";
@@ -28,6 +29,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { doc } from "firebase/firestore";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -47,19 +50,18 @@ type Message = {
 
 function MessagesDialog() {
   const { user } = useUser();
-  const database = useDatabase();
+  const firestore = useFirestore();
 
   const userMessagesRef = useMemo(() => {
-    if (!user || !database) return null;
-    return ref(database, `users/${user.uid}/messages`);
-  }, [user, database]);
+    if (!user || !firestore) return null;
+    return collection(firestore, `users/${user.uid}/messages`);
+  }, [user, firestore]);
 
-  const { data: messagesData, isLoading: messagesLoading } = useDatabaseValue<{[id: string]: Omit<Message, 'id'>}>(userMessagesRef);
+  const [messagesData, messagesLoading] = useCollectionData<Omit<Message, 'id'>>(userMessagesRef, { idField: 'id' });
 
   const sentMessages = useMemo(() => {
     if (!messagesData) return [];
-    return Object.entries(messagesData)
-      .map(([id, msg]) => ({ id, ...msg }))
+    return [...messagesData]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [messagesData]);
 
@@ -110,15 +112,15 @@ function UserProfileSection() {
   const { isAdmin, isAdminLoading } = useAdmin();
   const { toast } = useToast();
   const router = useRouter();
-  const database = useDatabase();
+  const firestore = useFirestore();
   const auth = useAuth();
 
   const userProfileRef = useMemo(() => {
-    if (!user || !database) return null;
-    return ref(database, `users/${user.uid}`);
-  }, [user, database]);
+    if (!user || !firestore) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [user, firestore]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDatabaseValue(userProfileRef);
+  const [userProfile, isProfileLoading] = useDocumentData(userProfileRef);
 
   const handleLogout = async () => {
     if (!auth) return;

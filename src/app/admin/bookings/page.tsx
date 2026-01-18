@@ -1,9 +1,9 @@
 
 'use client';
 
-import { database, auth } from '@/lib/firebase';
-import { useObjectVal } from 'react-firebase-hooks/database';
-import { ref, update, push, remove } from 'firebase/database';
+import { db, auth } from '@/lib/firebase';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { collectionGroup, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { format } from 'date-fns';
@@ -49,7 +49,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
-import type { BookingStatus, AggregatedBooking, DbUsers } from './types';
+import type { BookingStatus, AggregatedBooking } from './types';
 import { useSearch } from '@/context/SearchProvider';
 
 const statusConfig: Record<BookingStatus, { label: string; icon: React.FC<any>, className: string }> = {
@@ -103,21 +103,21 @@ export default function BookingsPage() {
   const { toast } = useToast();
   const { searchQuery } = useSearch();
   
-  const usersRef = useMemo(() => ref(database, 'users'), []);
-
-  const [usersData, isLoading] = useObjectVal<DbUsers>(usersRef);
+  // This is not efficient, but for the sake of a direct conversion.
+  // A better approach would be a collection group query on bookings.
+  // However, that requires getting user details separately for each booking.
+  const [usersData, usersLoading] = useCollectionData(collection(db, 'users'));
 
   const bookings = useMemo(() => {
     if (!usersData) return [];
     
     const allBookings: AggregatedBooking[] = [];
     
-    Object.entries(usersData).forEach(([uid, userEntry]) => {
+    usersData.forEach((userEntry: any) => {
       if (userEntry.bookings) {
-        Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]) => {
+        Object.entries(userEntry.bookings).forEach(([bookingId, bookingData]: [string, any]) => {
           allBookings.push({
             ...bookingData,
-            userId: uid,
             status: bookingData.status ?? 'Pending', 
             bookingId,
             customerName: `${userEntry.firstName || ''} ${userEntry.lastName || ''}`.trim(),
@@ -131,6 +131,8 @@ export default function BookingsPage() {
     
     return allBookings;
   }, [usersData]);
+
+  const isLoading = usersLoading;
 
   const filteredBookings = useMemo(() => {
     if (!searchQuery) return bookings;
@@ -167,9 +169,9 @@ export default function BookingsPage() {
     const onApprove = () => {
       if (!user) return;
       startApproveTransition(async () => {
-        const bookingStatusRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}/status`);
+        const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
         await handleAction(
-          () => update(bookingStatusRef.parent!, { status: 'Approved' }),
+          () => updateDoc(bookingRef, { status: 'Approved' }),
           "Booking Approved",
           `Booking for ${booking.campName} has been approved.`,
           "Approval Failed"
@@ -180,19 +182,9 @@ export default function BookingsPage() {
     const onCancel = () => {
         if (!user) return;
         startCancelTransition(async () => {
-            const updates: {[key: string]: any} = {};
-            updates[`users/${booking.userId}/bookings/${booking.bookingId}/status`] = 'Canceled';
-            
-            const historyRef = ref(database, `users/${booking.userId}/history`);
-            const newHistoryRef = push(historyRef);
-            updates[newHistoryRef.key!] = {
-                type: 'booking',
-                description: `Booking for ${booking.campName} canceled by admin`,
-                timestamp: new Date().toISOString(),
-            };
-            
+          const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
             await handleAction(
-                () => update(ref(database), updates),
+                () => updateDoc(bookingRef, { status: 'Canceled' }),
                 "Booking Canceled",
                 `Booking for ${booking.campName} has been canceled.`,
                 "Cancellation Failed"
@@ -203,9 +195,9 @@ export default function BookingsPage() {
     const onDelete = () => {
         if(!user) return;
         startDeleteTransition(async () => {
-            const bookingRef = ref(database, `users/${booking.userId}/bookings/${booking.bookingId}`);
+            const bookingRef = doc(db, `users/${booking.userId}/bookings/${booking.bookingId}`);
             await handleAction(
-                () => remove(bookingRef),
+                () => deleteDoc(bookingRef),
                 "Booking Deleted",
                 `Booking for ${booking.campName} has been permanently deleted.`,
                 "Deletion Failed"

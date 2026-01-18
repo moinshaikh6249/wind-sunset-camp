@@ -20,10 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, database, storage } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { ref as dbRef, set } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, setDoc, addDoc, collection } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 
@@ -33,13 +32,11 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
   mobileNumber: z.string().min(10, { message: "Please enter a valid mobile number." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  profilePicture: z.instanceof(File).optional(),
 });
 
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
-  const [avatarPreview, setAvatarPreview] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,17 +45,8 @@ export function SignupForm() {
       email: "",
       mobileNumber: "",
       password: "",
-      profilePicture: undefined,
     },
   });
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      form.setValue("profilePicture", file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -80,12 +68,12 @@ export function SignupForm() {
         photoURL: "", // Start with an empty photoURL
       };
 
-      const userRef = dbRef(database, `users/${user.uid}`);
-      await set(userRef, userProfile);
+      const userRef = doc(db, `users/${user.uid}`);
+      await setDoc(userRef, userProfile);
 
       // 3. Create the history entry
-      const historyRef = dbRef(database, `users/${user.uid}/history/${Date.now()}`);
-      await set(historyRef, {
+      const historyRef = collection(db, `users/${user.uid}/history`);
+      await addDoc(historyRef, {
         type: 'signup',
         description: 'Account created',
         timestamp: new Date().toISOString(),
@@ -98,32 +86,6 @@ export function SignupForm() {
       });
       router.push('/dashboard');
       
-      // 5. Handle profile picture upload in the background (non-blocking)
-      if (values.profilePicture) {
-        const file = values.profilePicture;
-        const filePath = `profile-pictures/${user.uid}/${file.name}`;
-        const fileRef = storageRef(storage, filePath);
-        
-        // This part runs in the background. We don't await it.
-        uploadBytes(fileRef, file)
-          .then(uploadResult => getDownloadURL(uploadResult.ref))
-          .then(photoURL => {
-            // Once the URL is ready, update Auth and Database in the background
-            updateProfile(user, { photoURL });
-            // Use set to update the entire object, ensuring the photoURL is included
-            set(dbRef(database, `users/${user.uid}`), { ...userProfile, photoURL });
-          })
-          .catch(error => {
-            console.error("Background profile picture upload failed:", error);
-            // Optionally, show a non-blocking toast to inform the user
-            toast({
-              title: "Profile Picture Upload Failed",
-              description: "There was an issue uploading your picture. You can try again from your dashboard.",
-              variant: "destructive"
-            });
-          });
-      }
-
     } catch (error: any) {
       console.error(error);
       alert(error.message);
@@ -137,9 +99,6 @@ export function SignupForm() {
           break;
         case 'auth/invalid-email':
           errorMessage = 'The email address is not valid.';
-          break;
-        case 'storage/unauthorized':
-          errorMessage = 'You do not have permission to upload files. Please check storage rules.';
           break;
       }
       toast({
@@ -155,35 +114,6 @@ export function SignupForm() {
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarPreview} />
-                <AvatarFallback>
-                  <User className="h-12 w-12 text-muted-foreground" />
-                </AvatarFallback>
-              </Avatar>
-              <FormField
-                control={form.control}
-                name="profilePicture"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="profilePicture" className="cursor-pointer text-sm font-medium text-primary underline-offset-4 hover:underline">
-                      Choose Profile Picture
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        id="profilePicture"
-                        type="file"
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/gif"
-                        onChange={handleFileChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
              <FormField
               control={form.control}
               name="name"
