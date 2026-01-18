@@ -134,7 +134,7 @@ export default function DashboardPage() {
         return;
     }
     
-    // Debugging logs
+    // Debugging logs to verify data before Firestore operation
     console.log("Attempting to cancel booking...");
     console.log("Current User UID:", user.uid);
     console.log("Booking Owner UID:", booking.userId);
@@ -146,7 +146,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const bookingRef = doc(db, `bookings/${booking.id}`);
+      const bookingRef = doc(db, 'bookings', booking.id);
       await updateDoc(bookingRef, { status: "Canceled" });
       toast({
         title: "Booking Canceled",
@@ -296,15 +296,15 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-2">
                               <AlertDialog>
                                 <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={status === 'Canceled'}>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={status !== 'Pending'}>
                                     <Trash2 className="h-5 w-5" />
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will cancel your booking for {booking.campName}. This action cannot be undone.
+                                      This will mark your booking for {booking.campName} as canceled. This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
