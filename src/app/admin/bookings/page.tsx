@@ -1,3 +1,4 @@
+
 'use client';
 
 import { db, auth } from '@/lib/firebase';
@@ -181,6 +182,14 @@ export default function BookingsPage() {
     const onDelete = () => {
         if(!user) return;
         startDeleteTransition(async () => {
+            if (!booking?.id) {
+                toast({
+                    title: "Deletion Failed",
+                    description: "Booking ID is missing. Cannot proceed.",
+                    variant: "destructive",
+                });
+                return;
+            }
             const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => deleteDoc(bookingRef),
