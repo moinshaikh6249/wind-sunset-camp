@@ -47,7 +47,7 @@ export default function GalleryPage() {
     if (error) {
        return (
         <div className="col-span-full text-center py-12">
-            <p className="text-destructive">Error loading images. Check the console for details.</p>
+            <p className="text-destructive">Error loading images. Please check the browser console for details.</p>
         </div>
       );
     }
@@ -62,7 +62,7 @@ export default function GalleryPage() {
     }
     
     return images.map((image) => (
-      <div key={image.id} className="relative aspect-w-3 aspect-h-2 rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
+      <div key={image.id} className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
           <img
               src={image.imageUrl}
               alt={image.description}

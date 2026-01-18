@@ -57,7 +57,29 @@ export default function RootLayout({
 }
 
 export const metadata: Metadata = {
-  title: "Wind & Sunset Camp",
-  description: "Your next adventure awaits at Wind & Sunset Camp.",
+  title: "Wind & Sunset Camp | Adventure Under the Open Sky",
+  description: "Your next adventure awaits at Wind & Sunset Camp. Join us for an unforgettable experience with nature. Explore our camps, view our gallery, and book your trip today.",
   viewport: "width=device-width, initial-scale=1",
+  openGraph: {
+    title: "Wind & Sunset Camp | Adventure Under the Open Sky",
+    description: "Join us at Wind & Sunset Camp for an adventure that renews your spirit. Explore our camps, view our gallery, and book your trip today.",
+    url: "https://sunset-camp-demo.web.app", 
+    siteName: "Wind & Sunset Camp",
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1476610182048-b716b8518a2a?w=1200',
+        width: 1200,
+        height: 630,
+        alt: 'A beautiful sunset over a lake at Wind & Sunset Camp.',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Wind & Sunset Camp | Adventure Under the Open Sky",
+    description: "Join us at Wind & Sunset Camp for an adventure that renews your spirit.",
+    images: ['https://images.unsplash.com/photo-1476610182048-b716b8518a2a?w=1200'],
+  },
 };

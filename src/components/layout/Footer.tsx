@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Info, GalleryVertical, Tent, Mail, PenSquare, Instagram } from "lucide-react";
+import { Info, GalleryVertical, Tent, Mail, PenSquare, Instagram, Phone } from "lucide-react";
 
 const navLinks = [
     { href: "/about", label: "About Us", icon: Info },
@@ -31,6 +31,16 @@ export function Footer() {
             <p className="mt-4 text-sm italic text-muted-foreground/80 max-w-xs">
               Your next adventure starts here, under the open sky.
             </p>
+             <div className="mt-4 space-y-2 text-sm text-muted-foreground/90">
+                <a href="mailto:sameermore3010@gmail.com" className="flex items-center justify-center md:justify-start gap-2.5 hover:text-accent dark:hover:text-primary transition-colors">
+                    <Mail className="w-4 h-4" />
+                    sameermore3010@gmail.com
+                </a>
+                <a href="tel:8080334787" className="flex items-center justify-center md:justify-start gap-2.5 hover:text-accent dark:hover:text-primary transition-colors">
+                    <Phone className="w-4 h-4" />
+                    8080334787
+                </a>
+             </div>
           </div>
 
           <div>

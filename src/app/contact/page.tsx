@@ -243,7 +243,7 @@ export default function ContactPage() {
                         <Phone className="h-6 w-6 text-accent mt-1"/>
                         <div>
                             <h4 className="font-semibold">Call Us</h4>
-                            <p className="text-muted-foreground">8080334787</p>
+                            <a href="tel:8080334787" className="text-muted-foreground hover:text-accent">8080334787</a>
                         </div>
                     </div>
                 </CardContent>

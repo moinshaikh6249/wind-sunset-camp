@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useMemo, useTransition } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, LoaderCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ function ImageCardSkeleton() {
 
 export default function GalleryPage() {
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useTransition();
 
   const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
   
@@ -63,7 +63,7 @@ export default function GalleryPage() {
   const [galleryImages, isLoading] = useCollectionData<GalleryImage>(galleryQuery, { idField: 'id' });
 
   const handleDeleteImage = (image: GalleryImage) => {
-    startTransition(async () => {
+    setDeletingId(async () => {
       try {
         const imageDbRef = doc(db, 'galleryImages', image.id);
         await deleteDoc(imageDbRef);
@@ -122,10 +122,11 @@ export default function GalleryPage() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                              <AlertDialogAction
                                 onClick={() => handleDeleteImage(image)}
-                                disabled={isPending}
+                                disabled={deletingId}
                                 className="bg-destructive hover:bg-destructive/90"
                             >
-                                {isPending ? "Deleting..." : "Yes, delete"}
+                                {deletingId ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                {deletingId ? "Deleting..." : "Yes, delete"}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
