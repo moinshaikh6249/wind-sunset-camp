@@ -3,7 +3,7 @@
 
 import { db, auth } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collectionGroup, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, collectionGroup, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useMemo, useState, useTransition } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { format } from 'date-fns';
