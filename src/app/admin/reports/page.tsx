@@ -1,15 +1,14 @@
-
 'use client';
 
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection } from 'firebase/firestore';
 import { useMemo } from 'react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { subDays, format, parseISO } from 'date-fns';
-import { Package, Users, CalendarClock, DollarSign, FileText } from 'lucide-react';
+import { Package, Users, CalendarClock, DollarSign, FileText, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 type Booking = {
@@ -32,9 +31,9 @@ type DbUser = {
 };
 
 const COLORS = {
-  Approved: '#22c55e', // green-500
-  Pending: '#f59e0b',  // amber-500
-  Canceled: '#ef4444', // red-500
+  Approved: 'hsl(var(--chart-2))', 
+  Pending: 'hsl(var(--chart-4))',
+  Canceled: 'hsl(var(--chart-1))',
 };
 
 const RADIAN = Math.PI / 180;
@@ -43,8 +42,10 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+  if (percent < 0.05) return null;
+
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
@@ -119,60 +120,75 @@ export default function ReportsPage() {
 
     return { bookingsByCamp: bookingsByCampArray, bookingStatusDistribution, userGrowth };
   }, [usersData]);
+
+  const hasData = useMemo(() => 
+    reportData.bookingsByCamp.length > 0 ||
+    reportData.bookingStatusDistribution.length > 0 ||
+    reportData.userGrowth.some(d => d.signups > 0),
+  [reportData]);
   
   const ChartSkeletons = () => (
      <>
-        <Card>
+        <Card className="glass-card">
             <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-6 w-3/4 shimmer-bg" />
+                <Skeleton className="h-4 w-1/2 shimmer-bg" />
             </CardHeader>
             <CardContent>
-                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full shimmer-bg" />
             </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
             <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-6 w-3/4 shimmer-bg" />
+                <Skeleton className="h-4 w-1/2 shimmer-bg" />
             </CardHeader>
             <CardContent>
-                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full shimmer-bg" />
             </CardContent>
         </Card>
-        <Card className="md:col-span-2">
+        <Card className="glass-card md:col-span-2 lg:col-span-1">
             <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-6 w-3/4 shimmer-bg" />
+                <Skeleton className="h-4 w-1/2 shimmer-bg" />
             </CardHeader>
             <CardContent>
-                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full shimmer-bg" />
             </CardContent>
         </Card>
      </>
   );
 
+  const EmptyState = () => (
+    <div className="col-span-full flex flex-col items-center justify-center text-center p-10 bg-muted/30 rounded-2xl border-2 border-dashed">
+        <BarChart3 className="h-16 w-16 text-muted-foreground/50 mb-4"/>
+        <h3 className="text-xl font-semibold">Waiting for activity…</h3>
+        <p className="text-muted-foreground mt-2">Your analytics will grow as users start booking.</p>
+    </div>
+  )
+
   return (
-    <div className="flex-1 space-y-4">
-      <h1 className="text-lg font-semibold md:text-2xl">Reports & Analytics</h1>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {isLoading ? <ChartSkeletons /> : (
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+      <h1 className="text-3xl font-bold tracking-tight text-heading-color animate-text-glow">Reports & Analytics</h1>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading ? <ChartSkeletons /> : !hasData ? <EmptyState /> : (
             <>
-                <Card>
+                <Card className="glass-card">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Package className="text-muted-foreground"/> Most Popular Camps</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BarChart3 className="text-muted-foreground"/> Most Popular Camps</CardTitle>
                     <CardDescription>Number of bookings per camp.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={reportData.bookingsByCamp} layout="vertical" margin={{ left: 25 }}>
                         <XAxis type="number" stroke={mutedColor} fontSize={12} />
-                        <YAxis type="category" dataKey="name" stroke={mutedColor} fontSize={12} width={100} />
+                        <YAxis type="category" dataKey="name" stroke={mutedColor} fontSize={12} width={100} tick={{ fill: mutedColor }} />
                         <Tooltip
                             cursor={{ fill: 'hsla(var(--muted))' }}
                             contentStyle={{
                                 backgroundColor: 'hsl(var(--background))',
-                                borderColor: 'hsl(var(--border))'
+                                borderColor: 'hsl(var(--border))',
+                                borderRadius: 'var(--radius)'
                             }}
                          />
                         <Bar dataKey="count" fill={primaryColor} radius={[0, 4, 4, 0]} name="Bookings" />
@@ -181,7 +197,7 @@ export default function ReportsPage() {
                 </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="glass-card">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><CalendarClock className="text-muted-foreground"/> Booking Status</CardTitle>
                     <CardDescription>Distribution of booking statuses.</CardDescription>
@@ -207,28 +223,31 @@ export default function ReportsPage() {
                             <Tooltip 
                                 contentStyle={{
                                     backgroundColor: 'hsl(var(--background))',
-                                    borderColor: 'hsl(var(--border))'
+                                    borderColor: 'hsl(var(--border))',
+                                    borderRadius: 'var(--radius)'
                                 }}
                             />
+                            <Legend iconType="circle" />
                         </PieChart>
                     </ResponsiveContainer>
                 </CardContent>
                 </Card>
 
-                <Card className="md:col-span-2 lg:col-span-1">
+                <Card className="glass-card md:col-span-2 lg:col-span-1">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Users className="text-muted-foreground"/> User Growth</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><LineChartIcon className="text-muted-foreground"/> User Growth</CardTitle>
                     <CardDescription>New signups over the last 30 days.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <ResponsiveContainer width="100%" height={250}>
                         <LineChart data={reportData.userGrowth}>
                         <XAxis dataKey="date" stroke={mutedColor} fontSize={12} />
-                        <YAxis stroke={mutedColor} fontSize={12} />
+                        <YAxis stroke={mutedColor} fontSize={12} allowDecimals={false} />
                         <Tooltip 
                              contentStyle={{
                                 backgroundColor: 'hsl(var(--background))',
-                                borderColor: 'hsl(var(--border))'
+                                borderColor: 'hsl(var(--border))',
+                                borderRadius: 'var(--radius)'
                             }}
                         />
                         <Line type="monotone" dataKey="signups" name="Signups" stroke={primaryColor} strokeWidth={2} dot={false} />

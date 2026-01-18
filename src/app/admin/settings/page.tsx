@@ -11,9 +11,9 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>

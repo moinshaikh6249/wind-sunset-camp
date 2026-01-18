@@ -31,6 +31,15 @@ export function OverviewChart({ data, isLoading }: OverviewChartProps) {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data}>
+        <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
         <XAxis
           dataKey="name"
           stroke={mutedColor}
@@ -48,15 +57,14 @@ export function OverviewChart({ data, isLoading }: OverviewChartProps) {
         <Tooltip 
             contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))'
+                borderColor: 'hsl(var(--border))',
+                borderRadius: 'var(--radius)'
             }}
             formatter={(value) => [value, 'Bookings']}
         />
-        <Legend />
-        <Bar dataKey="total" fill={primaryColor} radius={[4, 4, 0, 0]} name="Bookings"/>
+        <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+        <Bar dataKey="total" fill={primaryColor} radius={[4, 4, 0, 0]} name="Bookings" filter="url(#glow)"/>
       </BarChart>
     </ResponsiveContainer>
   )
 }
-
-    

@@ -238,7 +238,7 @@ export default function CampsPage() {
 
 
   return (
-    <>
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Camps</h1>
          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -262,7 +262,7 @@ export default function CampsPage() {
          </Dialog>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle>Upcoming Camps</CardTitle>
           <CardDescription>
@@ -287,6 +287,6 @@ export default function CampsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

@@ -342,7 +342,7 @@ export default function UsersPage() {
 
 
   return (
-    <>
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
           <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
@@ -364,7 +364,7 @@ export default function UsersPage() {
          </Dialog>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle>All Users</CardTitle>
           <CardDescription>
@@ -396,6 +396,6 @@ export default function UsersPage() {
         isOpen={!!profileUser}
         onOpenChange={(open) => !open && setProfileUser(null)}
       />
-    </>
+    </div>
   );
 }

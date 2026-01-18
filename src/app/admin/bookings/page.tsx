@@ -45,11 +45,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import type { Booking } from './types';
 import { useSearch } from '@/context/SearchProvider';
+import { DropdownMenuTrigger as AlertDialogTrigger } from '@radix-ui/react-dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger as TooltipTriggerComp } from '@/components/ui/tooltip';
 
 const statusConfig: Record<Booking['status'], { label: string; icon: React.FC<any>, className: string }> = {
     Approved: {
@@ -88,7 +89,7 @@ function BookingTableRowSkeleton() {
                 <Skeleton className="h-4 w-[80px]" />
             </TableCell>
              <TableCell className="hidden sm:table-cell">
-                <Skeleton className="h-5 w-[80px] rounded-full" />
+                <Skeleton className="h-6 w-[90px] rounded-full" />
             </TableCell>
             <TableCell>
                 <Skeleton className="h-8 w-8 rounded-md" />
@@ -107,7 +108,6 @@ export default function BookingsPage() {
   
   const bookings = useMemo(() => {
     if (!bookingsSnapshot) return [];
-    // Manually map docs to ensure 'id' is included, which is critical for actions.
     return bookingsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...(doc.data() as Omit<Booking, 'id'>),
@@ -120,7 +120,7 @@ export default function BookingsPage() {
       const timeA = a.bookingDate ? new Date(a.bookingDate).getTime() : 0;
       const timeB = b.bookingDate ? new Date(b.bookingDate).getTime() : 0;
       
-      if (isNaN(timeB)) return -1; // Put invalid dates at the end
+      if (isNaN(timeB)) return -1;
       if (isNaN(timeA)) return 1;
 
       return timeB - timeA;
@@ -144,7 +144,6 @@ export default function BookingsPage() {
       toast({
         title: successTitle,
         description: successDescription,
-        variant: successTitle.includes("approved") ? "default" : "destructive",
       });
     } catch (error: any) {
       toast({
@@ -172,11 +171,12 @@ export default function BookingsPage() {
           });
           return;
         }
+        console.log("Approving booking:", booking.id, booking);
         const bookingRef = doc(db, 'bookings', booking.id);
         await handleAction(
           () => updateDoc(bookingRef, { status: 'Approved' }),
-          "Booking approved successfully!",
-          "",
+          "Booking Approved!",
+          `${booking.fullName}'s booking for ${booking.campName} is now approved.`,
           "Approval Failed"
         );
       });
@@ -193,11 +193,12 @@ export default function BookingsPage() {
             });
             return;
           }
+          console.log("Canceling booking:", booking.id, booking);
           const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => updateDoc(bookingRef, { status: 'Canceled' }),
-                "Booking cancelled successfully!",
-                "",
+                "Booking Canceled",
+                `${booking.fullName}'s booking for ${booking.campName} has been canceled.`,
                 "Cancellation Failed"
             );
         });
@@ -214,11 +215,12 @@ export default function BookingsPage() {
                 });
                 return;
             }
+            console.log("Deleting booking:", booking.id, booking);
             const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => deleteDoc(bookingRef),
-                "Booking deleted successfully!",
-                "",
+                "Booking Deleted",
+                `The booking for ${booking.fullName} has been permanently deleted.`,
                 "Deletion Failed"
             );
         });
@@ -244,7 +246,7 @@ export default function BookingsPage() {
                 
                  <AlertDialogTrigger asChild>
                   <DropdownMenuItem 
-                    onSelect={() => setDialogType('cancel')}
+                    onSelect={(e) => { e.preventDefault(); setDialogType('cancel')}}
                     disabled={isCancelPending || booking.status === 'Canceled'}
                   >
                    Cancel Booking
@@ -256,10 +258,10 @@ export default function BookingsPage() {
                  <AlertDialogTrigger asChild>
                     <DropdownMenuItem 
                         className="text-destructive" 
-                        onSelect={() => setDialogType('delete')}
+                        onSelect={(e) => { e.preventDefault(); setDialogType('delete')}}
                         disabled={isDeletePending}
                     >
-                        <Trash2 className="mr-2 h-4 w-4"/> Delete Booking
+                        <Trash2 className="mr-2 h-4 w-4"/> Delete
                     </DropdownMenuItem>
                 </AlertDialogTrigger>
             </DropdownMenuContent>
@@ -367,7 +369,7 @@ export default function BookingsPage() {
         return (
             <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                    No bookings found.
+                    Waiting for activity… Your analytics will grow as users start booking.
                 </TableCell>
             </TableRow>
         );
@@ -377,7 +379,7 @@ export default function BookingsPage() {
         const Icon = currentStatusConfig.icon;
 
         return (
-        <TableRow key={booking.id}>
+        <TableRow key={booking.id} className="even:bg-muted/40">
             <TableCell>
                 <div className="font-medium">{booking.fullName}</div>
                 <div className="hidden text-sm text-muted-foreground md:inline">
@@ -394,7 +396,7 @@ export default function BookingsPage() {
                 {booking.numberOfPeople}
             </TableCell>
             <TableCell className="hidden sm:table-cell">
-                <Badge variant="outline" className={cn("gap-1.5", currentStatusConfig.className)}>
+                <Badge key={booking.status} variant="outline" className={cn("gap-1.5 py-1 px-3 text-sm", currentStatusConfig.className)}>
                     <Icon className="h-3.5 w-3.5" />
                     {currentStatusConfig.label}
                 </Badge>
@@ -407,16 +409,25 @@ export default function BookingsPage() {
   }
 
   return (
-    <>
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Bookings</h1>
-          <Button size="sm" onClick={handleExport}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export
-          </Button>
+         <TooltipProvider>
+          <Tooltip>
+            <TooltipTriggerComp asChild>
+              <Button size="sm" onClick={handleExport} className="transition-all hover:shadow-[0_0_15px_hsl(var(--primary))]">
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export
+              </Button>
+            </TooltipTriggerComp>
+            <TooltipContent>
+              <p>Export bookings to CSV</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle>
             All Bookings
@@ -445,6 +456,6 @@ export default function BookingsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

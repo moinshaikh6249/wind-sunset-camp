@@ -155,11 +155,11 @@ export default function ReviewsPage() {
   }
 
   return (
-    <>
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Manage Reviews</h1>
       </div>
-       <Card>
+       <Card className="glass-card">
         <CardHeader>
           <CardTitle>
             All Submitted Reviews
@@ -265,6 +265,6 @@ export default function ReviewsPage() {
             </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

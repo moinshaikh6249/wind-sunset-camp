@@ -165,13 +165,13 @@ export default function GalleryPage() {
   }
 
   return (
-    <>
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Gallery</h1>
          <UploadImageForm />
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle>Manage Gallery</CardTitle>
           <CardDescription>
@@ -184,6 +184,6 @@ export default function GalleryPage() {
             </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

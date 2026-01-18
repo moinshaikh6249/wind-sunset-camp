@@ -31,6 +31,15 @@ export function UserSignupChart({ data, isLoading }: UserSignupChartProps) {
     <div className="h-[250px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
+        <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
         <XAxis
           dataKey="date"
           stroke={mutedColor}
@@ -43,18 +52,18 @@ export function UserSignupChart({ data, isLoading }: UserSignupChartProps) {
           fontSize={12}
           tickLine={false}
           axisLine={false}
+          allowDecimals={false}
         />
         <Tooltip 
              contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))'
+                borderColor: 'hsl(var(--border))',
+                borderRadius: 'var(--radius)'
             }}
         />
-          <Bar dataKey="signups" fill={primaryColor} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="signups" fill={primaryColor} radius={[4, 4, 0, 0]} filter="url(#glow)" />
         </BarChart>
       </ResponsiveContainer>
     </div>
   )
 }
-
-    
