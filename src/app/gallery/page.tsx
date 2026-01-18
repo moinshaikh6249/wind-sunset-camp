@@ -6,6 +6,7 @@ import { useCollectionData } from "react-firebase-hooks/firestore";
 import { collection, query, orderBy } from "firebase/firestore";
 import { useEffect, useMemo } from "react";
 import { LoaderCircle, Image as ImageIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 // This is the shape of the document in Firestore.
 type GalleryImageDoc = {
@@ -21,7 +22,6 @@ export default function GalleryPage() {
     query(collection(db, "galleryImages"), orderBy("createdAt", "desc"))
   , []);
   
-  // Capture the error object from the hook for debugging.
   const [images, isLoading, error] = useCollectionData<GalleryImageDoc>(galleryQuery, { idField: 'id' });
 
   // Effect for debugging Firestore connection and data.
@@ -61,18 +61,20 @@ export default function GalleryPage() {
       );
     }
     
-    return images.map((image) => (
-      <div key={image.id} className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-md transform transition-transform duration-500 hover:scale-105 hover:shadow-2xl">
-          <img
-              src={image.imageUrl}
-              alt={image.description}
-              className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-              loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-              <p className="text-white text-sm drop-shadow-md">{image.description}</p>
+    return images.map((image, index) => (
+       <Card key={image.id} className="overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl animate-in fade-in" style={{ animationDelay: `${index * 50}ms`}}>
+          <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
+             <img
+                src={image.imageUrl}
+                alt={image.description}
+                className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+            />
           </div>
-      </div>
+          <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground truncate" title={image.description}>{image.description}</p>
+          </CardContent>
+       </Card>
     ));
   }
 
@@ -87,7 +89,7 @@ export default function GalleryPage() {
                 A glimpse into the adventures and serene moments at Wind & Sunset Camp.
                 </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {renderContent()}
             </div>
         </div>

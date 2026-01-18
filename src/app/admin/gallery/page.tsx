@@ -4,7 +4,7 @@
 import { db } from '@/lib/firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { useMemo, useTransition } from 'react';
+import { useMemo, useState } from 'react';
 import { Trash2, LoaderCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,37 +54,37 @@ function ImageCardSkeleton() {
 
 export default function GalleryPage() {
   const { toast } = useToast();
-  const [deletingId, setDeletingId] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
   
   // Use idField to include the document ID in each object, which is crucial for deletion.
-  // The hook returns data typed as GalleryImage, which includes the `id`.
   const [galleryImages, isLoading] = useCollectionData<GalleryImage>(galleryQuery, { idField: 'id' });
 
-  const handleDeleteImage = (image: GalleryImage) => {
-    setDeletingId(async () => {
-      try {
-        const imageDbRef = doc(db, 'galleryImages', image.id);
-        await deleteDoc(imageDbRef);
-        
-        toast({
-          title: "Image Deleted",
-          description: `The image has been permanently deleted.`,
-        });
-      } catch (error: any) {
-        toast({
-          title: "Deletion Failed",
-          description: error.message || "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-    });
+  const handleDeleteImage = async (image: GalleryImage) => {
+    setDeletingId(image.id);
+    try {
+      const imageDbRef = doc(db, 'galleryImages', image.id);
+      await deleteDoc(imageDbRef);
+      
+      toast({
+        title: "Image Deleted",
+        description: `The image has been permanently deleted.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Deletion Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+        setDeletingId(null);
+    }
   };
 
   const renderGallery = () => {
     if (isLoading) {
-      return [...Array(6)].map((_, i) => <ImageCardSkeleton key={i} />);
+      return [...Array(8)].map((_, i) => <ImageCardSkeleton key={i} />);
     }
     if (!galleryImages || galleryImages.length === 0) {
         return (
@@ -95,19 +95,21 @@ export default function GalleryPage() {
     }
     return galleryImages.map((image) => (
        <Card key={image.id} className="group relative overflow-hidden">
-            <img
-                src={image.imageUrl}
-                alt={image.description}
-                className="object-cover w-full h-40 transition-transform duration-300 group-hover:scale-110"
-                loading="lazy"
-            />
+            <div className="w-full aspect-video relative">
+                <img
+                    src={image.imageUrl}
+                    alt={image.description}
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                />
+            </div>
             <CardContent className="p-3">
-                <p className="text-sm truncate text-muted-foreground">{image.description}</p>
+                <p className="text-sm truncate text-muted-foreground" title={image.description}>{image.description}</p>
             </CardContent>
              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="icon">
+                        <Button variant="destructive" size="icon" disabled={!!deletingId}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </AlertDialogTrigger>
@@ -122,11 +124,11 @@ export default function GalleryPage() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                              <AlertDialogAction
                                 onClick={() => handleDeleteImage(image)}
-                                disabled={deletingId}
+                                disabled={deletingId === image.id}
                                 className="bg-destructive hover:bg-destructive/90"
                             >
-                                {deletingId ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                {deletingId ? "Deleting..." : "Yes, delete"}
+                                {deletingId === image.id ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                {deletingId === image.id ? "Deleting..." : "Yes, delete"}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -151,7 +153,7 @@ export default function GalleryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {renderGallery()}
             </div>
         </CardContent>
