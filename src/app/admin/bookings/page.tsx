@@ -144,6 +144,7 @@ export default function BookingsPage() {
       toast({
         title: successTitle,
         description: successDescription,
+        variant: successTitle.includes("approved") ? "default" : "destructive",
       });
     } catch (error: any) {
       toast({
@@ -171,13 +172,11 @@ export default function BookingsPage() {
           });
           return;
         }
-        console.log("Approving Booking ID:", booking.id);
-        console.log("Booking object:", booking);
         const bookingRef = doc(db, 'bookings', booking.id);
         await handleAction(
           () => updateDoc(bookingRef, { status: 'Approved' }),
-          "Booking Approved",
-          `Booking for ${booking.campName} has been approved.`,
+          "Booking approved successfully!",
+          "",
           "Approval Failed"
         );
       });
@@ -194,13 +193,11 @@ export default function BookingsPage() {
             });
             return;
           }
-          console.log("Canceling Booking ID:", booking.id);
-          console.log("Booking object:", booking);
           const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => updateDoc(bookingRef, { status: 'Canceled' }),
-                "Booking Canceled",
-                `Booking for ${booking.campName} has been canceled.`,
+                "Booking cancelled successfully!",
+                "",
                 "Cancellation Failed"
             );
         });
@@ -217,13 +214,11 @@ export default function BookingsPage() {
                 });
                 return;
             }
-            console.log("Deleting Booking ID:", booking.id);
-            console.log("Booking object:", booking);
             const bookingRef = doc(db, 'bookings', booking.id);
             await handleAction(
                 () => deleteDoc(bookingRef),
-                "Booking Deleted",
-                `Booking for ${booking.campName} has been permanently deleted.`,
+                "Booking deleted successfully!",
+                "",
                 "Deletion Failed"
             );
         });
@@ -295,21 +290,19 @@ export default function BookingsPage() {
              {dialogType === 'delete' && (
                 <>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this booking permanently?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Booking?</AlertDialogTitle>
                         <AlertDialogDescription>
-                           This action cannot be undone. This will permanently delete the booking for
-                            <span className="font-semibold"> {booking.fullName} </span>
-                            at <span className="font-semibold">{booking.campName}</span>.
+                           Are you sure you want to permanently delete this booking? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                         className="bg-destructive hover:bg-destructive/90"
                         onClick={onDelete}
                         disabled={isDeletePending}
                         >
-                        {isDeletePending ? "Deleting..." : "Yes, delete booking"}
+                        {isDeletePending ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </>

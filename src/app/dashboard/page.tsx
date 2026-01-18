@@ -358,8 +358,10 @@ export default function DashboardPage() {
                     )})}
                   </ul>
                 ) : (
-                  <div className="text-center py-12">
-                     <p className="text-muted-foreground mb-4">You haven&apos;t booked any camps yet.</p>
+                  <div className="text-center py-12 flex flex-col items-center">
+                     <Tent className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
+                     <h3 className="text-xl font-semibold text-foreground mb-2">No bookings yet.</h3>
+                     <p className="text-muted-foreground mb-6">Your adventure starts here. Book your first camp now!</p>
                      <Button asChild className="btn-glow">
                        <a href="/camps">Explore Camps</a>
                      </Button>
