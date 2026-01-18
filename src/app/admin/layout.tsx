@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAdmin } from "@/hooks/use-admin";
@@ -22,29 +21,30 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (isAdminLoading) {
-      return; 
+      return; // Do nothing while loading
     }
+
     if (isLoginPage) {
-      // If user is already logged in and is an admin, redirect to dashboard
-      if (user && isAdmin) {
+      // If user is already an admin, redirect from login to dashboard
+      if (isAdmin) {
         router.replace("/admin/dashboard");
       }
-      return;
-    }
-    // For all other admin pages:
-    if (!user || !isAdmin) {
-      // If user is not an admin, redirect them away.
-      router.replace("/admin/login");
+    } else {
+      // For all other admin pages, if not an admin, redirect to login
+      if (!isAdmin) {
+        router.replace("/admin/login");
+      }
     }
   }, [user, isAdmin, isAdminLoading, router, isLoginPage, pathname]);
 
-  // If on the login page, just render the content without the admin layout.
+  // For the login page, render children directly without the layout.
+  // This avoids showing the loading spinner on the login page itself when not logged in.
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  // For all other admin pages, show loading or protect the content.
-  if (isAdminLoading || !isAdmin || !user) {
+  // For protected admin pages, show loading spinner or the content.
+  if (isAdminLoading || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />

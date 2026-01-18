@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -34,6 +33,13 @@
           "description": "A log of the user's activities.",
           "items": {
             "$ref": "#/entities/UserActivity"
+          }
+        },
+        "messages": {
+          "type": "object",
+          "description": "Messages sent by the user.",
+          "additionalProperties": {
+            "$ref": "#/entities/UserMessage"
           }
         }
       },
@@ -130,11 +136,20 @@
         "description": {
           "type": "string"
         },
+        "price": {
+          "type": "number"
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "image": {
           "$ref": "#/entities/Image"
         }
       },
-      "required": ["id", "name", "date", "location", "description", "image"]
+      "required": ["id", "name", "date", "location", "description", "image", "price", "activities"]
     },
     "Image": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -157,18 +172,78 @@
         }
       },
       "required": ["id", "imageUrl", "imageHint"]
+    },
+    "ContactMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContactMessage",
+      "type": "object",
+      "description": "Represents a message submitted through the contact form, stored in a central location for admins.",
+      "properties": {
+        "messageId": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["messageId", "userId", "name", "email", "subject", "message", "timestamp"]
+    },
+    "UserMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserMessage",
+      "type": "object",
+      "description": "Represents a message summary stored under a user's profile.",
+      "properties": {
+        "subject": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["subject", "timestamp", "read"]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a user-submitted review.",
+      "properties": {
+        "name": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "visible": { "type": "boolean" },
+        "pinned": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "rating", "comment", "visible", "pinned", "createdAt"]
+    },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator user with special privileges.",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "role", "createdAt"]
     }
   },
   "auth": {
     "providers": [
       "password"
     ],
-    "customClaims": {
-      "isAdmin": {
-        "type": "boolean",
-        "description": "Determines if the user has administrative privileges."
-      }
-    }
+    "customClaims": null
   },
   "firestore": {
     "/users/{userId}": {
@@ -182,6 +257,12 @@
         "$ref": "#/entities/Booking"
       },
       "description": "Stores the camp bookings for a specific user."
+    },
+     "/users/{userId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/UserMessage"
+      },
+      "description": "Stores a summary of messages sent by a specific user."
     },
     "/users/{userId}/history/{activityId}": {
       "schema": {
@@ -199,4 +280,25 @@
       "schema": {
         "$ref": "#/entities/Image"
       },
-      "description": "Stores images for the public
+      "description": "Stores images for the public"
+    },
+    "/adminMessages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/ContactMessage"
+      },
+      "description": "A centralized collection of all user messages for admin access."
+    },
+    "/reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/Review"
+      },
+      "description": "Stores user-submitted reviews for the camp."
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/Admin"
+      },
+      "description": "Stores a list of administrators. The document ID is the admin's Firebase Auth UID."
+    }
+  }
+}

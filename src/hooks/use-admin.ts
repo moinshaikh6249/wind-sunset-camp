@@ -1,26 +1,28 @@
-
 'use client';
 
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { auth, db } from '@/lib/firebase';
+import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 
-const ADMIN_EMAIL = 'moinshaikh6249@gmail.com';
-
 export function useAdmin() {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, authLoading, authError] = useAuthState(auth);
 
-  const isAdmin = useMemo(() => {
-    if (!user) {
-      return false;
-    }
-    return user.email === ADMIN_EMAIL;
+  const adminDocRef = useMemo(() => {
+    if (!user) return null;
+    return doc(db, 'admins', user.uid);
   }, [user]);
+
+  const [adminDoc, adminLoading, adminError] = useDocumentData(adminDocRef);
+
+  const isAdmin = useMemo(() => !!adminDoc, [adminDoc]);
+  const isLoading = authLoading || (user && adminLoading);
 
   return {
     user,
     isAdmin,
-    isAdminLoading: loading,
-    error,
+    isAdminLoading: isLoading,
+    error: authError || adminError,
   };
 }
