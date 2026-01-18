@@ -7,8 +7,8 @@ import { useState, useMemo, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, addDoc, serverTimestamp, query, orderBy, where } from "firebase/firestore";
-import { Star, MessageSquare, Send, ThumbsUp, Check, LoaderCircle, Pin } from "lucide-react";
+import { collection, addDoc, serverTimestamp, query, where } from "firebase/firestore";
+import { Star, MessageSquare, Send, ThumbsUp, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -85,17 +85,27 @@ export default function ReviewsPage() {
   const [reviewsSnapshot, isLoading, error] = useCollection(
     query(
       collection(db, "reviews"),
-      where("visible", "==", true),
-      orderBy("createdAt", "desc")
+      where("visible", "==", true)
     )
   );
   
   const reviews = useMemo(() => {
     if (!reviewsSnapshot) return [];
     const fetchedReviews = reviewsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
-    const pinnedReviews = fetchedReviews.filter(r => r.pinned);
-    const unpinnedReviews = fetchedReviews.filter(r => !r.pinned);
-    return [...pinnedReviews, ...unpinnedReviews];
+    
+    // Client-side sorting to avoid complex Firestore indexes
+    fetchedReviews.sort((a, b) => {
+      // 1. Pinned reviews come first
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      // 2. Then, sort by creation date (newest first)
+      const timeA = a.createdAt?.seconds ?? 0;
+      const timeB = b.createdAt?.seconds ?? 0;
+      return timeB - timeA;
+    });
+
+    return fetchedReviews;
   }, [reviewsSnapshot]);
 
 
@@ -119,6 +129,8 @@ export default function ReviewsPage() {
         toast({ title: "Not logged in", description: "You must be logged in to leave a review.", variant: "destructive" });
         return;
     }
+    
+    console.log("Submitting review. Current User UID:", user.uid);
 
     try {
         const reviewData = {
@@ -129,7 +141,10 @@ export default function ReviewsPage() {
             createdAt: serverTimestamp(),
         };
 
-        await addDoc(collection(db, "reviews"), reviewData);
+        console.log("Review data to be sent:", reviewData);
+
+        const docRef = await addDoc(collection(db, "reviews"), reviewData);
+        console.log("Review submitted successfully. Document ID:", docRef.id);
 
         toast({
             title: "Review Submitted!",
@@ -144,6 +159,7 @@ export default function ReviewsPage() {
 
 
     } catch (error: any) {
+        console.error("Firestore review submission FAILED:", error);
         toast({
             title: "Submission Failed",
             description: error.message || "An unexpected error occurred.",
