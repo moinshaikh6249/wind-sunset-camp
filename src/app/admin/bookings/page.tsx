@@ -107,7 +107,15 @@ export default function BookingsPage() {
 
   const sortedBookings = useMemo(() => {
     if (!bookings) return [];
-    return [...bookings].sort((a, b) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
+    return [...bookings].sort((a, b) => {
+      const timeA = a.bookingDate ? new Date(a.bookingDate).getTime() : 0;
+      const timeB = b.bookingDate ? new Date(b.bookingDate).getTime() : 0;
+      
+      if (isNaN(timeB)) return -1; // Put invalid dates at the end
+      if (isNaN(timeA)) return 1;
+
+      return timeB - timeA;
+    });
   }, [bookings]);
 
 
@@ -289,7 +297,7 @@ export default function BookingsPage() {
           `"${booking.fullName.replace(/"/g, '""')}"`,
           booking.email,
           `"${booking.campName.replace(/"/g, '""')}"`,
-          format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss'),
+          booking.bookingDate ? format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss') : '',
           booking.numberOfPeople,
           booking.status
         ];
@@ -348,7 +356,7 @@ export default function BookingsPage() {
                 {booking.campName}
             </TableCell>
             <TableCell className="hidden md:table-cell">
-                {format(new Date(booking.bookingDate), 'PPpp')}
+                {booking.bookingDate ? format(new Date(booking.bookingDate), 'PPpp') : 'N/A'}
             </TableCell>
             <TableCell className="text-center hidden md:table-cell">
                 {booking.numberOfPeople}
