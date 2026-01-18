@@ -92,5 +92,3 @@ export function StatCard({ title, value, icon: Icon, description, isLoading, col
         </Card>
     )
 }
-
-    
