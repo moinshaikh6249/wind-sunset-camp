@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +51,7 @@ function StarRating({ rating }: { rating: number }) {
             {[...Array(5)].map((_, i) => (
                 <Star
                     key={i}
-                    className={`h-5 w-5 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}
+                    className={`h-5 w-5 transition-colors ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30"}`}
                 />
             ))}
         </div>
@@ -59,20 +60,18 @@ function StarRating({ rating }: { rating: number }) {
 
 function ReviewSkeleton() {
     return (
-        <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center gap-4">
+        <Card className="bg-card/80 dark:bg-card/70 backdrop-blur-sm p-5 shadow-lg">
+            <div className="flex items-start gap-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="w-full space-y-2">
-                    <Skeleton className="h-4 w-1/4" />
+                <div className="w-full space-y-3">
+                    <Skeleton className="h-5 w-1/3" />
                     <Skeleton className="h-4 w-1/2" />
+                    <div className="pt-2 space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
                 </div>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                </div>
-            </CardContent>
+            </div>
         </Card>
     );
 }
@@ -171,7 +170,7 @@ export default function ReviewsPage() {
   return (
     <div className="bg-background woody-texture-background">
       <div className="container mx-auto px-4 py-16 md:py-24">
-        <section className="text-center max-w-4xl mx-auto mb-12">
+        <section className="text-center max-w-4xl mx-auto mb-16">
             <h1 className="font-headline text-4xl md:text-6xl text-heading-color heading-shadow heading-underline mb-6">
                 Guest Reviews
             </h1>
@@ -187,45 +186,58 @@ export default function ReviewsPage() {
                     <div className="space-y-6">
                         <ReviewSkeleton />
                         <ReviewSkeleton />
+                        <ReviewSkeleton />
                     </div>
                 )}
                 {!isLoading && reviews && reviews.length > 0 ? (
-                    reviews.map((review) => (
-                        <Card key={review.id} className="bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg">
-                            <CardHeader className="flex flex-row items-center gap-4">
-                                <Avatar className="h-12 w-12 text-xl">
-                                    <AvatarFallback>{review.name.charAt(0).toUpperCase()}</AvatarFallback>
+                    reviews.map((review, index) => (
+                        <Card 
+                            key={review.id} 
+                            className="bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-transparent hover:border-accent/50 transition-all duration-300 transform hover:-translate-y-1 animate-in fade-in"
+                            style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                            <div className="flex items-start gap-4">
+                                <Avatar className="h-12 w-12 text-xl shadow-inner">
+                                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent/50 text-foreground font-semibold">
+                                        {review.name.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <CardTitle className="text-lg">{review.name}</CardTitle>
-                                            <StarRating rating={review.rating} />
+                                            <CardTitle className="text-lg font-semibold">{review.name}</CardTitle>
+                                            <div className="mt-1">
+                                                <StarRating rating={review.rating} />
+                                            </div>
                                         </div>
                                         {review.pinned && (
-                                            <Badge variant="secondary" className="gap-1.5 bg-sidebar-accent text-sidebar-accent-foreground">
+                                            <Badge variant="secondary" className="gap-1.5 bg-accent/20 text-accent border-accent/30 dark:bg-sidebar-accent/20 dark:text-sidebar-accent-foreground">
                                                 <Pin className="h-3.5 w-3.5" />
                                                 Pinned
                                             </Badge>
                                         )}
                                     </div>
+                                    <CardContent className="p-0 mt-3">
+                                        <p className="text-muted-foreground italic">&quot;{review.comment}&quot;</p>
+                                    </CardContent>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground italic">&quot;{review.comment}&quot;</p>
-                            </CardContent>
+                            </div>
                         </Card>
                     ))
                 ) : !isLoading && (
-                    <p className="text-muted-foreground text-center py-8">Be the first to leave a review!</p>
+                     <div className="text-center text-muted-foreground py-16 bg-card/50 rounded-lg">
+                        <MessageSquare className="mx-auto h-12 w-12 mb-4" />
+                        <p className="text-lg font-semibold">No reviews yet.</p>
+                        <p className="text-sm">Be the first to share your experience!</p>
+                    </div>
                 )}
             </div>
 
             <div className="lg:col-span-2">
-                <Card className="sticky top-24 bg-card/90 dark:bg-card/80 backdrop-blur-md shadow-xl">
+                <Card className="sticky top-24 bg-card/90 dark:bg-card/80 backdrop-blur-md shadow-xl border">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 font-headline text-2xl text-gradient">
-                            <MessageSquare />
+                        <CardTitle className="flex items-center gap-3 font-headline text-2xl text-gradient">
+                            <MessageSquare className="text-accent"/>
                             Leave a Review
                         </CardTitle>
                         <CardDescription>Share your experience with us and future campers.</CardDescription>
@@ -241,7 +253,7 @@ export default function ReviewsPage() {
                                             <FormItem>
                                             <FormLabel>Your Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="John D." {...field} readOnly={!!user?.displayName} />
+                                                <Input placeholder="John D." {...field} readOnly={!!user?.displayName} className="bg-background/70"/>
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>
@@ -260,7 +272,7 @@ export default function ReviewsPage() {
                                                         return (
                                                             <Star
                                                                 key={i}
-                                                                className={`h-8 w-8 cursor-pointer transition-colors ${ratingValue <= (hoverRating || field.value) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}
+                                                                className={`h-8 w-8 cursor-pointer transition-all duration-200 ${ratingValue <= (hoverRating || field.value) ? "text-yellow-400 fill-yellow-400 scale-110" : "text-muted-foreground/50 hover:scale-110"}`}
                                                                 onClick={() => field.onChange(ratingValue)}
                                                                 onMouseEnter={() => setHoverRating(ratingValue)}
                                                             />
@@ -279,7 +291,7 @@ export default function ReviewsPage() {
                                             <FormItem>
                                             <FormLabel>Your Comment</FormLabel>
                                             <FormControl>
-                                                <Textarea rows={4} placeholder="It was an amazing experience..." {...field} />
+                                                <Textarea rows={4} placeholder="It was an amazing experience..." {...field} className="bg-background/70"/>
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>
@@ -292,8 +304,11 @@ export default function ReviewsPage() {
                                 </form>
                             </Form>
                         ) : (
-                            <div className="text-center text-muted-foreground p-8">
-                                <p>You must be logged in to leave a review.</p>
+                             <div className="text-center text-muted-foreground p-8 border-dashed border-2 rounded-lg">
+                                <p className="font-semibold">You must be logged in to leave a review.</p>
+                                <Button asChild size="sm" className="mt-4">
+                                    <a href="/login">Login</a>
+                                </Button>
                             </div>
                         )}
                     </CardContent>
