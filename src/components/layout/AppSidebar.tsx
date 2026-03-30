@@ -15,23 +15,15 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, MessageSquare, CheckCircle, Clock, Star } from "lucide-react";
+import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, Star, Images } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { useUser, useFirestore, useAuth } from "@/firebase";
-import { useAdmin } from "@/hooks/use-admin";
-import { collection } from "firebase/firestore";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import { useMemo, useState, useEffect } from "react";
-import { useDocumentData } from "react-firebase-hooks/firestore";
-import { doc } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
@@ -42,108 +34,44 @@ const navLinks = [
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
-type Message = {
-  id: string;
-  subject: string;
-  timestamp: string;
-  read: boolean;
-};
-
-function MessagesDialog() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const userMessagesRef = useMemo(() => {
-    if (!user || !firestore) return null;
-    return collection(firestore, `users/${user.uid}/messages`);
-  }, [user, firestore]);
-
-  const [messagesData, messagesLoading] = useCollectionData<Omit<Message, 'id'>>(userMessagesRef, { idField: 'id' });
-
-  const sentMessages = useMemo(() => {
-    if (!messagesData) return [];
-    return [...messagesData]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [messagesData]);
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <MessageSquare className="mr-2 h-4 w-4" />
-          My Messages
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Your Sent Messages</DialogTitle>
-          <DialogDescription>
-            Here is a list of messages you've sent to the camp administrators.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4 max-h-[60vh] overflow-y-auto">
-          {messagesLoading ? (
-            <p>Loading messages...</p>
-          ) : sentMessages.length > 0 ? (
-            <ul className="space-y-4">
-              {sentMessages.map(msg => (
-                <li key={msg.id} className="border-b pb-3 last:border-b-0">
-                  <p className="font-semibold">{msg.subject}</p>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>{formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}</span>
-                    <div className={cn("flex items-center gap-1.5", msg.read ? "text-green-600" : "text-amber-600")}>
-                      {msg.read ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                      {msg.read ? "Read" : "Sent"}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-center">You have not sent any messages yet.</p>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 function UserProfileSection() {
-  const { user, isUserLoading } = useUser();
-  const { isAdmin, isAdminLoading } = useAdmin();
+  const { user, loading: isUserLoading, logout } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const firestore = useFirestore();
-  const auth = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+
   useEffect(() => { setMounted(true) }, []);
 
-  const userProfileRef = useMemo(() => {
-    if (!user || !firestore) return null;
-    return doc(firestore, `users/${user.uid}`);
-  }, [user, firestore]);
+  useEffect(() => {
+    if (!user) return;
 
-  const [userProfile, isProfileLoading] = useDocumentData(userProfileRef);
+    const fetchUserProfile = async () => {
+      try {
+        setIsProfileLoading(true);
+        const response = await api.get(`/users/${user._id}`);
+        setUserProfile(response.user || response);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
 
-  const handleLogout = async () => {
-    if (!auth) return;
-    try {
-      await signOut(auth);
-      toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out.",
-      });
-      router.push('/login');
-    } catch (error) {
-      toast({
-        title: "Logout Failed",
-        description: "An error occurred while logging out.",
-        variant: "destructive",
-      });
-    }
+    fetchUserProfile();
+  }, [user]);
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    router.push('/login');
   };
   
-  if (!mounted || isUserLoading || isAdminLoading || (user && isProfileLoading)) {
+  if (!mounted || isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="p-2 space-y-2">
         <Skeleton className="h-10 w-full" />
@@ -165,10 +93,10 @@ function UserProfileSection() {
     );
   }
 
-  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : (user.displayName || 'User');
-  const photoURL = userProfile?.photoURL || user.photoURL;
+  const displayName = userProfile ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() : (user?.email || 'User');
+  const photoURL = userProfile?.photoURL;
   const userInitial = displayName.charAt(0).toUpperCase();
-
+  const isAdmin = ['admin', 'super-admin'].includes(user?.role || '');
 
   return (
     <div className="p-2 space-y-3">
@@ -190,7 +118,6 @@ function UserProfileSection() {
             </Link>
          </Button>
       )}
-      {!isAdmin && <MessagesDialog />}
       <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
         <LogOut className="mr-2 h-4 w-4" />
         Logout
@@ -202,14 +129,14 @@ function UserProfileSection() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { setOpen, setOpenMobile } = useSidebar();
-  const { user } = useUser();
-  const { isAdmin } = useAdmin();
-
+  const { user } = useAuth();
 
   const handleLinkClick = () => {
     setOpen(false);
     setOpenMobile(false);
   };
+
+  if (pathname?.startsWith('/admin')) return null;
 
   return (
     <Sidebar>
@@ -231,19 +158,32 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuItem>
           ))}
-            {user && !isAdmin && (
-            <SidebarMenuItem>
-              <Link href="/dashboard" onClick={handleLinkClick}>
-                <SidebarMenuButton
-                  isActive={pathname === "/dashboard"}
-                  tooltip={{ children: "User Dashboard" }}
-                >
-                  <UserIcon />
-                  <span>User Dashboard</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          )}
+            {user && !['admin', 'super-admin'].includes(user.role) && (
+              <>
+                <SidebarMenuItem>
+                  <Link href="/dashboard" onClick={handleLinkClick}>
+                    <SidebarMenuButton
+                      isActive={pathname === "/dashboard"}
+                      tooltip={{ children: "User Dashboard" }}
+                    >
+                      <UserIcon />
+                      <span>User Dashboard</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/dashboard/memories" onClick={handleLinkClick}>
+                    <SidebarMenuButton
+                      isActive={pathname === "/dashboard/memories"}
+                      tooltip={{ children: "My Memories" }}
+                    >
+                      <Images />
+                      <span>My Memories</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              </>
+            )}
         </SidebarMenu>
 
         <div className="mt-auto">

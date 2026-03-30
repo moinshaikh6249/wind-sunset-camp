@@ -1,18 +1,16 @@
 "use client";
 
 import { BookingForm } from "./BookingForm";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useDocumentData } from "react-firebase-hooks/firestore";
 import { useSearchParams } from "next/navigation";
-import { useMemo, Suspense } from "react";
-import { doc } from "firebase/firestore";
+import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
+import { adaptCamp } from "@/lib/adapters/campAdapter";
 
 function AuthPrompt() {
   return (
@@ -36,41 +34,72 @@ function AuthPrompt() {
 }
 
 type Camp = {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
-    date: string;
+  date?: string;
     location: string;
     description: string;
     price: number;
-    activities: string[];
-    image: {
-        id: string;
-        imageUrl: string;
-        imageHint: string;
-    };
+  activities?: string[];
+  imageUrl?: string;
+  imageHint?: string;
 };
 
 function BookingPageContent() {
-  const [user, isUserLoading] = useAuthState(auth);
-  const searchParams = useSearchParams();
-
-  const campId = searchParams.get("camp");
-
-  const campRef = useMemo(() => {
-    if (!campId) return null;
-    return doc(db, `camps/${campId}`);
-  }, [campId]);
+  const [user, setUser] = useState<any>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [camp, setCamp] = useState<Camp | null>(null);
+  const [isCampLoading, setIsCampLoading] = useState(false);
   
-  const [camp, isCampLoading] = useDocumentData<Camp>(campRef);
+  const searchParams = useSearchParams();
+  const campId = searchParams.get("campId") || searchParams.get("camp");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          const response = await api.get('/auth/me');
+          setUser(response.user || response);
+        }
+      } catch (error) {
+        console.log('Not authenticated');
+      } finally {
+        setIsUserLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (campId) {
+      const fetchCamp = async () => {
+        try {
+          setIsCampLoading(true);
+          const response = await api.get(`/camps/${campId}`);
+          const campData = adaptCamp(response?.camp || response?.data || response);
+          setCamp(campData);
+        } catch (error) {
+          console.error('Failed to fetch camp:', error);
+        } finally {
+          setIsCampLoading(false);
+        }
+      };
+
+      fetchCamp();
+    }
+  }, [campId]);
 
   if (isUserLoading || (campId && isCampLoading)) {
     return (
-      <div className="container mx-auto px-4 py-16 md:py-24 text-center">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 text-center sm:px-6 md:py-20 lg:px-8 lg:py-24">
         <LoaderCircle className="h-12 w-12 animate-spin text-primary mx-auto mb-6" />
-        <h1 className="font-headline text-3xl md:text-5xl text-primary mb-6 text-gradient">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-5xl text-primary mb-6 text-gradient">
           Loading Your Adventure...
         </h1>
-        <p className="text-lg text-muted-foreground mb-8">
+        <p className="text-base sm:text-lg text-muted-foreground mb-8">
           We're getting everything ready for you.
         </p>
       </div>
@@ -79,26 +108,26 @@ function BookingPageContent() {
 
   return (
     <div className="bg-background">
-      <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8 lg:py-24">
         <div className="text-center max-w-4xl mx-auto mb-12">
-          <h1 className="font-headline text-4xl md:text-6xl text-primary mb-6 text-gradient">
+          <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-primary mb-6 text-gradient">
             Book Your Adventure
           </h1>
-          <p className="text-lg text-muted-foreground">
-            {user ? `Complete the form below to reserve your spot. You are booking as ${user.displayName || user.email}.` : "Please log in or create an account to proceed with your booking."}
+          <p className="text-base sm:text-lg text-muted-foreground">
+            {user ? `Complete the form below to reserve your spot. You are booking as ${user.firstName || user.email}.` : "Please log in or create an account to proceed with your booking."}
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 lg:gap-12">
             <div className="lg:col-span-3">
                  {campId && camp ? (
                     <Card className="overflow-hidden">
-                        <div className="relative h-64 w-full">
-                            <Image src={camp.image.imageUrl} alt={camp.name} fill className="object-cover" />
+                        <div className="relative h-56 w-full sm:h-64">
+                        <Image src={camp?.imageUrl ?? "/images/placeholder.jpg"} alt={camp.name} fill className="object-cover" />
                         </div>
                         <CardContent className="p-6 space-y-6">
                             <div>
-                                <h2 className="font-headline text-3xl text-gradient mb-2">{camp.name}</h2>
+                                <h2 className="font-headline text-2xl sm:text-3xl text-gradient mb-2">{camp.name}</h2>
                                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
                                     <span className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 text-accent" /> {camp.date}
@@ -150,9 +179,9 @@ function BookingPageContent() {
 export default function BookingPage() {
     return (
         <Suspense fallback={
-             <div className="container mx-auto px-4 py-16 md:py-24 text-center">
+       <div className="mx-auto w-full max-w-7xl px-4 py-14 text-center sm:px-6 md:py-20 lg:px-8 lg:py-24">
                 <LoaderCircle className="h-12 w-12 animate-spin text-primary mx-auto mb-6" />
-                <h1 className="font-headline text-3xl md:text-5xl text-primary mb-6 text-gradient">
+        <h1 className="font-headline text-2xl sm:text-3xl md:text-5xl text-primary mb-6 text-gradient">
                     Loading...
                 </h1>
             </div>

@@ -7,7 +7,8 @@ import { Poppins, Pacifico } from 'next/font/google';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppContent } from "./AppContent";
-import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { AuthProvider } from "@/context/AuthContext";
+import { AnimationProvider } from "@/components/animations/AnimationProvider";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -119,7 +120,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${pacifico.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${pacifico.variable} scroll-smooth`}>
       <head>
         <script
           type="application/ld+json"
@@ -127,24 +128,26 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <FirebaseClientProvider>
-            <SidebarProvider defaultOpen={false}>
-              <div className="flex flex-1">
-                <AppSidebar />
-                <AppContent>
-                  {children}
-                </AppContent>
-              </div>
-            </SidebarProvider>
-          </FirebaseClientProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AnimationProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <SidebarProvider defaultOpen={false}>
+                <div className="w-full h-screen flex flex-1">
+                  <AppSidebar />
+                  <AppContent>
+                    {children}
+                  </AppContent>
+                </div>
+              </SidebarProvider>
+            </AuthProvider>
+            <Toaster />
+          </ThemeProvider>
+        </AnimationProvider>
       </body>
     </html>
   );

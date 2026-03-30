@@ -11,29 +11,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Calendar, MapPin, IndianRupee, Zap, Tent } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection } from "firebase/firestore";
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import api from "@/lib/api";
+import { adaptCamps } from "@/lib/adapters/campAdapter";
+import { motion, useReducedMotion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Reveal } from "@/components/animations/Reveal";
 
 
 type Camp = {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
-    date: string;
+  date?: string;
     location: string;
     description: string;
     price: number;
-    activities: string[];
-    image: {
-        id: string;
-        imageUrl: string;
-        imageHint: string;
-    };
+  activities?: string[];
+  imageUrl?: string;
+  imageHint?: string;
 };
 
 const isValidImageUrl = (url: string | null | undefined): boolean => {
@@ -66,52 +67,197 @@ function CampCardSkeleton() {
 }
 
 export default function CampsPageContent() {
-  const campsRef = useMemo(() => collection(db, 'camps'), []);
-  const [upcomingCamps, isLoading] = useCollectionData<Camp>(campsRef, { idField: 'id' });
+  const [upcomingCamps, setUpcomingCamps] = useState<Camp[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [location, setLocation] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const shouldReduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+
+  const normalizeCampList = (response: any) => {
+    const campList = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.camps)
+        ? response.camps
+        : Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.data?.camps)
+            ? response.data.camps
+            : [];
+
+    return adaptCamps(campList);
+  };
+
+  const fetchCamps = async (filters?: {
+    location?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    date?: string;
+  }) => {
+    try {
+      setIsLoading(true);
+      const hasFilters = Boolean(
+        filters?.location || filters?.minPrice || filters?.maxPrice || filters?.date
+      );
+
+      const response = hasFilters
+        ? await api.get('/camps/search', {
+            params: {
+              ...(filters?.location ? { location: filters.location } : {}),
+              ...(filters?.minPrice ? { minPrice: filters.minPrice } : {}),
+              ...(filters?.maxPrice ? { maxPrice: filters.maxPrice } : {}),
+              ...(filters?.date ? { date: filters.date } : {}),
+            },
+          })
+        : await api.get('/camps');
+
+      const camps = normalizeCampList(response);
+      setUpcomingCamps(camps);
+    } catch (error) {
+      console.error('Failed to fetch camps:', error);
+      setUpcomingCamps([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCamps();
+  }, []);
+
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    await fetchCamps({
+      location,
+      minPrice,
+      maxPrice,
+      date: selectedDate,
+    });
+  };
+
+  const handleReset = async () => {
+    setLocation('');
+    setMinPrice('');
+    setMaxPrice('');
+    setSelectedDate('');
+    await fetchCamps();
+  };
 
 
   return (
     <div className="bg-background woody-texture-background">
-      <div className="container mx-auto px-4 py-16 md:py-24">
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <h1 className="font-headline text-4xl md:text-6xl text-heading-color heading-shadow heading-underline mb-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8 lg:py-24">
+        <Reveal className="text-center max-w-4xl mx-auto mb-16">
+          <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-heading-color heading-shadow heading-underline mb-6">
             Upcoming Camps
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             Your next adventure is just around the corner. Find the perfect camp
             for you and get ready to explore.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Card className="mb-10 rounded-2xl border bg-card/85 shadow-lg backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl sm:text-2xl">Search & Filter Camps</CardTitle>
+            <CardDescription>
+              Search by location, price range, and travel date.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSearch} className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <Input
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder="Location"
+              />
+              <Input
+                type="number"
+                min="0"
+                value={minPrice}
+                onChange={(event) => setMinPrice(event.target.value)}
+                placeholder="Min price"
+              />
+              <Input
+                type="number"
+                min="0"
+                value={maxPrice}
+                onChange={(event) => setMaxPrice(event.target.value)}
+                placeholder="Max price"
+              />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <Button type="submit" className="w-full btn-glow" disabled={isLoading}>
+                  Search
+                </Button>
+                <Button type="button" variant="outline" className="w-full" onClick={handleReset} disabled={isLoading}>
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {isLoading ? (
             <>
                 <CampCardSkeleton />
                 <CampCardSkeleton />
                 <CampCardSkeleton />
             </>
-          ) : upcomingCamps && upcomingCamps.length > 0 ? (
-            upcomingCamps.map((camp) => {
-              const imageUrl = isValidImageUrl(camp.image?.imageUrl) 
-                ? camp.image.imageUrl 
-                : `https://picsum.photos/seed/${camp.id}/600/400`;
+          ) : upcomingCamps?.length > 0 ? (
+            <>
+            {upcomingCamps.map((camp, index) => {
+              const campId = camp._id || camp.id;
+              const imageUrl = isValidImageUrl(camp?.imageUrl || '')
+                ? camp.imageUrl || '/images/placeholder.jpg'
+                : '/images/placeholder.jpg';
 
               return (
+              <motion.div
+                key={campId}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 20 }}
+                whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                whileHover={
+                  !shouldReduceMotion && !isMobile
+                    ? { scale: 1.03 }
+                    : undefined
+                }
+                transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : index * 0.05, ease: "easeOut" }}
+                style={{ willChange: "transform" }}
+              >
               <Card
-                key={camp.id}
-                id={camp.id}
+                id={campId}
                 className="group flex flex-col overflow-hidden rounded-2xl bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
               >
                 <div className="relative h-56 w-full overflow-hidden">
-                  <Image
-                    src={imageUrl}
-                    alt={camp.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint={camp.image.imageHint}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    loading="lazy"
-                  />
+                  <motion.div
+                    whileHover={
+                      !shouldReduceMotion && !isMobile
+                        ? { scale: 1.05 }
+                        : undefined
+                    }
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    style={{ width: "100%", height: "100%", willChange: "transform" }}
+                  >
+                    <Image
+                      src={imageUrl}
+                      alt={camp.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      data-ai-hint={camp?.imageHint || "camp adventure"}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      loading="lazy"
+                    />
+                  </motion.div>
                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                    {camp.price > 0 && (
                       <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground text-lg font-bold shadow-md">
@@ -154,12 +300,14 @@ export default function CampsPageContent() {
                   </CardContent>
                   <CardFooter className="p-0 mt-auto pt-6">
                     <Button asChild className="w-full btn-glow">
-                      <Link href={`/booking?camp=${camp.id}`}>Book This Camp</Link>
+                      <Link href={`/camps/${campId}`}>View Details</Link>
                     </Button>
                   </CardFooter>
                 </div>
               </Card>
-            )})
+              </motion.div>
+            )})}
+            </>
           ) : (
              <div className="col-span-full text-center py-16 flex flex-col items-center">
                  <Tent className="h-16 w-16 text-muted-foreground/50 mb-4" />

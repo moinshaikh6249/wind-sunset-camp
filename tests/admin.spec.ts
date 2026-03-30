@@ -24,7 +24,8 @@ test.describe('Admin Panel Flows', () => {
     await expect(page).toHaveURL('/admin/bookings');
     await expect(page.getByRole('heading', { name: 'All Bookings' })).toBeVisible();
     // Check if the table has at least one row (header)
-    await expect(page.locator('table tr')).toHaveCountGreaterThan(0);
+    const rows = await page.locator('table tr').count();
+    expect(rows).toBeGreaterThan(0);
   });
 
   // Test case 18, 19, 20: Admin can manage booking statuses.

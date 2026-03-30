@@ -122,14 +122,14 @@
       "required": ["name", "email", "message", "createdAt"]
     }
   },
-  "firestore": {
+  "database": {
     "/admins/{adminId}": {
       "schema": { "$ref": "#/entities/Admin" },
-      "description": "Stores admin user roles and permissions. Document ID must match the admin's Firebase Auth UID."
+      "description": "Stores admin user roles and permissions. Record ID maps to backend user identity."
     },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
-      "description": "Stores public user profile information. Document ID must match the user's Firebase Auth UID."
+      "description": "Stores public user profile information. Record ID maps to backend user identity."
     },
     "/bookings/{bookingId}": {
       "schema": { "$ref": "#/entities/Booking" },

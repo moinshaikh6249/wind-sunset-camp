@@ -48,15 +48,21 @@ export default function AboutPage() {
                 className="text-center border-0 bg-card/80 dark:bg-card/70 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 p-6 transform hover:-translate-y-2 rounded-2xl team-card-hover md:max-w-sm"
               >
                 <CardHeader className="items-center p-0">
-                  <div className="relative h-32 w-32 rounded-full overflow-hidden mb-4 shadow-lg border-4 border-background">
-                    <Image
-                      src={member.image.imageUrl}
-                      alt={member.name}
-                      fill
-                      className="object-cover"
-                      data-ai-hint={member.image.imageHint}
-                    />
-                  </div>
+                  {member.role === 'Owner' ? (
+                    <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center text-xl font-bold text-orange-600 mb-4 mt-2">
+                      SM
+                    </div>
+                  ) : (
+                    <div className="relative h-32 w-32 rounded-full overflow-hidden mb-4 shadow-lg border-4 border-background">
+                      <Image
+                        src={member.image.imageUrl}
+                        alt={member.name}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={member.image.imageHint}
+                      />
+                    </div>
+                  )}
                   <CardTitle className="font-headline text-2xl text-heading-color">
                     {member.name}
                   </CardTitle>

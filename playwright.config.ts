@@ -4,9 +4,6 @@ import path from 'path';
 // Use process.env.PORT by default and fallback to 3000 if not specified.
 const PORT = process.env.PORT || 3000;
 const baseURL = `http://localhost:${PORT}`;
-
-// Path to the global setup file.
-const globalSetup = require.resolve('./tests/auth.setup');
 export const USER_AUTH_FILE = path.join(__dirname, '.auth/user.json');
 export const ADMIN_AUTH_FILE = path.join(__dirname, '.auth/admin.json');
 
@@ -27,9 +24,6 @@ export default defineConfig({
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
-
-  // Global setup to run before all tests
-  globalSetup,
 
   use: {
     // Use baseURL so to make navigation relative.

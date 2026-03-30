@@ -18,8 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useEffect } from "react";
+import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -29,6 +30,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,9 +39,31 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const response = await api.post('/auth/login', {
+        email: values.email,
+        password: values.password,
+      });
+
+      if (!response?.success || !response?.token) {
+        throw new Error(response?.message || "Login failed");
+      }
+
+      // Store the token
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      await refreshUser();
+
       toast({
         title: "Logged In Successfully!",
         description: "Welcome back!",
@@ -47,19 +71,15 @@ export function LoginForm() {
       router.push("/dashboard");
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred. Please try again later.";
-      switch (error.code) {
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Please enter a valid email address.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many login attempts. Please try again later.';
-          break;
+      const status = error.response?.status;
+      const data = error.response?.data;
+
+      if (status === 401 || status === 400) {
+        errorMessage = data?.message || 'Invalid email or password.';
+      } else if (status === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.';
       }
+
       toast({
         title: "Login Failed",
         description: errorMessage,

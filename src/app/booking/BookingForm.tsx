@@ -3,15 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import React, { useEffect, useMemo, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
-import { auth, db } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollectionData, useDocumentData } from "react-firebase-hooks/firestore";
 import { useRouter } from "next/navigation";
-import { doc, collection, addDoc, updateDoc } from "firebase/firestore";
-
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import api from "@/lib/api";
+import { buildBookingWhatsappUrl } from "@/lib/whatsapp";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -45,34 +42,75 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type Camp = {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
+  date?: string;
 };
 
 type UserProfile = {
+    _id?: string;
     firstName?: string;
     lastName?: string;
+    email?: string;
     phone?: string;
 }
 
 function BookingFormComponent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const initialCamp = searchParams.get("camp") || "";
-  const [user, isUserLoading] = useAuthState(auth);
+  const initialCamp = searchParams.get("campId") || searchParams.get("camp") || "";
   const router = useRouter();
-
-  const campsRef = useMemo(() => collection(db, 'camps'), []);
   
-  const userProfileRef = useMemo(() => {
-    if (!user) return null;
-    return doc(db, `users/${user.uid}`);
-  }, [user]);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [upcomingCamps, setUpcomingCamps] = useState<Camp[]>([]);
+  const [campsLoading, setCampsLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          const response = await api.get('/auth/me');
+          const userData = response.user || response;
+          setUser(userData);
+        }
+      } catch (error) {
+        console.log('Not authenticated');
+      } finally {
+        setIsUserLoading(false);
+      }
+    };
 
-  const [upcomingCamps, campsLoading] = useCollectionData<Camp>(campsRef, { idField: 'id' });
-  const [userProfile, profileLoading] = useDocumentData<UserProfile>(userProfileRef);
+    fetchUser();
+  }, []);
 
+  useEffect(() => {
+    const fetchCamps = async () => {
+      try {
+        setCampsLoading(true);
+        const response = await api.get('/camps');
+        console.log("Camps API response:", response);
+
+        const camps = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.camps)
+            ? response.camps
+            : Array.isArray(response?.data)
+              ? response.data
+              : [];
+
+        setUpcomingCamps(camps);
+      } catch (error) {
+        console.error('Failed to fetch camps:', error);
+      } finally {
+        setCampsLoading(false);
+      }
+    };
+
+    fetchCamps();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,22 +125,20 @@ function BookingFormComponent() {
 
   useEffect(() => {
     if (user) {
-      const displayName = user.displayName || `${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`.trim();
+      const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '';
       form.setValue('fullName', displayName);
       form.setValue('email', user.email || '');
-      if (userProfile?.phone) {
-        form.setValue('phone', userProfile.phone);
+      if (user.phone) {
+        form.setValue('phone', user.phone);
       }
     }
-  }, [user, userProfile, form]);
+  }, [user, form]);
   
   useEffect(() => {
-    // If initialCamp changes (e.g. from URL), update the form
     if (initialCamp) {
         form.setValue('campId', initialCamp);
     }
   }, [initialCamp, form]);
-
 
   async function onSubmit(values: FormValues) {
     if (!user) {
@@ -111,83 +147,61 @@ function BookingFormComponent() {
         description: "You must be logged in to submit a booking.",
         variant: "destructive",
       });
-      console.log("Booking submission failed: User is not authenticated at time of submission.");
       return;
     }
 
-    if (!upcomingCamps) {
-        toast({ title: "Error", description: "Camps data is not ready. Please wait a moment and try again.", variant: "destructive" });
-        return;
-    }
-
-    const camp = upcomingCamps.find(c => c.id === values.campId);
+    const camp = upcomingCamps.find(c => (c._id || c.id) === values.campId);
     if (!camp) {
       toast({ title: "Error", description: "Selected camp not found.", variant: "destructive" });
       return;
     }
       
     const bookingData = {
-      userId: user.uid, // Set from authenticated user
       fullName: values.fullName,
       email: values.email,
       phone: values.phone,
       campId: values.campId,
-      campName: camp.name,
       numberOfPeople: values.numberOfPeople,
-      bookingDate: new Date().toISOString(),
-      status: "Pending" as const,
     };
 
-    console.log("Attempting to create booking for user:", user.uid);
-    console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
-
     try {
-      // Step 1: Create the main booking document. This is the critical operation.
-      const bookingsRef = collection(db, "bookings");
-      const docRef = await addDoc(bookingsRef, bookingData);
-      console.log("✅ Booking creation successful. Document ID:", docRef.id);
-      
-      // Step 2: Show success toast immediately after the critical operation succeeds.
-      toast({
-        title: "Booking Submitted!",
-        description: `We've received your booking for ${camp.name}. It is now pending approval.`,
+      const createBookingResponse = await api.post('/bookings', bookingData);
+      const booking = createBookingResponse?.booking;
+
+      if (!booking?._id) {
+        throw new Error('Booking was created but booking ID is missing.');
+      }
+
+      const whatsappUrl = buildBookingWhatsappUrl({
+        name: values.fullName,
+        campName: camp.name,
+        numberOfPeople: values.numberOfPeople,
+        campDate: camp.date,
+        phone: values.phone,
       });
 
-      // Step 3: Perform non-critical, secondary writes.
-      // These are in a separate try/catch so their failure doesn't cause a false negative on the UI.
-      try {
-        // Add a history entry to the user's profile
-        const historyRef = collection(db, `users/${user.uid}/history`);
-        await addDoc(historyRef, {
-            type: 'booking',
-            description: `Booked ${camp.name}`,
-            timestamp: new Date().toISOString(),
-        });
+      toast({
+        title: 'Booking Confirmed',
+        description: 'Booking confirmed. Please send the WhatsApp message to confirm your reservation.',
+      });
 
-        // If the user's phone number was updated, save it to their profile.
-        if(userProfileRef && values.phone && values.phone !== userProfile?.phone) {
-            await updateDoc(userProfileRef, { phone: values.phone });
-        }
-      } catch (secondaryError: any) {
-        // Log for debugging, but don't show a user-facing failure message for the booking.
-        console.warn("⚠️ A non-critical write operation failed after booking creation:", secondaryError);
-      }
-      
-      // Step 4: Navigate to the dashboard.
-      router.push('/dashboard');
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+      router.push(
+        `/booking-success?bookingId=${booking._id}&campName=${encodeURIComponent(camp.name)}&campDate=${encodeURIComponent(camp.date || 'To be confirmed')}&people=${values.numberOfPeople}&totalPrice=${encodeURIComponent(`₹${booking.totalPrice ?? 0}`)}&whatsappUrl=${encodeURIComponent(whatsappUrl)}`
+      );
 
     } catch (error: any) {
-      // This will now only catch critical failures from the main booking creation.
-      console.error("❌ Firestore booking creation FAILED:", error);
+      console.error("Booking creation failed:", error);
       toast({
         title: "Booking Failed",
-        description: error.message || "An unexpected error occurred. Please check your permissions and try again.",
+        description: error.response?.data?.message || error.message || "An unexpected error occurred. Please check your permissions and try again.",
         variant: "destructive",
       });
     }
   }
 
-  const isFormReady = !campsLoading && !profileLoading;
+  const isFormReady = !campsLoading;
 
   if (isUserLoading) {
     return (
@@ -206,7 +220,7 @@ function BookingFormComponent() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <FormField
               control={form.control}
               name="fullName"
@@ -257,23 +271,34 @@ function BookingFormComponent() {
                   <FormLabel>Which camp are you interested in?</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a camp" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {upcomingCamps ? upcomingCamps.map((camp) => (
-                        <SelectItem key={camp.id} value={camp.id}>
-                          {camp.name}
-                        </SelectItem>
-                      )) : <SelectItem value="loading" disabled>Loading camps...</SelectItem>}
+                      {campsLoading ? (
+                        <SelectItem value="loading" disabled>Loading camps...</SelectItem>
+                      ) : upcomingCamps.length === 0 ? (
+                        <SelectItem value="no-camps" disabled>No camps available</SelectItem>
+                      ) : (
+                        upcomingCamps.map((camp) => (
+                          <SelectItem key={camp._id || camp.id} value={camp._id || camp.id || ''}>
+                            {camp.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Payment Method</p>
+              <p className="text-sm text-muted-foreground">Pay at Camp</p>
+            </div>
+
+            <FormField
               control={form.control}
               name="numberOfPeople"
               render={({ field }) => (
@@ -289,7 +314,9 @@ function BookingFormComponent() {
 
             <div className="space-y-4">
               <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting || !isFormReady}>
-                {form.formState.isSubmitting ? "Submitting..." : "Submit Booking"}
+                {form.formState.isSubmitting
+                  ? "Processing..."
+                  : "Reserve Camp"}
               </Button>
             </div>
           </form>

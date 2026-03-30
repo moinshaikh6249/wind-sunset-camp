@@ -3,18 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, X, Star, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Logo } from "@/components/Logo";
-import { useUser, useFirestore, useAuth } from "@/firebase";
-import { useAdmin } from "@/hooks/use-admin";
-import { doc } from "firebase/firestore";
-import { useDocumentData } from "react-firebase-hooks/firestore";
-import { signOut } from "firebase/auth";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import api from "@/lib/api";
 
 const navLinks = [
     { href: "/", label: "Home" },
@@ -26,39 +24,43 @@ const navLinks = [
   ];
 
 function UserProfileSection() {
-    const { user, isUserLoading } = useUser();
-    const { isAdmin, isAdminLoading } = useAdmin();
+    const { user, loading: isUserLoading, logout } = useAuth();
     const { toast } = useToast();
-    const firestore = useFirestore();
-    const auth = useAuth();
+    const router = useRouter();
     const [mounted, setMounted] = React.useState(false);
+    const [userProfile, setUserProfile] = React.useState<any>(null);
+    const [isProfileLoading, setIsProfileLoading] = React.useState(false);
+
     React.useEffect(() => { setMounted(true) }, []);
 
-    const userProfileRef = React.useMemo(() => {
-        if (!user || !firestore) return null;
-        return doc(firestore, `users/${user.uid}`);
-    }, [user, firestore]);
+    React.useEffect(() => {
+      if (!user) return;
 
-    const [userProfile, isProfileLoading] = useDocumentData(userProfileRef);
-
-    const handleLogout = async () => {
-        if (!auth) return;
+      const fetchUserProfile = async () => {
         try {
-            await signOut(auth);
-            toast({
-                title: "Logged Out",
-                description: "You have been successfully logged out.",
-            });
+          setIsProfileLoading(true);
+          const response = await api.get(`/users/${user._id}`);
+          setUserProfile(response.user || response);
         } catch (error) {
-            toast({
-                title: "Logout Failed",
-                description: "An error occurred while logging out.",
-                variant: "destructive",
-            });
+          console.error("Error fetching user profile:", error);
+        } finally {
+          setIsProfileLoading(false);
         }
+      };
+
+      fetchUserProfile();
+    }, [user]);
+
+    const handleLogout = () => {
+        logout();
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+        });
+        router.push('/login');
     };
     
-    if (!mounted || isUserLoading || isAdminLoading || (user && isProfileLoading)) {
+    if (!mounted || isUserLoading || (user && isProfileLoading)) {
         return (
              <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-10 w-10 text-xl animate-pulse bg-muted"></Avatar>
@@ -87,9 +89,10 @@ function UserProfileSection() {
         );
     }
     
-    const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : (user.displayName || 'User');
-    const photoURL = userProfile?.photoURL || user.photoURL;
+    const displayName = userProfile ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() : (user?.email || 'User');
+    const photoURL = userProfile?.photoURL;
     const userInitial = displayName.charAt(0).toUpperCase();
+    const isAdmin = ['admin', 'super-admin'].includes(user?.role || '');
 
     return (
         <div className="space-y-4">

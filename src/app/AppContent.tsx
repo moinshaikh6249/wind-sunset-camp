@@ -1,13 +1,21 @@
 
 'use client';
 
+import { usePathname } from "next/navigation";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PageTransition } from "@/components/animations/PageTransition";
 
 export function AppContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { open, isMobile, setOpen } = useSidebar();
+
+  if (pathname?.startsWith('/admin')) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <div 
@@ -18,12 +26,14 @@ export function AppContent({ children }: { children: React.ReactNode }) {
         )} 
         onClick={() => setOpen(false)} 
       />
-      <div className={cn(
-          "flex flex-col min-h-screen w-full transition-all duration-300",
+        <div className={cn(
+          "flex min-h-screen w-full flex-col overflow-x-hidden transition-all duration-300",
           {"md:blur-sm": open && !isMobile} // Optional: blur background when sidebar is open on desktop
         )}>
         <Header />
-        <main className="flex-grow flex flex-col bg-background">{children}</main>
+        <main className="flex-grow flex flex-col bg-background">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <Footer />
       </div>
       <div 

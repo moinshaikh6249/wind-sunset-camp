@@ -1,15 +1,13 @@
 
 'use client';
 
-import { db } from "@/lib/firebase";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { useMemo, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Trash2, Eye, EyeOff, Pin, PinOff, MessageSquare } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
+import api from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,7 +40,7 @@ type Review = {
     comment: string;
     visible: boolean;
     pinned: boolean;
-    createdAt: { seconds: number; nanoseconds: number; }
+    createdAt?: string | Date | { seconds: number; nanoseconds: number; };
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -87,19 +85,55 @@ export default function ReviewsPage() {
   const { searchQuery } = useSearch();
   const { isAdmin } = useAdmin();
   const [isPending, startTransition] = useTransition();
-  
-  const reviewsQuery = useMemo(() => query(collection(db, 'reviews'), orderBy("createdAt", "desc")), []);
-  const [reviewsSnapshot, isLoading] = useCollection(reviewsQuery);
-  const reviewsData = useMemo(() => reviewsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)), [reviewsSnapshot]);
-  
-  const sortedReviews = useMemo(() => {
-      if (!reviewsData) return [];
-      return [...reviewsData].sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0);
+
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchReviews = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.get<{ success: boolean; reviews: any[] }>('/reviews/all');
+      const mappedReviews: Review[] = (data.reviews || []).map((r: any) => ({
+        id: r._id || r.id,
+        name: r.name,
+        rating: r.rating,
+        comment: r.comment,
+        visible: r.visible,
+        pinned: r.pinned,
+        createdAt: r.createdAt,
+      }));
+      setReviews(mappedReviews);
+    } catch (error: any) {
+      toast({
+        title: "Failed to load reviews",
+        description: error?.message || "Unable to fetch reviews.",
+        variant: "destructive",
       });
-  }, [reviewsData]);
+      setReviews([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const sortedReviews = useMemo(() => {
+    if (!reviews) return [];
+    return [...reviews].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      const aDate = a.createdAt ? (typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt) : null;
+      const bDate = b.createdAt ? (typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt) : null;
+
+      const aTime = aDate instanceof Date ? aDate.getTime() : 0;
+      const bTime = bDate instanceof Date ? bDate.getTime() : 0;
+
+      return bTime - aTime;
+    });
+  }, [reviews]);
 
 
   const filteredReviews = useMemo(() => {
@@ -114,43 +148,41 @@ export default function ReviewsPage() {
   
   const handleAction = async (action: () => Promise<any>, successTitle: string, errorTitle: string) => {
     startTransition(async () => {
-        try {
-            await action();
-            toast({ title: successTitle });
-        } catch (error: any) {
-            toast({
-                title: errorTitle,
-                description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
-                variant: "destructive",
-            });
-        }
+      try {
+        await action();
+        toast({ title: successTitle });
+        await fetchReviews();
+      } catch (error: any) {
+        toast({
+          title: errorTitle,
+          description: error.message || "An unexpected error occurred. You may not have sufficient permissions.",
+          variant: "destructive",
+        });
+      }
     });
   };
   
   const onToggleVisibility = (review: Review) => {
-    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
-        () => updateDoc(reviewRef, { visible: !review.visible }),
-        `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
-        "Failed to update visibility"
+      () => api.put(`/reviews/${review.id}/visibility`),
+      `Review ${!review.visible ? 'is now visible' : 'is now hidden'}.`,
+      "Failed to update visibility"
     );
   }
 
   const onTogglePin = (review: Review) => {
-    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
-        () => updateDoc(reviewRef, { pinned: !review.pinned }),
-        `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
-        "Failed to update pin status"
+      () => api.put(`/reviews/${review.id}/pin`),
+      `Review ${!review.pinned ? 'pinned' : 'unpinned'}.`,
+      "Failed to update pin status"
     );
   }
 
   const onDelete = (review: Review) => {
-    const reviewRef = doc(db, 'reviews', review.id);
     handleAction(
-        () => deleteDoc(reviewRef),
-        `Review by ${review.name} deleted.`,
-        "Failed to delete review"
+      () => api.delete(`/reviews/${review.id}`),
+      `Review by ${review.name} deleted.`,
+      "Failed to delete review"
     );
   }
 
@@ -192,7 +224,7 @@ export default function ReviewsPage() {
                         <div className="my-1"><StarRating rating={review.rating} /></div>
                         <p className="text-muted-foreground mt-3 italic text-sm">&quot;{review.comment}&quot;</p>
                          <p className="text-xs text-muted-foreground/80 mt-3">
-                           {review.createdAt ? formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true }) : ''}
+                           {review.createdAt ? formatDistanceToNow(new Date(typeof review.createdAt === 'object' && 'seconds' in review.createdAt ? review.createdAt.seconds * 1000 : review.createdAt), { addSuffix: true }) : ''}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">

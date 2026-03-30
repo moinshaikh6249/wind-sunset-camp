@@ -1,11 +1,9 @@
 
 'use client';
 
-import { db } from '@/lib/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, doc, deleteDoc } from 'firebase/firestore';
-import { useMemo, useState, useTransition } from 'react';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import api from '@/lib/api';
+import { useMemo, useState, useTransition, useEffect } from 'react';
+import { Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -16,14 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -56,18 +46,18 @@ import {
 import { CampForm, type CampWithId } from './CampForm';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { adaptCamps } from '@/lib/adapters/campAdapter';
 
 type DbCamp = {
     id: string;
     name: string;
-    date: string;
+  date?: string;
     location: string;
     description: string;
-    image: {
-        id: string;
-        imageUrl: string;
-        imageHint: string;
-    };
+  imageUrl?: string;
+  imageHint?: string;
+  featured?: boolean;
+  status?: 'active' | 'inactive';
 };
 
 const isValidImageUrl = (url: string | null | undefined): boolean => {
@@ -97,7 +87,10 @@ function CampTableRowSkeleton() {
                 <Skeleton className="h-4 w-[200px]" />
             </TableCell>
             <TableCell>
-                <Skeleton className="h-8 w-8 rounded-md" />
+              <div className="flex gap-2 justify-end">
+                <Skeleton className="h-8 w-16 rounded-md" />
+                <Skeleton className="h-8 w-16 rounded-md" />
+              </div>
             </TableCell>
         </TableRow>
     )
@@ -110,8 +103,31 @@ export default function CampsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCamp, setEditingCamp] = useState<CampWithId | null>(null);
 
-  const campsRef = useMemo(() => collection(db, 'camps'), []);
-  const [camps, isLoading] = useCollectionData<DbCamp>(campsRef);
+  const [camps, setCamps] = useState<DbCamp[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchCamps = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/camps');
+      const campList = Array.isArray(response)
+        ? response
+        : response?.camps || response?.data || [];
+      const normalizedCamps = adaptCamps(campList).map((camp: any) => ({
+        ...camp,
+        id: camp._id || camp.id,
+      }));
+      setCamps(normalizedCamps);
+    } catch (error) {
+      console.error('Failed to fetch camps', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCamps();
+  }, []);
 
   const filteredCamps = useMemo(() => {
     if (!camps) return [];
@@ -127,9 +143,8 @@ export default function CampsPage() {
   const handleDeleteCamp = (camp: CampWithId) => {
     startTransition(async () => {
       try {
-        const campDbRef = doc(db, `camps/${camp.id}`);
-        await deleteDoc(campDbRef);
-        
+        await api.delete(`/admin/camps/${camp.id}`);
+        await fetchCamps();
         toast({
           title: "Camp Deleted",
           description: `${camp.name} has been permanently deleted.`,
@@ -168,9 +183,9 @@ export default function CampsPage() {
         );
     }
     return filteredCamps.map((camp) => {
-        const imageUrl = isValidImageUrl(camp.image?.imageUrl) 
-            ? camp.image.imageUrl 
-            : `https://picsum.photos/seed/${camp.id}/64/64`;
+      const imageUrl = isValidImageUrl(camp?.imageUrl)
+        ? (camp.imageUrl as string)
+            : '/images/placeholder.jpg';
 
         return (
         <TableRow key={camp.id}>
@@ -194,22 +209,18 @@ export default function CampsPage() {
             </TableCell>
             <TableCell>
             <AlertDialog>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleEditCamp(camp as CampWithId)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="destructive" size="sm">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
                     </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => handleEditCamp(camp as CampWithId)}>Edit</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive" onSelect={e => e.preventDefault()}>Delete</DropdownMenuItem>
-                        </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                  </AlertDialogTrigger>
+                </div>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -256,7 +267,10 @@ export default function CampsPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="max-h-[70vh] p-4">
-                  <CampForm campToEdit={editingCamp} onFormSubmit={() => setDialogOpen(false)} />
+                  <CampForm campToEdit={editingCamp} onFormSubmit={() => {
+                    setDialogOpen(false);
+                    fetchCamps();
+                  }} />
                 </ScrollArea>
             </DialogContent>
          </Dialog>

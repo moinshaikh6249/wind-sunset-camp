@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,12 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, addDoc, collection } from "firebase/firestore";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
-
+import api from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -50,36 +45,23 @@ export function SignupForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // 1. Create user and update their Auth display name immediately
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      await updateProfile(user, { displayName: values.name });
-
       const nameParts = values.name.trim().split(/\s+/);
       const firstName = nameParts[0] || '';
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-      
-      // 2. Create the initial user profile in the database without the photoURL
-      const userProfile = {
+
+      const response = await api.post('/auth/signup', {
         firstName,
         lastName,
         email: values.email,
         phone: values.mobileNumber,
-        photoURL: "", // Start with an empty photoURL
-      };
-
-      const userRef = doc(db, `users/${user.uid}`);
-      await setDoc(userRef, userProfile);
-
-      // 3. Create the history entry
-      const historyRef = collection(db, `users/${user.uid}/history`);
-      await addDoc(historyRef, {
-        type: 'signup',
-        description: 'Account created',
-        timestamp: new Date().toISOString(),
+        password: values.password,
+        confirmPassword: values.password,
       });
-      
-      // 4. Navigate immediately to the dashboard
+
+      // Store the token
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
       toast({
         title: "Account Created!",
         description: "Welcome! Redirecting you to the dashboard...",
@@ -88,19 +70,16 @@ export function SignupForm() {
       
     } catch (error: any) {
       console.error(error);
-      alert(error.message);
       let errorMessage = "An unexpected error occurred during sign up.";
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'An account with this email already exists.';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Password is too weak. It must be at least 6 characters long.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'The email address is not valid.';
-          break;
+      const status = error.response?.status;
+      const data = error.response?.data;
+
+      if (status === 400 || status === 409) {
+        errorMessage = data?.message || 'An account with this email already exists.';
+      } else if (status === 422) {
+        errorMessage = 'Please check your input and try again.';
       }
+
       toast({
         title: "Signup Failed",
         description: errorMessage,

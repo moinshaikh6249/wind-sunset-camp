@@ -4,8 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,7 +27,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
 import { LoaderCircle, Upload, ImageOff } from "lucide-react";
+import Image from 'next/image';
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+type UploadImageFormProps = {
+  onSuccess?: () => void | Promise<void>;
+};
 
 const formSchema = z.object({
   imageUrl: z.string().min(1, "Please provide a valid image URL."),
@@ -38,7 +42,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function UploadImageForm() {
+export function UploadImageForm(props: UploadImageFormProps) {
   const { toast } = useToast();
   const [isSubmitting, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -69,11 +73,10 @@ export function UploadImageForm() {
   function onSubmit(values: FormValues) {
     startTransition(async () => {
       try {
-        await addDoc(collection(db, 'galleryImages'), {
+        await api.post('/gallery', {
           imageUrl: values.imageUrl,
           description: values.description,
           imageHint: values.imageHint,
-          createdAt: serverTimestamp(),
         });
 
         toast({
@@ -83,6 +86,9 @@ export function UploadImageForm() {
         setOpen(false);
         resetForm();
 
+        if (props.onSuccess) {
+          await props.onSuccess();
+        }
       } catch (error: any) {
         toast({
           title: "Operation Failed",
@@ -138,10 +144,12 @@ export function UploadImageForm() {
                         </div>
                       ) : (
                         <div className="relative w-full h-[200px] rounded-md border overflow-hidden">
-                            <img 
-                                src={imageUrlValue} 
-                                alt="Image preview" 
-                                className="w-full h-full object-cover"
+                            <Image
+                                src={imageUrlValue}
+                                alt="Image preview"
+                                fill
+                                unoptimized
+                                className="object-cover"
                                 onError={() => setPreviewError(true)}
                             />
                         </div>

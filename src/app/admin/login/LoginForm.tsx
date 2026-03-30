@@ -18,9 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, db } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -30,6 +29,7 @@ const formSchema = z.object({
 export function AdminLoginForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,42 +41,50 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      
-      // Check admin status from Firestore
-      const adminRef = doc(db, `admins/${user.uid}`);
-      const adminSnapshot = await getDoc(adminRef);
+      const response = await api.post('/admin/login', {
+        email: values.email,
+        password: values.password,
+      });
 
-      if (adminSnapshot.exists()) {
-        toast({
-          title: "Admin Login Successful!",
-          description: "Welcome back, administrator!",
-        });
-        router.push("/admin/dashboard");
-      } else {
-        await auth.signOut();
-        toast({
-          title: "Access Denied",
-          description: "You do not have administrative privileges.",
-          variant: "destructive",
-        });
+      if (!response?.success || !response?.token) {
+        throw new Error(response?.message || 'Login failed');
       }
+
+      const admin = response.admin
+        ? { ...response.admin, role: response.admin.role || 'admin' }
+        : null;
+
+      // Persist auth token for subsequent requests
+      localStorage.setItem('adminToken', response.token);
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      if (!admin) {
+        localStorage.removeItem('adminToken');
+        throw new Error('Invalid admin response');
+      }
+
+      localStorage.setItem('user', JSON.stringify(admin));
+
+      void refreshUser();
+
+      toast({
+        title: "Admin Login Successful!",
+        description: "Welcome back, administrator!",
+      });
+      router.push("/admin/dashboard");
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred. Please try again later.";
-      switch (error.code) {
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Please enter a valid email address.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many login attempts. Please try again later.';
-          break;
+      const status = error.response?.status;
+      const data = error.response?.data;
+
+      if (status === 401 || status === 400 || status === 404) {
+        errorMessage = data?.message || 'Invalid email or password.';
+      } else if (status === 500) {
+        errorMessage = data?.message || 'Server error';
+      } else if (status === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.';
       }
+
       toast({
         title: "Login Failed",
         description: errorMessage,

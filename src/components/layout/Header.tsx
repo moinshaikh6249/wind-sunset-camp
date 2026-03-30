@@ -11,17 +11,17 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNav } from "./MobileNav";
 import { SidebarTrigger } from "../ui/sidebar";
-import { useUser } from "@/firebase";
+import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "../ui/skeleton";
 
 export function Header() {
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useAuth();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="hidden md:flex" />
           <Logo />

@@ -1,33 +1,23 @@
 'use client';
 
-import { db } from '@/lib/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { subDays, format, parseISO } from 'date-fns';
+import { subDays, format } from 'date-fns';
 import { Package, Users, CalendarClock, DollarSign, FileText, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import api from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 type Booking = {
-  bookingDate: string;
-  campId: string;
   campName: string;
-  numberOfPeople: number;
-  status?: 'Approved' | 'Pending' | 'Canceled';
-  userId: string;
+  status: 'Approved' | 'Pending' | 'Canceled' | 'Completed' | string;
+  createdAt: string;
 };
 
-type HistoryItem = {
-  type: string;
-  timestamp: string;
-};
-
-type DbUser = {
-  bookings?: { [bookingId: string]: Booking };
-  history?: { [historyId: string]: HistoryItem };
+type User = {
+  createdAt: string;
 };
 
 const COLORS = {
@@ -54,50 +44,69 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 export default function ReportsPage() {
   const { theme } = useTheme();
+  const { toast } = useToast();
 
-  const [usersData, isLoading] = useCollectionData<DbUser>(collection(db, 'users'));
-  
+  const [bookingsData, setBookingsData] = useState<Booking[]>([]);
+  const [usersData, setUsersData] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [primaryColor, mutedColor] = useMemo(() => {
-        if (typeof window === 'undefined') return ["#000000", "#999999"];
-        const styles = getComputedStyle(document.documentElement);
-        const primary = `hsl(${styles.getPropertyValue("--primary")})`;
-        const muted = `hsl(${styles.getPropertyValue("--muted-foreground")})`;
-        return [primary, muted];
+    if (typeof window === 'undefined') return ["#000000", "#999999"];
+    const styles = getComputedStyle(document.documentElement);
+    const primary = `hsl(${styles.getPropertyValue("--primary")})`;
+    const muted = `hsl(${styles.getPropertyValue("--muted-foreground")})`;
+    return [primary, muted];
   }, [theme]);
+
+  const fetchReportData = async () => {
+    setIsLoading(true);
+    try {
+      const bookingsResponse = await api.get<{ success: boolean; bookings: Booking[] }>('/bookings?limit=1000');
+      const usersResponse = await api.get<{ success: boolean; users: User[] }>('/admin/users?limit=1000');
+
+      setBookingsData(bookingsResponse.bookings || []);
+      setUsersData(usersResponse.users || []);
+    } catch (error: any) {
+      toast({
+        title: 'Failed to load reports',
+        description: error?.message || 'Unable to fetch report data.',
+        variant: 'destructive',
+      });
+      setBookingsData([]);
+      setUsersData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportData();
+  }, []);
 
 
   const reportData = useMemo(() => {
-    if (!usersData) {
-      return {
-        bookingsByCamp: [],
-        bookingStatusDistribution: [],
-        userGrowth: [],
-      };
-    }
-
     const bookingsByCamp: { [key: string]: number } = {};
-    const bookingStatusCount = { Approved: 0, Pending: 0, Canceled: 0 };
+    const bookingStatusCount = { Approved: 0, Pending: 0, Canceled: 0, Completed: 0 };
     const signupCounts: { [key: string]: number } = {};
 
-    usersData.forEach(user => {
-      if (user.bookings) {
-        Object.values(user.bookings).forEach(booking => {
-          bookingsByCamp[booking.campName] = (bookingsByCamp[booking.campName] || 0) + 1;
-          const status = booking.status || 'Pending';
-          if (status in bookingStatusCount) {
-            bookingStatusCount[status]++;
-          }
-        });
+    bookingsData.forEach((booking) => {
+      bookingsByCamp[booking.campName] = (bookingsByCamp[booking.campName] || 0) + 1;
+      const status = booking.status || 'Pending';
+      if (status in bookingStatusCount) {
+        bookingStatusCount[status as keyof typeof bookingStatusCount]++;
       }
+    });
 
-      if (user.history) {
-        Object.values(user.history).forEach(item => {
-          if (item.type === 'signup') {
-            const date = format(parseISO(item.timestamp), 'yyyy-MM-dd');
-            signupCounts[date] = (signupCounts[date] || 0) + 1;
-          }
-        });
-      }
+    const today = new Date();
+    const thirtyDaysAgo = subDays(today, 29);
+
+    usersData.forEach((user) => {
+      const createdAt = new Date(user.createdAt);
+      if (isNaN(createdAt.getTime())) return;
+      if (createdAt < thirtyDaysAgo) return;
+
+      const dateKey = format(createdAt, 'yyyy-MM-dd');
+      signupCounts[dateKey] = (signupCounts[dateKey] || 0) + 1;
     });
 
     const bookingsByCampArray = Object.entries(bookingsByCamp)
@@ -106,9 +115,8 @@ export default function ReportsPage() {
 
     const bookingStatusDistribution = Object.entries(bookingStatusCount)
       .map(([name, value]) => ({ name, value }))
-      .filter(item => item.value > 0);
+      .filter((item) => item.value > 0);
 
-    const today = new Date();
     const userGrowth = Array.from({ length: 30 }).map((_, i) => {
       const date = subDays(today, 29 - i);
       const formattedDate = format(date, 'yyyy-MM-dd');
@@ -119,7 +127,7 @@ export default function ReportsPage() {
     });
 
     return { bookingsByCamp: bookingsByCampArray, bookingStatusDistribution, userGrowth };
-  }, [usersData]);
+  }, [bookingsData, usersData]);
 
   const hasData = useMemo(() => 
     reportData.bookingsByCamp.length > 0 ||

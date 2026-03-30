@@ -229,12 +229,12 @@
       }
     }
   },
-  "firestore": {
+  "database": {
     "/users/{userId}": {
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
-      "description": "Stores user profile information. The document ID is the user's Firebase Auth UID."
+      "description": "Stores user profile information. The record ID is the user's backend user ID."
     },
     "/users/{userId}/bookings/{bookingId}": {
       "schema": {

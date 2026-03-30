@@ -1,12 +1,11 @@
 
 'use client';
 
-import { db } from '@/lib/firebase';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Trash2, LoaderCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import api from '@/lib/api';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,17 +29,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { UploadImageForm } from './UploadImageForm';
 
-// This is the shape of the document in Firestore
-type GalleryImageDoc = {
-  description: string;
-  imageUrl: string;
-  imageHint: string;
-  createdAt: any; // from serverTimestamp
-}
-
-// This is the shape of the data in our component, including the Firestore document ID
-type GalleryImage = GalleryImageDoc & {
+// This is the shape of the data in our component, including the API response ID
+type GalleryImage = {
   id: string;
+  imageUrl: string;
+  description: string;
+  imageHint: string;
+  createdAt?: string | Date;
 }
 
 function ImageCardSkeleton() {
@@ -54,44 +49,54 @@ function ImageCardSkeleton() {
 
 export default function GalleryPage() {
   const { toast } = useToast();
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const galleryQuery = useMemo(() => query(collection(db, 'galleryImages'), orderBy("createdAt", "desc")), []);
-  
-  // Use useCollection and manually map the docs to include the ID
-  const [gallerySnapshot, isLoading] = useCollection(galleryQuery);
-  
-  const galleryImages = useMemo(() => {
-    if (!gallerySnapshot) return [];
-    // Manually map docs to ensure 'id' is included, which is critical for deletion.
-    return gallerySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as GalleryImageDoc),
-    })) as GalleryImage[];
-  }, [gallerySnapshot]);
+  const fetchGalleryImages = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.get<{ success: boolean; images: any[] }>('/gallery');
+      const mappedImages: GalleryImage[] = (data.images || []).map((img: any) => ({
+        id: img._id || img.id,
+        imageUrl: img.imageUrl,
+        description: img.description,
+        imageHint: img.imageHint,
+        createdAt: img.createdAt,
+      }));
+      setGalleryImages(mappedImages);
+    } catch (error: any) {
+      toast({
+        title: "Failed to load gallery",
+        description: error?.message || "Unable to fetch gallery images.",
+        variant: "destructive",
+      });
+      setGalleryImages([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteImage = async (image: GalleryImage) => {
     if (!image || !image.id) {
-        toast({
-            title: "Deletion Failed",
-            description: "Invalid image data. Cannot delete.",
-            variant: "destructive",
-        });
-        console.error("Missing image id:", image);
-        return;
+      toast({
+        title: "Deletion Failed",
+        description: "Invalid image data. Cannot delete.",
+        variant: "destructive",
+      });
+      console.error("Missing image id:", image);
+      return;
     }
-    
-    console.log("Deleting Firestore document:", image.id);
+
     setDeletingId(image.id);
 
     try {
-      const imageDbRef = doc(db, 'galleryImages', image.id);
-      await deleteDoc(imageDbRef);
-      
+      await api.delete(`/gallery/${image.id}`);
       toast({
         title: "Image Deleted",
         description: `The image has been permanently deleted.`,
       });
+      await fetchGalleryImages();
     } catch (error: any) {
       toast({
         title: "Deletion Failed",
@@ -99,9 +104,13 @@ export default function GalleryPage() {
         variant: "destructive",
       });
     } finally {
-        setDeletingId(null);
+      setDeletingId(null);
     }
   };
+
+  useEffect(() => {
+    fetchGalleryImages();
+  }, []);
 
   const renderGallery = () => {
     if (isLoading) {
@@ -117,11 +126,11 @@ export default function GalleryPage() {
     return galleryImages.map((image) => (
        <Card key={image.id} className="group relative overflow-hidden rounded-2xl">
             <div className="w-full aspect-video relative">
-                <img
-                    src={image.imageUrl}
+                <Image
+                  src={image?.imageUrl || "/images/placeholder.jpg"}
                     alt={image.description}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                    loading="lazy"
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
                  {deletingId === image.id && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -168,7 +177,7 @@ export default function GalleryPage() {
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
          <h1 className="text-lg font-semibold md:text-2xl">Gallery</h1>
-         <UploadImageForm />
+<UploadImageForm onSuccess={fetchGalleryImages} />
       </div>
 
       <Card className="glass-card">

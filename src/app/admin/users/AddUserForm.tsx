@@ -5,6 +5,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,10 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useTransition } from "react";
-import { createUser } from "./actions";
 import { LoaderCircle } from "lucide-react";
 
 const formSchema = z.object({
@@ -35,7 +33,6 @@ type AddUserFormProps = {
 
 export function AddUserForm({ onUserAdded }: AddUserFormProps) {
   const { toast } = useToast();
-  const [adminUser] = useAuthState(auth);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,19 +46,15 @@ export function AddUserForm({ onUserAdded }: AddUserFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!adminUser) {
-      toast({
-        title: "Authentication Error",
-        description: "You must be logged in as an admin to add users.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     startTransition(async () => {
       try {
-        const idToken = await adminUser.getIdToken();
-        await createUser(idToken, values);
+        await api.post('/auth/signup', {
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          password: values.password,
+          confirmPassword: values.password,
+        });
 
         toast({
           title: "User Created Successfully",

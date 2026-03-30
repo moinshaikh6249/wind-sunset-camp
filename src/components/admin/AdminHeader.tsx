@@ -2,21 +2,19 @@
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Sun, Moon, Tent, GalleryVertical, Mail, Star } from "lucide-react";
+import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Tent, GalleryVertical, Mail, Star } from "lucide-react";
 import Link from "next/link";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { useSearch } from "@/context/SearchProvider";
 import { cn } from "@/lib/utils";
+import api from "@/lib/api";
 
 
 const navLinks = [
@@ -62,25 +60,17 @@ function MobileNav() {
 }
 
 function UserMenu() {
-    const [user] = useAuthState(auth);
+    const { user, logout } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleLogout = async () => {
-        try {
-          await signOut(auth);
-          toast({
-            title: "Logged Out",
-            description: "You have been successfully logged out.",
-          });
-          router.push('/admin/login');
-        } catch (error) {
-          toast({
-            title: "Logout Failed",
-            description: "An error occurred while logging out.",
-            variant: "destructive",
-          });
-        }
+    const handleLogout = () => {
+        logout();
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+        });
+        router.push('/admin/login');
       };
 
     return (

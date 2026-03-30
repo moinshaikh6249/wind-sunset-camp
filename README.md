@@ -1,5 +1,5 @@
-# Firebase Studio
+# Wind & Sunset Camp
 
-This is a NextJS starter in Firebase Studio.
+This project is a Next.js frontend connected to an Express + MongoDB backend.
 
-To get started, take a look at src/app/page.tsx.
+To get started, run the frontend and backend locally and open `src/app/page.tsx`.

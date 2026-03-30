@@ -4,12 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useState, useMemo, useEffect } from "react";
-import { db, auth } from "@/lib/firebase";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, addDoc, serverTimestamp, query, where } from "firebase/firestore";
-import { Star, MessageSquare, Send, ThumbsUp, LoaderCircle, Pin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, MessageSquare, Send, LoaderCircle, Pin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import api from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -35,14 +32,23 @@ const formSchema = z.object({
 });
 
 type Review = {
-    id: string;
+    _id: string;
+    id?: string;
     name: string;
     rating: number;
     comment: string;
     visible: boolean;
     pinned: boolean;
-    createdAt: { seconds: number; nanoseconds: number; };
+    createdAt: string;
     userId?: string;
+}
+
+type User = {
+    _id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    role: string;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -78,35 +84,89 @@ function ReviewSkeleton() {
 
 export default function ReviewsPageContent() {
   const { toast } = useToast();
-  const [user] = useAuthState(auth);
+  const [user, setUser] = useState<User | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [hoverRating, setHoverRating] = useState(0);
-  
-  const [reviewsSnapshot, isLoading, error] = useCollection(
-    query(
-      collection(db, "reviews"),
-      where("visible", "==", true)
-    )
-  );
-  
-  const reviews = useMemo(() => {
-    if (!reviewsSnapshot) return [];
-    const fetchedReviews = reviewsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
-    
-    // Client-side sorting to avoid complex Firestore indexes
-    fetchedReviews.sort((a, b) => {
-      // 1. Pinned reviews come first
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
 
-      // 2. Then, sort by creation date (newest first)
-      const timeA = a.createdAt?.seconds ?? 0;
-      const timeB = b.createdAt?.seconds ?? 0;
-      return timeB - timeA;
-    });
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          const response = await api.get('/auth/me');
+          setUser(response.user || response);
+        }
+      } catch (error) {
+        console.log('Not authenticated');
+      }
+    };
 
-    return fetchedReviews;
-  }, [reviewsSnapshot]);
+    fetchUser();
+  }, []);
 
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get('/reviews');
+        const allReviews = response.reviews || response.data || [];
+        
+        // Sort reviews: pinned first, then by date
+        const sorted = allReviews.sort((a: Review, b: Review) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        
+        setReviews(sorted);
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+        const response = await api.post('/reviews', {
+            name: values.name,
+            rating: values.rating,
+            comment: values.comment,
+        });
+
+        toast({
+            title: "Review Submitted!",
+            description: "Thank you for your feedback. Your review is now visible.",
+        });
+        form.reset();
+        if (user?.firstName) {
+            form.setValue('name', `${user.firstName} ${user.lastName || ''}`);
+        }
+        form.setValue('rating', 0);
+
+        // Refresh reviews
+        const updatedResponse = await api.get('/reviews');
+        const allReviews = updatedResponse.reviews || updatedResponse.data || [];
+        const sorted = allReviews.sort((a: Review, b: Review) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        setReviews(sorted);
+
+    } catch (error: any) {
+        console.error("Review submission failed:", error);
+        toast({
+            title: "Submission Failed",
+            description: error.response?.data?.message || error.message || "An unexpected error occurred.",
+            variant: "destructive",
+        });
+    }
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,70 +178,26 @@ export default function ReviewsPageContent() {
   });
 
   useEffect(() => {
-    if (user && user.displayName) {
-        form.setValue("name", user.displayName);
+    if (user && user.firstName) {
+        form.setValue("name", `${user.firstName} ${user.lastName || ''}`);
     }
   }, [user, form]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
-        toast({ title: "Not logged in", description: "You must be logged in to leave a review.", variant: "destructive" });
-        return;
-    }
-    
-    console.log("Submitting review. Current User UID:", user.uid);
-
-    try {
-        const reviewData = {
-            ...values,
-            userId: user.uid,
-            visible: true, // New reviews are visible by default
-            pinned: false,
-            createdAt: serverTimestamp(),
-        };
-
-        console.log("Review data to be sent:", reviewData);
-
-        const docRef = await addDoc(collection(db, "reviews"), reviewData);
-        console.log("Review submitted successfully. Document ID:", docRef.id);
-
-        toast({
-            title: "Review Submitted!",
-            description: "Thank you for your feedback. Your review is now visible.",
-            icon: <ThumbsUp className="h-5 w-5 text-green-500" />,
-        });
-        form.reset();
-        if (user?.displayName) {
-            form.setValue('name', user.displayName);
-        }
-        form.setValue('rating', 0);
-
-
-    } catch (error: any) {
-        console.error("Firestore review submission FAILED:", error);
-        toast({
-            title: "Submission Failed",
-            description: error.message || "An unexpected error occurred.",
-            variant: "destructive",
-        });
-    }
-  }
-
   return (
     <div className="bg-background woody-texture-background">
-      <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 md:py-20 lg:px-8 lg:py-24">
         <section className="text-center max-w-4xl mx-auto mb-16">
-            <h1 className="font-headline text-4xl md:text-6xl text-heading-color heading-shadow heading-underline mb-6">
+            <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-heading-color heading-shadow heading-underline mb-6">
                 Guest Reviews
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
                 See what our adventurers are saying about their experience at Wind & Sunset Camp.
             </p>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-5 lg:gap-12">
             <div className="lg:col-span-3 space-y-6">
-                <h2 className="font-headline text-3xl text-gradient">What Our Guests Say</h2>
+                <h2 className="font-headline text-2xl sm:text-3xl text-gradient">What Our Guests Say</h2>
                 {isLoading && (
                     <div className="space-y-6">
                         <ReviewSkeleton />
@@ -190,40 +206,42 @@ export default function ReviewsPageContent() {
                     </div>
                 )}
                 {!isLoading && reviews && reviews.length > 0 ? (
-                    reviews.map((review, index) => (
-                        <Card 
-                            key={review.id} 
-                            className="bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-transparent hover:border-accent/50 transition-all duration-300 transform hover:-translate-y-1 animate-in fade-in"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                            <div className="flex items-start gap-4">
-                                <Avatar className="h-12 w-12 text-xl shadow-inner">
-                                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent/50 text-foreground font-semibold">
-                                        {review.name.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="text-lg font-semibold">{review.name}</CardTitle>
-                                            <div className="mt-1">
-                                                <StarRating rating={review.rating} />
-                                            </div>
-                                        </div>
-                                        {review.pinned && (
-                                            <Badge variant="secondary" className="gap-1.5 bg-accent/20 text-accent border-accent/30 dark:bg-sidebar-accent/20 dark:text-sidebar-accent-foreground">
-                                                <Pin className="h-3.5 w-3.5" />
-                                                Pinned
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <CardContent className="p-0 mt-3">
-                                        <p className="text-muted-foreground italic">&quot;{review.comment}&quot;</p>
-                                    </CardContent>
-                                </div>
-                            </div>
-                        </Card>
-                    ))
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+                      {reviews.map((review, index) => (
+                          <Card 
+                              key={review._id || review.id} 
+                              className="bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-transparent hover:border-accent/50 transition-all duration-300 transform hover:-translate-y-1 animate-in fade-in"
+                              style={{ animationDelay: `${index * 100}ms` }}
+                          >
+                              <div className="flex items-start gap-4">
+                                  <Avatar className="h-11 w-11 sm:h-12 sm:w-12 text-xl shadow-inner">
+                                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent/50 text-foreground font-semibold">
+                                          {review.name.charAt(0).toUpperCase()}
+                                      </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                          <div>
+                                              <CardTitle className="text-base sm:text-lg font-semibold">{review.name}</CardTitle>
+                                              <div className="mt-1">
+                                                  <StarRating rating={review.rating} />
+                                              </div>
+                                          </div>
+                                          {review.pinned && (
+                                              <Badge variant="secondary" className="w-fit gap-1.5 bg-accent/20 text-accent border-accent/30 dark:bg-sidebar-accent/20 dark:text-sidebar-accent-foreground">
+                                                  <Pin className="h-3.5 w-3.5" />
+                                                  Pinned
+                                              </Badge>
+                                          )}
+                                      </div>
+                                      <CardContent className="p-0 mt-3">
+                                          <p className="text-sm sm:text-base text-muted-foreground italic">&quot;{review.comment}&quot;</p>
+                                      </CardContent>
+                                  </div>
+                              </div>
+                          </Card>
+                      ))}
+                    </div>
                 ) : !isLoading && (
                      <div className="text-center text-muted-foreground py-16 bg-card/50 rounded-lg">
                         <MessageSquare className="mx-auto h-12 w-12 mb-4" />
@@ -234,31 +252,30 @@ export default function ReviewsPageContent() {
             </div>
 
             <div className="lg:col-span-2">
-                <Card className="sticky top-24 bg-card/90 dark:bg-card/80 backdrop-blur-md shadow-xl border">
+                <Card className="bg-card/90 dark:bg-card/80 backdrop-blur-md shadow-xl border lg:sticky lg:top-24">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-3 font-headline text-2xl text-gradient">
+                        <CardTitle className="flex items-center gap-3 font-headline text-xl sm:text-2xl text-gradient">
                             <MessageSquare className="text-accent"/>
                             Leave a Review
                         </CardTitle>
                         <CardDescription>Share your experience with us and future campers.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {user ? (
-                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Your Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="John D." {...field} readOnly={!!user?.displayName} className="bg-background/70"/>
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Your Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="John D." {...field} className="bg-background/70"/>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                      <FormField
                                         control={form.control}
                                         name="rating"
@@ -303,14 +320,6 @@ export default function ReviewsPageContent() {
                                     </Button>
                                 </form>
                             </Form>
-                        ) : (
-                             <div className="text-center text-muted-foreground p-8 border-dashed border-2 rounded-lg">
-                                <p className="font-semibold">You must be logged in to leave a review.</p>
-                                <Button asChild size="sm" className="mt-4">
-                                    <a href="/login">Login</a>
-                                </Button>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
             </div>

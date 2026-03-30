@@ -1,12 +1,10 @@
 'use client';
 
-import { db, auth } from '@/lib/firebase';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, doc, updateDoc, deleteDoc, query } from 'firebase/firestore';
-import { useMemo, useState, useTransition } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import api, { API_BASE_URL } from '@/lib/api';
+import { useMemo, useState, useTransition, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
-import { MoreHorizontal, FileDown, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
+import { FileDown, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,14 +18,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import {
   Table,
   TableBody,
   TableCell,
@@ -36,35 +26,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import type { Booking } from './types';
 import { useSearch } from '@/context/SearchProvider';
-import { DropdownMenuTrigger as AlertDialogTrigger } from '@radix-ui/react-dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger as TooltipTriggerComp } from '@/components/ui/tooltip';
 
 const statusConfig: Record<Booking['status'], { label: string; icon: React.FC<any>, className: string }> = {
-    Approved: {
+    approved: {
       label: "Approved",
       icon: CheckCircle,
       className: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 border-green-300 dark:border-green-700",
     },
-    Pending: {
+    pending: {
       label: "Pending",
       icon: Clock,
       className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-300 dark:border-amber-700",
     },
-    Canceled: {
-      label: "Canceled",
+    rejected: {
+      label: "Rejected",
       icon: XCircle,
       className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-300 dark:border-red-700",
     },
@@ -88,8 +67,14 @@ function BookingTableRowSkeleton() {
             <TableCell className="hidden md:table-cell">
                 <Skeleton className="h-4 w-[80px]" />
             </TableCell>
+            <TableCell className="hidden md:table-cell">
+              <Skeleton className="h-4 w-[90px]" />
+            </TableCell>
              <TableCell className="hidden sm:table-cell">
                 <Skeleton className="h-6 w-[90px] rounded-full" />
+            </TableCell>
+            <TableCell className="hidden md:table-cell">
+              <Skeleton className="h-6 w-[110px] rounded-full" />
             </TableCell>
             <TableCell>
                 <Skeleton className="h-8 w-8 rounded-md" />
@@ -99,20 +84,56 @@ function BookingTableRowSkeleton() {
 }
 
 export default function BookingsPage() {
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const { toast } = useToast();
   const { searchQuery } = useSearch();
-  
-  const bookingsQuery = useMemo(() => query(collection(db, 'bookings')), []);
-  const [bookingsSnapshot, isLoading] = useCollection(bookingsQuery);
-  
-  const bookings = useMemo(() => {
-    if (!bookingsSnapshot) return [];
-    return bookingsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Booking, 'id'>),
-    })) as Booking[];
-  }, [bookingsSnapshot]);
+
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    try {
+      const endpoint = '/admin/bookings';
+      console.log('[AdminBookings] Fetch start', {
+        baseURL: API_BASE_URL || '(missing NEXT_PUBLIC_API_URL)',
+        endpoint,
+      });
+
+      const response = await api.get(endpoint);
+      console.log('[AdminBookings] Fetch response', response);
+
+      const rawBookings = Array.isArray(response)
+        ? response
+        : Array.isArray((response as any)?.bookings)
+          ? (response as any).bookings
+          : Array.isArray((response as any)?.data?.bookings)
+            ? (response as any).data.bookings
+            : [];
+
+      console.log('[AdminBookings] Parsed bookings count', rawBookings.length);
+
+      const normalizedBookings: Booking[] = rawBookings.map((booking: any) => ({
+        ...booking,
+        id: booking.id || booking._id,
+        bookingDate: booking.bookingDate || booking.createdAt,
+        status: typeof booking.status === 'string' ? booking.status.toLowerCase() : 'pending',
+      }));
+      setBookings(normalizedBookings);
+    } catch (error: any) {
+      console.error('[AdminBookings] Fetch failed', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
   const sortedBookings = useMemo(() => {
     if (!bookings) return [];
@@ -154,11 +175,9 @@ export default function BookingsPage() {
     }
   };
 
-  function ActionMenu({ booking }: { booking: Booking }) {
+  function ActionButtons({ booking }: { booking: Booking }) {
     const [isApprovePending, startApproveTransition] = useTransition();
-    const [isCancelPending, startCancelTransition] = useTransition();
-    const [isDeletePending, startDeleteTransition] = useTransition();
-    const [dialogType, setDialogType] = useState<'cancel' | 'delete' | null>(null);
+    const [isRejectPending, startRejectTransition] = useTransition();
     
     const onApprove = () => {
       if (!user) return;
@@ -171,147 +190,59 @@ export default function BookingsPage() {
           });
           return;
         }
-        console.log("Approving booking:", booking.id, booking);
-        const bookingRef = doc(db, 'bookings', booking.id);
+
         await handleAction(
-          () => updateDoc(bookingRef, { status: 'Approved' }),
+          () => api.patch(`/bookings/${booking.id}/approve`),
           "Booking Approved!",
           `${booking.fullName}'s booking for ${booking.campName} is now approved.`,
           "Approval Failed"
         );
+        await fetchBookings();
       });
     };
     
-    const onCancel = () => {
+    const onReject = () => {
         if (!user) return;
-        startCancelTransition(async () => {
+        startRejectTransition(async () => {
           if (!booking?.id) {
             toast({
-              title: "Cancellation Failed",
+              title: "Rejection Failed",
               description: "Booking ID is missing. Cannot proceed.",
               variant: "destructive",
             });
             return;
           }
-          console.log("Canceling booking:", booking.id, booking);
-          const bookingRef = doc(db, 'bookings', booking.id);
-            await handleAction(
-                () => updateDoc(bookingRef, { status: 'Canceled' }),
-                "Booking Canceled",
-                `${booking.fullName}'s booking for ${booking.campName} has been canceled.`,
-                "Cancellation Failed"
-            );
+
+          await handleAction(
+              () => api.patch(`/bookings/${booking.id}/reject`),
+              "Booking Rejected",
+              `${booking.fullName}'s booking for ${booking.campName} has been rejected.`,
+              "Rejection Failed"
+          );
+          await fetchBookings();
         });
     };
 
-    const onDelete = () => {
-        if(!user) return;
-        startDeleteTransition(async () => {
-            if (!booking?.id) {
-                toast({
-                    title: "Deletion Failed",
-                    description: "Booking ID is missing. Cannot proceed.",
-                    variant: "destructive",
-                });
-                return;
-            }
-            console.log("Deleting booking:", booking.id, booking);
-            const bookingRef = doc(db, 'bookings', booking.id);
-            await handleAction(
-                () => deleteDoc(bookingRef),
-                "Booking Deleted",
-                `The booking for ${booking.fullName} has been permanently deleted.`,
-                "Deletion Failed"
-            );
-        });
-    }
-
     return (
-       <AlertDialog onOpenChange={(open) => !open && setDialogType(null)}>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isApprovePending || isCancelPending || isDeletePending}>
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-            </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem 
-                    onSelect={onApprove}
-                    disabled={booking.status === 'Approved' || isApprovePending}
-                >
-                    {isApprovePending ? "Approving..." : "Approve"}
-                </DropdownMenuItem>
-                
-                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem 
-                    onSelect={(e) => { e.preventDefault(); setDialogType('cancel')}}
-                    disabled={isCancelPending || booking.status === 'Canceled'}
-                  >
-                   Cancel Booking
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-
-                <DropdownMenuSeparator />
-
-                 <AlertDialogTrigger asChild>
-                    <DropdownMenuItem 
-                        className="text-destructive" 
-                        onSelect={(e) => { e.preventDefault(); setDialogType('delete')}}
-                        disabled={isDeletePending}
-                    >
-                        <Trash2 className="mr-2 h-4 w-4"/> Delete
-                    </DropdownMenuItem>
-                </AlertDialogTrigger>
-            </DropdownMenuContent>
-        </DropdownMenu>
-         <AlertDialogContent>
-            {dialogType === 'cancel' && (
-                <>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action will mark the booking as Canceled for 
-                            <span className="font-semibold"> {booking.fullName} </span>
-                            at <span className="font-semibold">{booking.campName}</span>.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                        <AlertDialogAction
-                        className="bg-destructive hover:bg-destructive/90"
-                        onClick={onCancel}
-                        disabled={isCancelPending}
-                        >
-                        {isCancelPending ? "Canceling..." : "Yes, cancel booking"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </>
-            )}
-             {dialogType === 'delete' && (
-                <>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Booking?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                           Are you sure you want to permanently delete this booking? This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                        className="bg-destructive hover:bg-destructive/90"
-                        onClick={onDelete}
-                        disabled={isDeletePending}
-                        >
-                        {isDeletePending ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </>
-            )}
-        </AlertDialogContent>
-      </AlertDialog>
-    )
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onApprove}
+          disabled={booking.status !== 'pending' || isApprovePending || isRejectPending}
+        >
+          {isApprovePending ? 'Approving...' : 'Approve'}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onReject}
+          disabled={booking.status !== 'pending' || isRejectPending || isApprovePending}
+        >
+          {isRejectPending ? 'Rejecting...' : 'Reject'}
+        </Button>
+      </div>
+    );
   }
 
   const handleExport = () => {
@@ -323,7 +254,7 @@ export default function BookingsPage() {
       return;
     }
 
-    const headers = ["Customer Name", "Email", "Camp Name", "Booked On", "Guests", "Status"];
+    const headers = ["Customer Name", "Email", "Camp Name", "Booked On", "Guests", "Total Price", "Status", "Payment Method", "Payment Status"];
     const csvRows = [
       headers.join(','),
       ...filteredBookings.map(booking => {
@@ -333,7 +264,10 @@ export default function BookingsPage() {
           `"${booking.campName.replace(/"/g, '""')}"`,
           booking.bookingDate ? format(new Date(booking.bookingDate), 'yyyy-MM-dd HH:mm:ss') : '',
           booking.numberOfPeople,
-          booking.status
+          booking.totalPrice ?? 0,
+          booking.status,
+          'Cash',
+          'Pending'
         ];
         return row.join(',');
       })
@@ -365,18 +299,28 @@ export default function BookingsPage() {
     if (isLoading) {
       return [...Array(5)].map((_, i) => <BookingTableRowSkeleton key={i} />);
     }
-    if (filteredBookings.length === 0) {
+    if (bookings.length === 0) {
         return (
             <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={8} className="h-24 text-center">
                     Waiting for activity… Your analytics will grow as users start booking.
                 </TableCell>
             </TableRow>
         );
     }
+    if (filteredBookings.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={8} className="h-24 text-center">
+            No bookings match your current search.
+          </TableCell>
+        </TableRow>
+      );
+    }
     return filteredBookings.map((booking) => {
-        const currentStatusConfig = statusConfig[booking.status] || statusConfig.Pending;
+        const currentStatusConfig = statusConfig[booking.status] || statusConfig.pending;
         const Icon = currentStatusConfig.icon;
+        const paymentLabel = 'Cash / Pending';
 
         return (
         <TableRow key={booking.id} className="even:bg-muted/40">
@@ -395,14 +339,22 @@ export default function BookingsPage() {
             <TableCell className="text-center hidden md:table-cell">
                 {booking.numberOfPeople}
             </TableCell>
+            <TableCell className="text-center hidden md:table-cell">
+              ₹{booking.totalPrice ?? 0}
+            </TableCell>
             <TableCell className="hidden sm:table-cell">
                 <Badge key={booking.status} variant="outline" className={cn("gap-1.5 py-1 px-3 text-sm", currentStatusConfig.className)}>
                     <Icon className="h-3.5 w-3.5" />
                     {currentStatusConfig.label}
                 </Badge>
             </TableCell>
+            <TableCell className="hidden md:table-cell">
+              <Badge variant="outline" className="py-1 px-3 text-sm">
+                {paymentLabel}
+              </Badge>
+            </TableCell>
             <TableCell>
-                <ActionMenu booking={booking} />
+              <ActionButtons booking={booking} />
             </TableCell>
         </TableRow>
     )});
@@ -444,7 +396,9 @@ export default function BookingsPage() {
                 <TableHead>Camp</TableHead>
                 <TableHead className="hidden md:table-cell">Booked On</TableHead>
                 <TableHead className="text-center hidden md:table-cell">Guests</TableHead>
+                <TableHead className="text-center hidden md:table-cell">Total Price</TableHead>
                 <TableHead className="hidden sm:table-cell">Status</TableHead>
+                <TableHead className="hidden md:table-cell">Payment</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>

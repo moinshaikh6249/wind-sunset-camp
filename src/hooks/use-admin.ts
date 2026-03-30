@@ -1,28 +1,17 @@
 'use client';
 
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useDocumentData } from 'react-firebase-hooks/firestore';
-import { auth, db } from '@/lib/firebase';
-import { doc } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
 import { useMemo } from 'react';
 
 export function useAdmin() {
-  const [user, authLoading, authError] = useAuthState(auth);
+  const { user, loading } = useAuth();
 
-  const adminDocRef = useMemo(() => {
-    if (!user) return null;
-    return doc(db, 'admins', user.uid);
-  }, [user]);
-
-  const [adminDoc, adminLoading, adminError] = useDocumentData(adminDocRef);
-
-  const isAdmin = useMemo(() => !!adminDoc, [adminDoc]);
-  const isLoading = authLoading || (user && adminLoading);
+  const isAdmin = useMemo(() => ['admin', 'super-admin'].includes(user?.role || ''), [user?.role]);
 
   return {
     user,
     isAdmin,
-    isAdminLoading: isLoading,
-    error: authError || adminError,
+    isAdminLoading: loading,
+    error: null,
   };
 }
