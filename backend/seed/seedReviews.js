@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Review from '../models/Review.js';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -23,18 +24,18 @@ const seedReviews = async () => {
   }
 
   await mongoose.connect(process.env.MONGO_URI);
-  console.log(`[seed:reviews] Connected to DB: ${mongoose.connection.name}`);
+  logger.info('[seed:reviews] Connected to DB', { dbName: mongoose.connection.name });
 
   await Review.deleteMany({});
   const inserted = await Review.insertMany(reviews);
 
-  console.log(`[seed:reviews] Inserted ${inserted.length} reviews`);
+  logger.info('[seed:reviews] Inserted reviews', { count: inserted.length });
   await mongoose.connection.close();
-  console.log('[seed:reviews] Done');
+  logger.info('[seed:reviews] Done');
 };
 
 seedReviews().catch(async (error) => {
-  console.error('[seed:reviews] Failed:', error.message);
+  logger.error('[seed:reviews] Failed', { error: error.message });
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }

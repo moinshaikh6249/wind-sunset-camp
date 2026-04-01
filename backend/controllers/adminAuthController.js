@@ -2,32 +2,64 @@ import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../utils/jwt.js';
+import logger from '../utils/logger.js';
 
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    const admin = await Admin.findOne({ email });
+    if (!normalizedEmail || typeof password !== 'string' || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+      });
+    }
+
+    const admin = await Admin.findOne({ email: normalizedEmail });
 
     if (!admin) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
     }
 
-    const inputPassword = password;
+    const passwordHash = typeof admin.password === 'string' ? admin.password.trim() : '';
+
+    if (!passwordHash || !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(passwordHash)) {
+      logger.warn('Admin login blocked due to missing password hash', {
+        email: normalizedEmail,
+        adminId: String(admin._id),
+      });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+    }
+
     let isValidPassword = false;
 
-    if (typeof admin.password === 'string' && admin.password.startsWith('$2b$')) {
-      isValidPassword = await bcrypt.compare(inputPassword, admin.password);
-    } else {
-      isValidPassword = inputPassword === admin.password;
+    try {
+      isValidPassword = await bcrypt.compare(password, passwordHash);
+    } catch (compareError) {
+      logger.warn('Admin login blocked due to invalid password hash comparison', {
+        email: normalizedEmail,
+        adminId: String(admin._id),
+        error: compareError.message,
+      });
+
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
     }
 
-    console.log('Input password:', inputPassword);
-    console.log('DB password:', admin.password);
-    console.log('Match:', isValidPassword);
-
     if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
     }
 
     const token = jwt.sign(
@@ -51,7 +83,14 @@ export const loginAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error' });
+    logger.error('Admin login failed due to server-side error', {
+      email: String(req.body?.email || '').trim().toLowerCase() || undefined,
+      error: error.message,
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to complete login. Please try again.',
+    });
   }
 };
 

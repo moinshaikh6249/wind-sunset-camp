@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           ...normalizedUser,
           _id: normalizedUser?._id || normalizedUser?.id,
+          role: normalizedUser?.role || 'user',
         } as User);
         return;
       }

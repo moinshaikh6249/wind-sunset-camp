@@ -38,15 +38,17 @@ export const generateToken = (userId, email, role, permissions) => {
       permissions,
     },
     getJwtSecret(),
-    { expiresIn: '7d' }
+    { expiresIn: process.env.ACCESS_TOKEN_TTL || '15m' }
   );
 };
 
 export const generateRefreshToken = (userId) => {
+  const jti = randomBytes(16).toString('hex');
+
   return jwt.sign(
-    { userId },
+    { userId, id: userId, jti },
     getJwtRefreshSecret(),
-    { expiresIn: '30d' }
+    { expiresIn: process.env.REFRESH_TOKEN_TTL || '30d' }
   );
 };
 

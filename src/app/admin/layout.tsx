@@ -46,7 +46,7 @@ export default function AdminLayout({
   // For protected admin pages, show loading spinner or the content.
   if (isAdminLoading || !isAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -54,11 +54,12 @@ export default function AdminLayout({
 
   return (
     <SearchProvider>
-      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      <div className="relative grid min-h-screen w-full overflow-x-clip bg-[radial-gradient(circle_at_20%_0%,rgba(34,197,94,0.1),transparent_42%),radial-gradient(circle_at_85%_8%,rgba(249,115,22,0.1),transparent_45%),linear-gradient(180deg,#05070b_0%,#0a0f16_48%,#0a1119_100%)] md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:44px_44px]" />
         <AdminSidebar />
-        <div className="flex flex-col">
+        <div className="relative flex min-h-screen flex-col">
           <AdminHeader />
-          <main className="flex flex-1 flex-col">
+          <main className="flex flex-1 flex-col overflow-y-auto">
             {children}
           </main>
         </div>

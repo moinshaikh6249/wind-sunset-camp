@@ -1,5 +1,6 @@
 import cloudinary from '../config/cloudinary.js';
 import GalleryImage from '../models/GalleryImage.js';
+import mongoose from 'mongoose';
 
 const buildImageHint = (description = '') => {
   const normalized = description
@@ -62,6 +63,13 @@ export const uploadGalleryImage = async (req, res) => {
 
 export const deleteGalleryImage = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const image = await GalleryImage.findById(req.params.id);
 
     if (!image) {

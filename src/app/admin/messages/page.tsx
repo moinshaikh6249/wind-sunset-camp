@@ -39,7 +39,8 @@ import { cn } from '@/lib/utils';
 import { useSearch } from '@/context/SearchProvider';
 
 type ContactMessage = {
-  id: string;
+  _id: string;
+  id?: string;
   name: string;
   email: string;
   subject: string;
@@ -48,6 +49,8 @@ type ContactMessage = {
   read: boolean;
   userId: string | null;
 };
+
+const getMessageId = (message?: Partial<ContactMessage> | null) => message?._id || message?.id || '';
 
 function MessageSkeleton() {
   return (
@@ -76,8 +79,27 @@ export default function MessagesPage() {
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get<{ success: boolean; messages: ContactMessage[] }>('/messages');
-      setMessages(data.messages || []);
+      const data = await api.get<{ success: boolean; messages: Array<Partial<ContactMessage>> }>('/admin/messages');
+      const normalized = (data.messages || [])
+        .map((message) => {
+          const messageId = getMessageId(message);
+          if (!messageId) return null;
+
+          return {
+            _id: messageId,
+            id: messageId,
+            name: String(message.name || 'Unknown'),
+            email: String(message.email || ''),
+            subject: String(message.subject || 'No subject'),
+            message: String(message.message || ''),
+            timestamp: String((message as any).timestamp || new Date().toISOString()),
+            read: Boolean(message.read),
+            userId: (message.userId as string) || null,
+          } as ContactMessage;
+        })
+        .filter((message): message is ContactMessage => Boolean(message));
+
+      setMessages(normalized);
     } catch (error: any) {
       toast({
         title: 'Failed to load messages',
@@ -110,7 +132,8 @@ export default function MessagesPage() {
   }, [sortedMessages, searchQuery]);
 
   const handleToggleRead = async (message: ContactMessage) => {
-    if (!message?.id) {
+    const messageId = message._id || message.id || '';
+    if (!messageId) {
       toast({
         title: 'Operation Failed',
         description: 'Message ID is missing. Cannot update status.',
@@ -120,11 +143,14 @@ export default function MessagesPage() {
     }
 
     try {
-      await api.put(`/messages/${message.id}/read`);
+      await api.put(`/admin/messages/${messageId}/read`, {
+        messageId,
+        read: !message.read,
+      });
       toast({
         title: `Message marked as ${message.read ? 'unread' : 'read'}`,
       });
-      setSelectedMessage({ ...message, read: !message.read });
+      setSelectedMessage({ ...message, _id: messageId, id: messageId, read: !message.read });
       await fetchMessages();
     } catch (error: any) {
       toast({
@@ -146,7 +172,7 @@ export default function MessagesPage() {
     }
 
     try {
-      await api.delete(`/messages/${id}`);
+      await api.delete(`/admin/messages/${id}`);
       toast({
         title: 'Message Deleted',
         description: 'The message has been removed from the inbox.',
@@ -180,12 +206,19 @@ export default function MessagesPage() {
             ) : filteredMessages.length > 0 ? (
               <div className="space-y-2">
                 {filteredMessages.map((message) => (
-                  <DialogTrigger asChild key={message.id}>
+                  <DialogTrigger asChild key={getMessageId(message)}>
                     <div
                       onClick={() => {
-                        setSelectedMessage(message);
-                        if (!message.read) {
-                          handleToggleRead(message);
+                        const normalizedMessage = {
+                          ...message,
+                          _id: getMessageId(message),
+                          id: getMessageId(message),
+                        };
+
+                        setSelectedMessage(normalizedMessage);
+
+                        if (!normalizedMessage.read) {
+                          handleToggleRead(normalizedMessage);
                         }
                       }}
                       className={cn(
@@ -246,7 +279,7 @@ export default function MessagesPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleToggleRead(selectedMessage)}>
+              <Button variant="outline" size="sm" onClick={() => handleToggleRead({ ...selectedMessage, _id: selectedMessage._id })}>
                 {selectedMessage.read ? (
                   <ArchiveRestore className="mr-2 h-4 w-4" />
                 ) : (
@@ -270,7 +303,7 @@ export default function MessagesPage() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDelete(selectedMessage.id)}
+                      onClick={() => handleDelete(selectedMessage._id)}
                       className="bg-destructive hover:bg-destructive/90"
                     >
                       Yes, delete it

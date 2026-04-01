@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 const connectDB = async () => {
   try {
@@ -13,10 +14,10 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
 
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    logger.info('MongoDB connected', { host: conn.connection.host });
     return conn;
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    logger.error('MongoDB connection error', { error: error.message });
     process.exit(1);
   }
 };

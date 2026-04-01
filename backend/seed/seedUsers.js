@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ const seedUsers = async () => {
   }
 
   await mongoose.connect(process.env.MONGO_URI);
-  console.log(`[seed:users] Connected to DB: ${mongoose.connection.name}`);
+  logger.info('[seed:users] Connected to DB', { dbName: mongoose.connection.name });
 
   const users = await Promise.all(
     rawUsers.map(async (entry) => {
@@ -45,13 +46,13 @@ const seedUsers = async () => {
   await User.deleteMany({ email: { $in: users.map((u) => u.email) } });
   const inserted = await User.insertMany(users);
 
-  console.log(`[seed:users] Inserted ${inserted.length} users`);
+  logger.info('[seed:users] Inserted users', { count: inserted.length });
   await mongoose.connection.close();
-  console.log('[seed:users] Done');
+  logger.info('[seed:users] Done');
 };
 
 seedUsers().catch(async (error) => {
-  console.error('[seed:users] Failed:', error.message);
+  logger.error('[seed:users] Failed', { error: error.message });
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }

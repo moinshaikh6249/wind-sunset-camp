@@ -1,0 +1,21 @@
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-03-31T18:39:11.573Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-03-31T18:39:11.792Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-03-31T18:39:11.795Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:32.157Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:32.283Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:32.287Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:38.056Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:38.175Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-03-31T18:41:38.178Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-03-31T18:49:00.841Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-03-31T18:49:00.960Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-03-31T18:49:00.963Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-03-31T18:51:28.518Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-03-31T18:51:28.755Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-03-31T18:51:28.757Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T02:57:05.971Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T02:57:06.296Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T02:57:06.298Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T02:58:32.975Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T02:58:33.097Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T02:58:33.100Z"}

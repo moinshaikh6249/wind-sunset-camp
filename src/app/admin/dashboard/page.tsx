@@ -20,8 +20,12 @@ import {
 import {
   Users,
   CalendarCheck,
+  CalendarDays,
   Activity,
-  TrendingUp,
+  IndianRupee,
+  Tent,
+  ListTodo,
+  BadgeAlert,
   MessageSquare,
   Star,
   Clock3,
@@ -46,7 +50,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -77,8 +81,13 @@ type DashboardAnalytics = {
     totalMessages: number;
   };
   bookingsPerMonth: MonthlyBookings[];
-  revenuePerMonth: MonthlyRevenue[];
   campPopularity: CampPopularity[];
+};
+
+type PendingActionCounts = {
+  pendingApprovals: number;
+  newReviews: number;
+  refundRequests: number;
 };
 
 type BookingItem = {
@@ -164,8 +173,14 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [recentBookings, setRecentBookings] = useState<BookingItem[]>([]);
+  const [allBookings, setAllBookings] = useState<BookingItem[]>([]);
   const [recentMessages, setRecentMessages] = useState<MessageItem[]>([]);
   const [memories, setMemories] = useState<CustomerMemoryItem[]>([]);
+  const [pendingActionCounts, setPendingActionCounts] = useState<PendingActionCounts>({
+    pendingApprovals: 0,
+    newReviews: 0,
+    refundRequests: 0,
+  });
   const [liveNotification, setLiveNotification] = useState<LiveBookingNotification | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [memoryError, setMemoryError] = useState<string | null>(null);
@@ -181,7 +196,6 @@ export default function AdminDashboardPage() {
       totalMessages: 0,
     },
     bookingsPerMonth: [],
-    revenuePerMonth: [],
     campPopularity: [],
   };
 
@@ -240,13 +254,18 @@ export default function AdminDashboardPage() {
             totalMessages: Number(normalizedStats?.totalMessages || 0),
           },
           bookingsPerMonth: Array.isArray(normalizedAnalytics?.bookingsPerMonth) ? normalizedAnalytics.bookingsPerMonth : [],
-          revenuePerMonth: Array.isArray(normalizedAnalytics?.revenuePerMonth) ? normalizedAnalytics.revenuePerMonth : [],
           campPopularity: Array.isArray(normalizedAnalytics?.campPopularity) ? normalizedAnalytics.campPopularity : [],
         });
 
+        setAllBookings(bookingsList);
         setRecentBookings(bookingsList.slice(0, 8));
         setRecentMessages(messagesList.slice(0, 5));
         setMemories(memoriesList);
+        setPendingActionCounts({
+          pendingApprovals: Number(normalizedStats?.pendingApprovals || pendingBookings),
+          newReviews: Number(normalizedStats?.newReviews || normalizedStats?.pendingReviews || 0),
+          refundRequests: Number(normalizedStats?.refundRequests || normalizedStats?.pendingRefundRequests || 0),
+        });
       } catch (err: any) {
         console.error('Failed to load dashboard analytics', err);
         if (!mounted) return;
@@ -348,23 +367,6 @@ export default function AdminDashboardPage() {
     };
   }, [analytics, chartColors]);
 
-  const revenueChartData = useMemo(() => {
-    const source = analytics?.revenuePerMonth || [];
-    return {
-      labels: source.map((item) => item.month),
-      datasets: [
-        {
-          label: 'Revenue (₹)',
-          data: source.map((item) => item.revenue),
-          borderColor: chartColors.accent,
-          backgroundColor: chartColors.accent,
-          tension: 0.35,
-          fill: false,
-        },
-      ],
-    };
-  }, [analytics, chartColors]);
-
   const campPopularityChartData = useMemo(() => {
     const source = analytics?.campPopularity || [];
     const palette = [
@@ -422,6 +424,29 @@ export default function AdminDashboardPage() {
   }), [chartColors]);
 
   const displayName = user?.firstName || user?.email ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email : 'Admin';
+
+  const todayStats = useMemo(() => {
+    const today = new Date();
+    const isSameDay = (input?: string) => {
+      if (!input) return false;
+      const parsed = new Date(input);
+      if (Number.isNaN(parsed.getTime())) return false;
+      return parsed.toDateString() === today.toDateString();
+    };
+
+    const todaysBookings = allBookings.filter((booking) => isSameDay(booking.createdAt));
+    const todayRevenue = todaysBookings.reduce((sum, booking) => {
+      const rawAmount = (booking as any)?.totalAmount ?? (booking as any)?.amount ?? (booking as any)?.totalPrice ?? 0;
+      return sum + Number(rawAmount || 0);
+    }, 0);
+
+    return {
+      bookingsCount: todaysBookings.length,
+      revenue: todayRevenue,
+      activeCamps: Number(analytics?.totals?.totalCamps || 0),
+      pendingBookings: Number(analytics?.totals?.pendingBookings || 0),
+    };
+  }, [allBookings, analytics?.totals?.pendingBookings, analytics?.totals?.totalCamps]);
 
   const quickActions = [
     {
@@ -483,7 +508,7 @@ export default function AdminDashboardPage() {
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/60 p-6 shadow-[0_0_40px_rgba(16,185,129,0.15)]">
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/65 p-6 shadow-[0_0_45px_rgba(34,197,94,0.2)] before:pointer-events-none before:absolute before:-left-16 before:top-1/2 before:h-40 before:w-40 before:-translate-y-1/2 before:rounded-full before:bg-emerald-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-20 after:top-0 after:h-44 after:w-44 after:rounded-full after:bg-orange-400/14 after:blur-3xl">
         <h2 className="text-2xl font-black tracking-tight text-slate-100 sm:text-3xl">Welcome back, {displayName}!</h2>
         <p className="mt-2 text-sm text-slate-300/90">
           Here&apos;s a live overview of bookings, engagement, and growth across Wind &amp; Sunset Camp.
@@ -579,7 +604,7 @@ export default function AdminDashboardPage() {
                       const statusUi = getStatusUi(booking.status);
 
                       return (
-                        <TableRow key={booking._id}>
+                        <TableRow key={booking._id} className="border-white/10 transition-all duration-300 hover:bg-gradient-to-r hover:from-emerald-500/10 hover:to-orange-500/5 hover:shadow-[inset_0_0_0_1px_rgba(34,197,94,0.15)]">
                           <TableCell>
                             <div className="font-medium text-foreground">{booking.fullName}</div>
                             <p className="text-xs text-muted-foreground">{booking.email}</p>
@@ -623,14 +648,14 @@ export default function AdminDashboardPage() {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className={`group rounded-xl border border-primary/20 bg-slate-950/35 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 ${action.glow}`}
+                  className={`group relative overflow-hidden rounded-xl border border-emerald-400/20 bg-gradient-to-br from-slate-950/70 via-slate-900/70 to-emerald-950/35 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/45 hover:shadow-[0_16px_36px_-20px_rgba(34,197,94,0.85)] before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(120deg,rgba(34,197,94,0.12),transparent_45%,rgba(249,115,22,0.14))] before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${action.glow}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h4 className="font-semibold text-slate-100">{action.label}</h4>
                       <p className="mt-1 text-xs text-slate-300/80">{action.description}</p>
                     </div>
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary transition-transform duration-300 group-hover:scale-110">
+                    <div className="rounded-lg border border-emerald-400/25 bg-gradient-to-br from-emerald-500/20 to-orange-500/20 p-2 text-emerald-200 transition-transform duration-300 group-hover:scale-110 group-hover:text-orange-200">
                       <Icon className="h-4 w-4" />
                     </div>
                   </div>
@@ -660,17 +685,103 @@ export default function AdminDashboardPage() {
         <Card className="glass-card xl:col-span-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-muted-foreground" />
-              Revenue per month
+              <ListTodo className="h-5 w-5 text-muted-foreground" />
+              Today&apos;s Action Hub
             </CardTitle>
-            <CardDescription>Estimated monthly revenue from approved/paid bookings.</CardDescription>
+            <CardDescription>Actionable daily metrics, latest bookings, and pending tasks.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="mb-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
-              Current month revenue: <span className="font-bold">{formatCurrency((analytics?.revenuePerMonth || []).slice(-1)[0]?.revenue || 0)}</span>
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-emerald-300">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Today Bookings
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.bookingsCount}</p>
+              </div>
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-cyan-300">
+                  <IndianRupee className="h-3.5 w-3.5" />
+                  Today Revenue
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-100">{formatCurrency(todayStats.revenue)}</p>
+              </div>
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-violet-300">
+                  <Tent className="h-3.5 w-3.5" />
+                  Active Camps
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.activeCamps}</p>
+              </div>
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-amber-300">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  Pending Bookings
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.pendingBookings}</p>
+              </div>
             </div>
-            <div className="h-[280px]">
-              {isLoading ? <Skeleton className="h-full w-full" /> : <Line data={revenueChartData} options={commonChartOptions} />}
+
+            <div className="rounded-xl border border-primary/15 bg-slate-950/35 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-100">Recent Bookings Snapshot</h4>
+                <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-primary hover:text-primary">
+                  <Link href="/admin/bookings">View all</Link>
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {(recentBookings.slice(0, 4)).map((booking) => {
+                  const statusUi = getStatusUi(booking.status);
+
+                  return (
+                    <div key={`snapshot-${booking._id}`} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{booking.fullName}</p>
+                        <p className="text-xs text-muted-foreground">{booking.campName} • {formatDate(booking.createdAt)}</p>
+                      </div>
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusUi.className}`}>
+                        {statusUi.label}
+                      </span>
+                    </div>
+                  );
+                })}
+                {recentBookings.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No bookings yet for quick review.</p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-primary/15 bg-slate-950/35 p-4">
+              <h4 className="mb-3 text-sm font-semibold text-slate-100">Pending Actions</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-sm text-amber-200">
+                    <Clock3 className="h-4 w-4" />
+                    Pending approvals
+                  </div>
+                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-100">
+                    {pendingActionCounts.pendingApprovals}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-sm text-violet-200">
+                    <Star className="h-4 w-4" />
+                    New reviews
+                  </div>
+                  <span className="rounded-full bg-violet-400/20 px-2 py-0.5 text-xs font-bold text-violet-100">
+                    {pendingActionCounts.newReviews}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-sm text-rose-200">
+                    <BadgeAlert className="h-4 w-4" />
+                    Refund requests
+                  </div>
+                  <span className="rounded-full bg-rose-400/20 px-2 py-0.5 text-xs font-bold text-rose-100">
+                    {pendingActionCounts.refundRequests}
+                  </span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

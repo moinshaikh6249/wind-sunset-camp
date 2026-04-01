@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import logger from './logger.js';
 
 let transporterInstance = null;
 
@@ -19,7 +20,7 @@ const getTransporter = () => {
   const emailPass = process.env.EMAIL_PASS;
 
   if (!emailUser || !emailPass) {
-    console.warn('Email configuration incomplete (EMAIL_USER or EMAIL_PASS missing); email notifications disabled');
+    logger.warn('Email configuration incomplete; email notifications disabled');
     return null;
   }
 
@@ -42,7 +43,7 @@ export const sendEmail = async ({ to, subject, html }) => {
   const transporter = getTransporter();
   
   if (!transporter) {
-    console.log(`[Email Disabled] Would send to ${to}: ${subject}`);
+    logger.info('Email disabled, skipping send', { to, subject });
     return;
   }
 
@@ -54,7 +55,7 @@ export const sendEmail = async ({ to, subject, html }) => {
       html,
     });
   } catch (error) {
-    console.error(`Email send failed for ${to}:`, error.message);
+    logger.error('Email send failed', { to, error: error.message });
   }
 };
 
@@ -149,7 +150,9 @@ export const sendBookingCreatedNotifications = async (booking) => {
   const results = await Promise.allSettled(tasks);
   results.forEach((result) => {
     if (result.status === 'rejected') {
-      console.error('Booking created notification email error:', result.reason?.message || result.reason);
+      logger.error('Booking created notification email error', {
+        error: result.reason?.message || String(result.reason),
+      });
     }
   });
 };
@@ -210,7 +213,10 @@ export const sendBookingStatusNotifications = async (booking, status) => {
   const results = await Promise.allSettled(tasks);
   results.forEach((result) => {
     if (result.status === 'rejected') {
-      console.error(`Booking ${status.toLowerCase()} notification email error:`, result.reason?.message || result.reason);
+      logger.error('Booking status notification email error', {
+        status: status.toLowerCase(),
+        error: result.reason?.message || String(result.reason),
+      });
     }
   });
 };

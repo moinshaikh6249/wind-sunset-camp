@@ -131,13 +131,14 @@ export default function RootLayout({
         <AnimationProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
+            storageKey="wind-sunset-theme"
             disableTransitionOnChange
           >
             <AuthProvider>
               <SidebarProvider defaultOpen={false}>
-                <div className="w-full h-screen flex flex-1">
+                <div className="flex min-h-screen w-full flex-1">
                   <AppSidebar />
                   <AppContent>
                     {children}

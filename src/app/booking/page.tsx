@@ -3,35 +3,13 @@
 import { BookingForm } from "./BookingForm";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { Calendar, IndianRupee, LoaderCircle, MapPin, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import { adaptCamp } from "@/lib/adapters/campAdapter";
-
-function AuthPrompt() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl text-gradient">Login to Book</CardTitle>
-      </CardHeader>
-      <CardContent className="text-center">
-        <p className="text-muted-foreground mb-6">You need to be logged in to book a camp.</p>
-        <div className="flex flex-col gap-4">
-            <Button asChild size="lg" className="w-full btn-glow">
-                <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-                <Link href="/signup">Sign Up</Link>
-            </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 type Camp = {
     _id: string;
@@ -47,6 +25,7 @@ type Camp = {
 };
 
 function BookingPageContent() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [camp, setCamp] = useState<Camp | null>(null);
@@ -74,6 +53,17 @@ function BookingPageContent() {
   }, []);
 
   useEffect(() => {
+    if (isUserLoading || user) return;
+
+    const redirectPath = typeof window !== "undefined"
+      ? `${window.location.pathname}${window.location.search}`
+      : "/booking";
+
+    const loginUrl = `/login?redirect=${encodeURIComponent(redirectPath)}&message=${encodeURIComponent("Please login to continue booking")}`;
+    router.replace(loginUrl);
+  }, [isUserLoading, user, router]);
+
+  useEffect(() => {
     if (campId) {
       const fetchCamp = async () => {
         try {
@@ -92,7 +82,7 @@ function BookingPageContent() {
     }
   }, [campId]);
 
-  if (isUserLoading || (campId && isCampLoading)) {
+  if (isUserLoading || !user || (campId && isCampLoading)) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-14 text-center sm:px-6 md:py-20 lg:px-8 lg:py-24">
         <LoaderCircle className="h-12 w-12 animate-spin text-primary mx-auto mb-6" />
@@ -114,7 +104,7 @@ function BookingPageContent() {
             Book Your Adventure
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground">
-            {user ? `Complete the form below to reserve your spot. You are booking as ${user.firstName || user.email}.` : "Please log in or create an account to proceed with your booking."}
+            {`Complete the form below to reserve your spot. You are booking as ${user.firstName || user.email}.`}
           </p>
         </div>
         
@@ -168,7 +158,7 @@ function BookingPageContent() {
                 ) : null}
             </div>
             <div className="lg:col-span-2">
-              {user ? <BookingForm /> : <AuthPrompt />}
+              <BookingForm />
             </div>
         </div>
       </div>

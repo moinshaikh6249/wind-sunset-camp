@@ -18,10 +18,10 @@ const Card = React.forwardRef<
       <motion.div
         ref={ref}
         className={cn(
-          "rounded-lg border bg-card text-card-foreground shadow-sm",
+          "rounded-2xl border bg-card text-card-foreground shadow-[0_10px_30px_-22px_rgba(15,23,42,0.45)] transition-all duration-300",
           className
         )}
-        whileHover={{ scale: 1.03 }}
+        whileHover={{ y: -3, scale: 1.01 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
         style={{ willChange: "transform" }}
         {...(props as any)}
@@ -33,7 +33,7 @@ const Card = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "rounded-2xl border bg-card text-card-foreground shadow-[0_10px_30px_-22px_rgba(15,23,42,0.45)] transition-all duration-300",
         className
       )}
       {...props}

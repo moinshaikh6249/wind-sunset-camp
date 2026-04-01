@@ -5,12 +5,23 @@ import Review from '../models/Review.js';
 import Message from '../models/Message.js';
 import Camp from '../models/Camp.js';
 import GalleryImage from '../models/GalleryImage.js';
+import mongoose from 'mongoose';
 import cloudinary from '../config/cloudinary.js';
 import { sendBookingStatusNotifications } from '../utils/sendEmail.js';
+
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || '').trim());
 
 export const getCurrentAdmin = async (req, res) => {
   try {
     const adminId = req.user?.adminId || req.user?.id || req.user?.userId;
+
+    if (!isValidObjectId(adminId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const admin = await Admin.findById(adminId).select('-password');
 
     if (!admin) {
@@ -34,7 +45,6 @@ export const getCurrentAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch admin profile',
-      error: error.message,
     });
   }
 };
@@ -156,6 +166,14 @@ export const uploadGalleryImage = async (req, res) => {
 
 export const deleteGalleryImage = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+        data: null,
+      });
+    }
+
     const image = await GalleryImage.findById(req.params.id);
 
     if (!image) {
@@ -236,6 +254,14 @@ export const createCamp = async (req, res) => {
 
 export const updateCamp = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+        data: null,
+      });
+    }
+
     const existingCamp = await Camp.findById(req.params.id);
 
     if (!existingCamp) {
@@ -282,6 +308,14 @@ export const updateCamp = async (req, res) => {
 
 export const deleteCamp = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+        data: null,
+      });
+    }
+
     const camp = await Camp.findByIdAndDelete(req.params.id);
 
     if (!camp) {
@@ -311,25 +345,31 @@ export const deleteCamp = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
+    const currentPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (currentPage - 1) * pageLimit;
 
     const users = await User.find()
       .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(pageLimit);
 
-    const total = await User.countDocuments();
+    const totalCount = await User.countDocuments();
+    const totalPages = Math.max(Math.ceil(totalCount / pageLimit), 1);
 
     res.json({
       success: true,
+      data: users,
       users,
+      currentPage,
+      totalPages,
+      totalCount,
       pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
+        total: totalCount,
+        page: currentPage,
+        limit: pageLimit,
+        pages: totalPages,
       },
     });
   } catch (error) {
@@ -337,13 +377,19 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
-      error: error.message,
     });
   }
 };
 
 export const deleteUser = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user) {
@@ -362,7 +408,6 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete user',
-      error: error.message,
     });
   }
 };
@@ -390,7 +435,6 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard stats',
-      error: error.message,
     });
   }
 };
@@ -538,33 +582,57 @@ export const getAnalytics = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics',
-      error: error.message,
     });
   }
 };
 
 export const getAllBookings = async (req, res) => {
   try {
+    const currentPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (currentPage - 1) * pageLimit;
+
     const bookings = await Booking.find()
       .populate('userId', 'firstName lastName email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageLimit);
+
+    const totalCount = await Booking.countDocuments();
+    const totalPages = Math.max(Math.ceil(totalCount / pageLimit), 1);
 
     res.json({
       success: true,
+      data: bookings,
       bookings,
+      currentPage,
+      totalPages,
+      totalCount,
+      pagination: {
+        total: totalCount,
+        page: currentPage,
+        limit: pageLimit,
+        pages: totalPages,
+      },
     });
   } catch (error) {
     console.error('Get bookings error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch bookings',
-      error: error.message,
     });
   }
 };
 
 export const getBookingById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
@@ -583,13 +651,19 @@ export const getBookingById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch booking',
-      error: error.message,
     });
   }
 };
 
 export const updateBookingStatus = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { status } = req.body;
     const allowedStatuses = ['pending', 'approved', 'rejected'];
 
@@ -631,13 +705,19 @@ export const updateBookingStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update booking status',
-      error: error.message,
     });
   }
 };
 
 export const approveBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
@@ -668,13 +748,19 @@ export const approveBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to approve booking',
-      error: error.message,
     });
   }
 };
 
 export const rejectBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
@@ -704,13 +790,19 @@ export const rejectBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to reject booking',
-      error: error.message,
     });
   }
 };
 
 export const deleteBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findByIdAndDelete(req.params.id);
 
     if (!booking) {
@@ -729,7 +821,6 @@ export const deleteBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete booking',
-      error: error.message,
     });
   }
 };
@@ -747,13 +838,19 @@ export const getAllReviews = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reviews',
-      error: error.message,
     });
   }
 };
 
 export const updateReviewVisibility = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { visible } = req.body;
 
     if (typeof visible !== 'boolean') {
@@ -786,13 +883,19 @@ export const updateReviewVisibility = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review visibility',
-      error: error.message,
     });
   }
 };
 
 export const updateReviewPin = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { pinned } = req.body;
 
     if (typeof pinned !== 'boolean') {
@@ -825,13 +928,19 @@ export const updateReviewPin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review pin status',
-      error: error.message,
     });
   }
 };
 
 export const deleteReview = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const review = await Review.findByIdAndDelete(req.params.id);
 
     if (!review) {
@@ -850,31 +959,56 @@ export const deleteReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete review',
-      error: error.message,
     });
   }
 };
 
 export const getAllMessages = async (req, res) => {
   try {
-    const messages = await Message.find().sort({ timestamp: -1 });
+    const currentPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (currentPage - 1) * pageLimit;
+
+    const messages = await Message.find()
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(pageLimit);
+
+    const totalCount = await Message.countDocuments();
+    const totalPages = Math.max(Math.ceil(totalCount / pageLimit), 1);
 
     res.json({
       success: true,
+      data: messages,
       messages,
+      currentPage,
+      totalPages,
+      totalCount,
+      pagination: {
+        total: totalCount,
+        page: currentPage,
+        limit: pageLimit,
+        pages: totalPages,
+      },
     });
   } catch (error) {
     console.error('Get messages error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch messages',
-      error: error.message,
     });
   }
 };
 
 export const getMessageById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const message = await Message.findById(req.params.id);
 
     if (!message) {
@@ -893,18 +1027,32 @@ export const getMessageById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch message',
-      error: error.message,
     });
   }
 };
 
 export const markMessageAsRead = async (req, res) => {
   try {
+    const messageId = req.params.id || req.body?.messageId;
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message ID is missing',
+      });
+    }
+
+    if (!isValidObjectId(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { read } = req.body;
     const readValue = typeof read === 'boolean' ? read : true;
 
     const message = await Message.findByIdAndUpdate(
-      req.params.id,
+      messageId,
       { read: readValue },
       { new: true, runValidators: true }
     );
@@ -926,13 +1074,19 @@ export const markMessageAsRead = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update message read status',
-      error: error.message,
     });
   }
 };
 
 export const deleteMessage = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const message = await Message.findByIdAndDelete(req.params.id);
 
     if (!message) {
@@ -951,7 +1105,6 @@ export const deleteMessage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete message',
-      error: error.message,
     });
   }
 };

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Camp from '../models/Camp.js';
+import logger from '../utils/logger.js';
 
 const isAbsoluteUrl = (value = '') => /^https?:\/\//i.test(String(value));
 
@@ -141,7 +142,6 @@ export const getAllCamps = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch camps',
-      error: error.message,
     });
   }
 };
@@ -199,7 +199,6 @@ export const searchCamps = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to search camps',
-      error: error.message,
     });
   }
 };
@@ -270,14 +269,17 @@ export const getCampById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch camp',
-      error: error.message,
     });
   }
 };
 
 export const createCamp = async (req, res) => {
   try {
-    console.log('Creating camp:', req.body);
+    logger.info('Creating camp', {
+      hasFileUpload: Boolean(req.file),
+      name: req.body?.name,
+      location: req.body?.location,
+    });
 
     const errors = validateCampPayload(req.body, {
       requireAll: true,
@@ -329,13 +331,19 @@ export const createCamp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create camp',
-      error: error.message,
     });
   }
 };
 
 export const updateCamp = async (req, res) => {
   try {
+    if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const errors = validateCampPayload(req.body, {
       requireAll: false,
       hasImageFile: Boolean(req.file),
@@ -387,13 +395,19 @@ export const updateCamp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update camp',
-      error: error.message,
     });
   }
 };
 
 export const deleteCamp = async (req, res) => {
   try {
+    if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const camp = await Camp.findByIdAndDelete(req.params.id);
 
     if (!camp) {
@@ -412,7 +426,6 @@ export const deleteCamp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete camp',
-      error: error.message,
     });
   }
 };

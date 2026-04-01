@@ -2,6 +2,8 @@ import Review from '../models/Review.js';
 import Activity from '../models/Activity.js';
 import Camp from '../models/Camp.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import mongoose from 'mongoose';
 import { validateReviewData } from '../utils/validators.js';
 
 const normalizeReview = (review) => {
@@ -50,13 +52,19 @@ export const getAllReviews = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reviews',
-      error: error.message,
     });
   }
 };
 
 export const getReviewsByCamp = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.campId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const reviews = await Review.find({
       campId: req.params.campId,
       visible: true,
@@ -81,7 +89,6 @@ export const getReviewsByCamp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch camp reviews',
-      error: error.message,
     });
   }
 };
@@ -119,14 +126,13 @@ export const getAllReviewsAdmin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reviews',
-      error: error.message,
     });
   }
 };
 
 export const createReview = async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -136,6 +142,14 @@ export const createReview = async (req, res) => {
     }
 
     const { campId, rating, comment } = req.body;
+    const normalizedCampId = typeof campId === 'string' ? campId.trim() : '';
+
+    if (!mongoose.Types.ObjectId.isValid(normalizedCampId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid camp ID',
+      });
+    }
 
     const user = await User.findById(userId);
     if (!user) {
@@ -145,7 +159,7 @@ export const createReview = async (req, res) => {
       });
     }
 
-    const camp = await Camp.findById(campId);
+    const camp = await Camp.findById(normalizedCampId);
     if (!camp) {
       return res.status(404).json({
         success: false,
@@ -154,7 +168,7 @@ export const createReview = async (req, res) => {
     }
 
     const errors = validateReviewData({
-      campId,
+      campId: normalizedCampId,
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       rating,
       comment,
@@ -167,7 +181,7 @@ export const createReview = async (req, res) => {
       });
     }
 
-    const existingReview = await Review.findOne({ campId, userId });
+    const existingReview = await Review.findOne({ campId: normalizedCampId, userId });
     if (existingReview) {
       return res.status(409).json({
         success: false,
@@ -177,7 +191,7 @@ export const createReview = async (req, res) => {
 
     const review = new Review({
       userId,
-      campId,
+      campId: normalizedCampId,
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
       email: user.email?.toLowerCase() || null,
       rating: parseInt(rating),
@@ -188,6 +202,16 @@ export const createReview = async (req, res) => {
 
     await review.save();
 
+    try {
+      await Notification.create({
+        type: 'new_review_submitted',
+        title: 'New review submitted',
+        message: `${review.name} left a ${review.rating}-star review for ${camp.name}.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (review):', notificationError.message);
+    }
+
     await review.populate('userId', 'firstName lastName photoURL');
 
     // Create activity record if user is logged in
@@ -197,7 +221,7 @@ export const createReview = async (req, res) => {
       description: `Reviewed camp: ${camp.name}`,
       metadata: {
         reviewId: review._id,
-        campId,
+        campId: normalizedCampId,
       },
     });
 
@@ -211,13 +235,19 @@ export const createReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create review',
-      error: error.message,
     });
   }
 };
 
 export const updateReview = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { name, rating, comment } = req.body;
 
     const review = await Review.findByIdAndUpdate(
@@ -248,13 +278,19 @@ export const updateReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message,
     });
   }
 };
 
 export const toggleReviewVisibility = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -277,13 +313,19 @@ export const toggleReviewVisibility = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message,
     });
   }
 };
 
 export const toggleReviewPin = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -306,13 +348,19 @@ export const toggleReviewPin = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update review',
-      error: error.message,
     });
   }
 };
 
 export const deleteReview = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const review = await Review.findByIdAndDelete(req.params.id);
 
     if (!review) {
@@ -331,7 +379,6 @@ export const deleteReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete review',
-      error: error.message,
     });
   }
 };

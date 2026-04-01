@@ -192,7 +192,7 @@ export default function BookingsPage() {
         }
 
         await handleAction(
-          () => api.patch(`/bookings/${booking.id}/approve`),
+          () => api.patch(`/admin/bookings/${booking.id}/approve`),
           "Booking Approved!",
           `${booking.fullName}'s booking for ${booking.campName} is now approved.`,
           "Approval Failed"
@@ -214,7 +214,7 @@ export default function BookingsPage() {
           }
 
           await handleAction(
-              () => api.patch(`/bookings/${booking.id}/reject`),
+              () => api.patch(`/admin/bookings/${booking.id}/reject`),
               "Booking Rejected",
               `${booking.fullName}'s booking for ${booking.campName} has been rejected.`,
               "Rejection Failed"

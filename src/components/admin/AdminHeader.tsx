@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Tent, GalleryVertical, Mail, Star } from "lucide-react";
+import { Home, Settings, Users2, CalendarCheck, BarChart, Search, PanelLeft, Tent, GalleryVertical, Mail, Star, Bell } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 import { useSearch } from "@/context/SearchProvider";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
+import { NotificationCenter } from "@/components/layout/NotificationCenter";
 
 
 const navLinks = [
@@ -25,6 +26,7 @@ const navLinks = [
     { href: "/admin/gallery", label: "Gallery", icon: GalleryVertical },
     { href: "/admin/messages", label: "Messages", icon: Mail },
     { href: "/admin/reviews", label: "Reviews", icon: Star },
+    { href: "/admin/notifications", label: "Notifications", icon: Bell },
     { href: "/admin/reports", label: "Reports", icon: BarChart },
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
@@ -107,7 +109,7 @@ export function AdminHeader() {
     const { searchQuery, setSearchQuery } = useSearch();
 
     return (
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+      <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-white/10 bg-slate-950/45 px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/35 lg:h-[60px] lg:px-6">
             <Sheet>
               <SheetTrigger asChild>
                 <Button
@@ -128,13 +130,14 @@ export function AdminHeader() {
                         <Input
                             type="search"
                             placeholder="Search..."
-                            className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3 transition-all duration-300 focus:w-full lg:focus:w-2/3 focus:shadow-lg focus:shadow-primary/10"
+                      className="w-full appearance-none border-white/10 bg-slate-900/60 pl-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:w-2/3 lg:w-1/3 transition-all duration-300 focus:w-full focus:border-emerald-400/40 focus:shadow-[0_0_0_1px_rgba(34,197,94,0.25),0_0_24px_rgba(34,197,94,0.18)] lg:focus:w-2/3"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </form>
             </div>
+            <NotificationCenter />
             <UserMenu />
         </header>
     )

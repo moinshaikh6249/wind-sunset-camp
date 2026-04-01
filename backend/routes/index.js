@@ -15,6 +15,7 @@ import adminDashboardRoutes from './adminDashboardRoutes.js';
 import adminGalleryRoutes from './adminGalleryRoutes.js';
 import adminMemoryRoutes from './adminMemoryRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 
 const router = express.Router();
 
@@ -33,5 +34,6 @@ router.use('/admin', adminCampRoutes);
 router.use('/admin', adminGalleryRoutes);
 router.use('/admin', adminMemoryRoutes);
 router.use('/admin', adminRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

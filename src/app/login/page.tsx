@@ -9,10 +9,10 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="font-headline text-4xl md:text-5xl mb-4 text-white text-glow-white drop-shadow-lg">
-            User Login
+            Welcome Back
           </h1>
           <p className="text-gray-200">
-            Enter your credentials to access your account.
+            Choose your role and sign in from one secure login panel.
           </p>
         </div>
         <LoginForm />

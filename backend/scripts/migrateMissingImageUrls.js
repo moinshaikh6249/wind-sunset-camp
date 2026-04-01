@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Camp from '../models/Camp.js';
 import GalleryImage from '../models/GalleryImage.js';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -54,14 +55,14 @@ const migrate = async () => {
     updatedGallery += 1;
   }
 
-  console.log(`[migrate:images] Camps updated: ${updatedCamps}`);
-  console.log(`[migrate:images] Gallery images updated: ${updatedGallery}`);
+  logger.info('[migrate:images] Camps updated', { count: updatedCamps });
+  logger.info('[migrate:images] Gallery images updated', { count: updatedGallery });
 
   await mongoose.connection.close();
 };
 
 migrate().catch(async (error) => {
-  console.error('[migrate:images] Failed:', error.message);
+  logger.error('[migrate:images] Failed', { error: error.message });
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }

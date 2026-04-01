@@ -13,7 +13,22 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, getJwtSecret());
-    req.user = decoded;
+    const id = decoded?.id || decoded?.userId || decoded?.adminId;
+    const role = decoded?.role;
+
+    if (!id || !role) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token payload.',
+      });
+    }
+
+    req.user = {
+      ...decoded,
+      id,
+      role,
+      userId: id,
+    };
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -28,6 +43,42 @@ const authMiddleware = async (req, res, next) => {
       message: 'Invalid token.',
     });
   }
+};
+
+export const requireUserRole = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required.',
+    });
+  }
+
+  if (req.user.role !== 'user') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. User privileges required.',
+    });
+  }
+
+  next();
+};
+
+export const requireAdminRole = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required.',
+    });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Admin privileges required.',
+    });
+  }
+
+  next();
 };
 
 export default authMiddleware;

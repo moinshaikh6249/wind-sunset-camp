@@ -23,10 +23,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import api from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    campId: z.string().min(1, { message: "Please select a camp." }),
   rating: z.number().min(1, "Please select a rating.").max(5),
   comment: z.string().min(10, { message: "Comment must be at least 10 characters." }),
 });
@@ -49,6 +57,12 @@ type User = {
     firstName?: string;
     lastName?: string;
     role: string;
+}
+
+type Camp = {
+    _id: string;
+    id?: string;
+    name: string;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -88,6 +102,8 @@ export default function ReviewsPageContent() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hoverRating, setHoverRating] = useState(0);
+    const [camps, setCamps] = useState<Camp[]>([]);
+    const [isCampsLoading, setIsCampsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -106,6 +122,32 @@ export default function ReviewsPageContent() {
   }, []);
 
   useEffect(() => {
+        const fetchCamps = async () => {
+            try {
+                setIsCampsLoading(true);
+                const response = await api.get('/camps');
+
+                const campList = Array.isArray(response)
+                    ? response
+                    : Array.isArray(response?.camps)
+                        ? response.camps
+                        : Array.isArray(response?.data)
+                            ? response.data
+                            : [];
+
+                setCamps(campList);
+            } catch (error) {
+                console.error('Failed to fetch camps:', error);
+                setCamps([]);
+            } finally {
+                setIsCampsLoading(false);
+            }
+        };
+
+        fetchCamps();
+    }, []);
+
+    useEffect(() => {
     const fetchReviews = async () => {
       try {
         setIsLoading(true);
@@ -131,9 +173,31 @@ export default function ReviewsPageContent() {
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+        const selectedCampId = values.campId?.trim();
+
+        if (!selectedCampId) {
+            toast({
+                title: "Camp Required",
+                description: "Please select a camp before submitting your review.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const hasSelectedCamp = camps.some((camp) => (camp._id || camp.id) === selectedCampId);
+        if (!hasSelectedCamp) {
+            toast({
+                title: "Camp Not Found",
+                description: "Please select a valid camp from the list.",
+                variant: "destructive",
+            });
+            return;
+        }
+
     try {
-        const response = await api.post('/reviews', {
+                await api.post('/reviews', {
             name: values.name,
+                        campId: selectedCampId,
             rating: values.rating,
             comment: values.comment,
         });
@@ -146,6 +210,7 @@ export default function ReviewsPageContent() {
         if (user?.firstName) {
             form.setValue('name', `${user.firstName} ${user.lastName || ''}`);
         }
+        form.setValue('campId', '');
         form.setValue('rating', 0);
 
         // Refresh reviews
@@ -172,6 +237,7 @@ export default function ReviewsPageContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+            campId: "",
       rating: 0,
       comment: "",
     },
@@ -277,6 +343,39 @@ export default function ReviewsPageContent() {
                                     )}
                                 />
                                      <FormField
+                                                                                control={form.control}
+                                                                                name="campId"
+                                                                                render={({ field }) => (
+                                                                                        <FormItem>
+                                                                                        <FormLabel>Camp</FormLabel>
+                                                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                                                            <FormControl>
+                                                                                                <SelectTrigger className="w-full bg-background/70">
+                                                                                                    <SelectValue placeholder="Select the camp you visited" />
+                                                                                                </SelectTrigger>
+                                                                                            </FormControl>
+                                                                                            <SelectContent>
+                                                                                                {isCampsLoading ? (
+                                                                                                    <SelectItem value="__loading" disabled>Loading camps...</SelectItem>
+                                                                                                ) : camps.length === 0 ? (
+                                                                                                    <SelectItem value="__empty" disabled>No camps available</SelectItem>
+                                                                                                ) : (
+                                                                                                    camps
+                                                                                                        .map((camp) => ({ id: camp._id || camp.id, name: camp.name }))
+                                                                                                        .filter((camp) => Boolean(camp.id))
+                                                                                                        .map((camp) => (
+                                                                                                            <SelectItem key={camp.id} value={camp.id || ''}>
+                                                                                                                {camp.name}
+                                                                                                            </SelectItem>
+                                                                                                        ))
+                                                                                                )}
+                                                                                            </SelectContent>
+                                                                                        </Select>
+                                                                                        <FormMessage />
+                                                                                        </FormItem>
+                                                                                )}
+                                                                        />
+                                                                         <FormField
                                         control={form.control}
                                         name="rating"
                                         render={({ field }) => (
@@ -314,7 +413,7 @@ export default function ReviewsPageContent() {
                                             </FormItem>
                                         )}
                                     />
-                                    <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting}>
+                                    <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting || isCampsLoading || camps.length === 0}>
                                         {form.formState.isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                                         {form.formState.isSubmitting ? "Submitting..." : "Submit Review"}
                                     </Button>

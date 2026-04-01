@@ -35,7 +35,8 @@ const formatMemory = (memory, req) => {
   };
 };
 
-const getUserIdFromRequest = (req) => req.user?.userId || req.user?.id || null;
+const getUserIdFromRequest = (req) => req.user?.id || null;
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || '').trim());
 
 export const createMemory = async (req, res) => {
   try {
@@ -97,7 +98,6 @@ export const createMemory = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to upload memory',
-      error: error.message,
     });
   }
 };
@@ -117,7 +117,6 @@ export const getApprovedMemories = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch memories',
-      error: error.message,
     });
   }
 };
@@ -146,7 +145,6 @@ export const getMyMemories = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch your memories',
-      error: error.message,
     });
   }
 };
@@ -159,6 +157,13 @@ export const deleteMyMemory = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Authentication required',
+      });
+    }
+
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
       });
     }
 
@@ -193,7 +198,6 @@ export const deleteMyMemory = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to delete memory',
-      error: error.message,
     });
   }
 };
@@ -213,13 +217,19 @@ export const getAllMemoriesAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch memories',
-      error: error.message,
     });
   }
 };
 
 export const approveMemory = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const memory = await Memory.findByIdAndUpdate(
       req.params.id,
       { status: 'approved', updatedAt: new Date() },
@@ -243,13 +253,19 @@ export const approveMemory = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to approve memory',
-      error: error.message,
     });
   }
 };
 
 export const rejectMemory = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const memory = await Memory.findByIdAndUpdate(
       req.params.id,
       { status: 'rejected', updatedAt: new Date() },
@@ -273,13 +289,19 @@ export const rejectMemory = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to reject memory',
-      error: error.message,
     });
   }
 };
 
 export const deleteMemoryAdmin = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const memory = await Memory.findById(req.params.id);
 
     if (!memory) {
@@ -304,7 +326,6 @@ export const deleteMemoryAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to delete memory',
-      error: error.message,
     });
   }
 };

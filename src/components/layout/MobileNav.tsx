@@ -16,10 +16,8 @@ import api from "@/lib/api";
 
 const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/about", label: "About Us" },
-    { href: "/gallery", label: "Gallery" },
-    { href: "/camps", label: "Upcoming Camps" },
-    { href: "/reviews", label: "Reviews" },
+  { href: "/camps", label: "Camps" },
+  { href: "/gallery", label: "Gallery" },
     { href: "/contact", label: "Contact" },
   ];
 
@@ -136,16 +134,16 @@ export function MobileNav() {
           <div className="flex items-center justify-between pb-4 border-b">
             <Logo />
           </div>
-          <nav className="flex flex-col gap-4 text-base font-medium mt-6">
+          <nav className="mt-6 flex flex-col gap-2 text-base font-medium">
             {navLinks.map(({ href, label }) => (
               <SheetClose asChild key={href}>
                   <Link
                   href={href}
                   className={cn(
-                      "transition-colors hover:text-foreground/80 p-2 rounded-md",
+                      "rounded-xl px-3 py-2.5 transition-all duration-300",
                       pathname === href
-                      ? "text-foreground bg-accent/10"
-                      : "text-foreground/60"
+                      ? "bg-accent/10 text-foreground"
+                      : "text-foreground/65 hover:bg-accent/5 hover:text-foreground"
                   )}
                   >
                   {label}

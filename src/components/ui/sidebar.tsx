@@ -224,7 +224,13 @@ const Sidebar = React.forwardRef<
 
     return (
       <>
-      <div className={cn("fixed inset-0 z-40 bg-black/50 transition-opacity", (open && !isMobile) ? 'opacity-100 md:hidden' : 'opacity-0 pointer-events-none')} onClick={() => setOpen(false)} />
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] transition-opacity duration-300",
+          open && !isMobile ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
+        onClick={() => setOpen(false)}
+      />
       <div
         ref={ref}
         className="group peer hidden md:block text-sidebar-foreground"
@@ -243,7 +249,6 @@ const Sidebar = React.forwardRef<
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
             className,
-            (state === 'collapsed' && collapsible === 'offcanvas') && 'hidden',
           )}
           {...props}
         >

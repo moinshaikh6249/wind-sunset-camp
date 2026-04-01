@@ -1,14 +1,16 @@
 import express from 'express';
-import * as adminBookingController from '../controllers/adminBookingController.js';
-import authMiddleware from '../middleware/auth.js';
-import adminMiddleware from '../middleware/adminMiddleware.js';
+import * as bookingController from '../controllers/bookingController.js';
+import authMiddleware, { requireAdminRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authMiddleware, adminMiddleware);
+router.use(authMiddleware, requireAdminRole);
 
-router.get('/bookings', adminBookingController.getAllBookings);
-router.patch('/bookings/:id/approve', adminBookingController.approveBooking);
-router.patch('/bookings/:id/reject', adminBookingController.rejectBooking);
+router.get('/bookings', bookingController.getAllBookings);
+router.get('/bookings/:id', bookingController.getBookingById);
+router.patch('/bookings/:id/approve', bookingController.approveBooking);
+router.patch('/bookings/:id/reject', bookingController.rejectBooking);
+router.put('/bookings/:id/status', bookingController.updateBookingStatus);
+router.delete('/bookings/:id', bookingController.deleteBooking);
 
 export default router;

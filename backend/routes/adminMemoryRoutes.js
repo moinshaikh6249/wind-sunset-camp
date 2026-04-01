@@ -1,11 +1,10 @@
 import express from 'express';
 import * as memoryController from '../controllers/memoryController.js';
-import authMiddleware from '../middleware/auth.js';
-import adminMiddleware from '../middleware/adminMiddleware.js';
+import authMiddleware, { requireAdminRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authMiddleware, adminMiddleware);
+router.use(authMiddleware, requireAdminRole);
 
 router.get('/memories', memoryController.getAllMemoriesAdmin);
 router.patch('/memories/:id/approve', memoryController.approveMemory);

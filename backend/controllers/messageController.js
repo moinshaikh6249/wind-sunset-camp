@@ -1,5 +1,9 @@
 import Message from '../models/Message.js';
+import Notification from '../models/Notification.js';
+import mongoose from 'mongoose';
 import { validateMessageData } from '../utils/validators.js';
+
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || '').trim());
 
 export const createMessage = async (req, res) => {
   try {
@@ -25,6 +29,16 @@ export const createMessage = async (req, res) => {
 
     await newMessage.save();
 
+    try {
+      await Notification.create({
+        type: 'new_user_message',
+        title: 'New user message',
+        message: `${newMessage.name}: ${newMessage.subject}.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (message):', notificationError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Message sent successfully',
@@ -35,7 +49,6 @@ export const createMessage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to send message',
-      error: error.message,
     });
   }
 };
@@ -75,13 +88,19 @@ export const getAllMessages = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch messages',
-      error: error.message,
     });
   }
 };
 
 export const getMessageById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const message = await Message.findById(req.params.id).populate('userId', 'firstName lastName email');
 
     if (!message) {
@@ -100,15 +119,30 @@ export const getMessageById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch message',
-      error: error.message,
     });
   }
 };
 
 export const markMessageAsRead = async (req, res) => {
   try {
+    const messageId = req.params.id || req.body?.messageId;
+
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message ID is missing',
+      });
+    }
+
+    if (!isValidObjectId(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const message = await Message.findByIdAndUpdate(
-      req.params.id,
+      messageId,
       { read: true },
       { new: true }
     );
@@ -130,13 +164,19 @@ export const markMessageAsRead = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update message',
-      error: error.message,
     });
   }
 };
 
 export const deleteMessage = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const message = await Message.findByIdAndDelete(req.params.id);
 
     if (!message) {
@@ -155,7 +195,6 @@ export const deleteMessage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete message',
-      error: error.message,
     });
   }
 };

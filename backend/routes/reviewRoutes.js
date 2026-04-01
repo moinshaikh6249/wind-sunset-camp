@@ -1,6 +1,6 @@
 import express from 'express';
 import * as reviewController from '../controllers/reviewController.js';
-import authMiddleware from '../middleware/auth.js';
+import authMiddleware, { requireUserRole } from '../middleware/auth.js';
 import { adminMiddleware } from '../middleware/admin.js';
 
 const router = express.Router();
@@ -15,7 +15,7 @@ router.put('/:id/pin', authMiddleware, adminMiddleware, reviewController.toggleR
 router.delete('/:id', authMiddleware, adminMiddleware, reviewController.deleteReview);
 
 router.get('/:campId', reviewController.getReviewsByCamp);
-router.post('/', authMiddleware, reviewController.createReview);
-router.put('/:id', authMiddleware, reviewController.updateReview);
+router.post('/', authMiddleware, requireUserRole, reviewController.createReview);
+router.put('/:id', authMiddleware, requireUserRole, reviewController.updateReview);
 
 export default router;

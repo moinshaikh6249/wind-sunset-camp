@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import GalleryImage from '../models/GalleryImage.js';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -25,18 +26,18 @@ const seedGallery = async () => {
   }
 
   await mongoose.connect(process.env.MONGO_URI);
-  console.log(`[seed:gallery] Connected to DB: ${mongoose.connection.name}`);
+  logger.info('[seed:gallery] Connected to DB', { dbName: mongoose.connection.name });
 
   await GalleryImage.deleteMany({});
   const inserted = await GalleryImage.insertMany(galleryImages);
 
-  console.log(`[seed:gallery] Inserted ${inserted.length} gallery images`);
+  logger.info('[seed:gallery] Inserted gallery images', { count: inserted.length });
   await mongoose.connection.close();
-  console.log('[seed:gallery] Done');
+  logger.info('[seed:gallery] Done');
 };
 
 seedGallery().catch(async (error) => {
-  console.error('[seed:gallery] Failed:', error.message);
+  logger.error('[seed:gallery] Failed', { error: error.message });
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }

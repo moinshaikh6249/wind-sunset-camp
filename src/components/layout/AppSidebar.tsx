@@ -10,191 +10,160 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
   useSidebar,
   SidebarSeparator,
+  SidebarTrigger,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Button } from "../ui/button";
-import { Home, Info, GalleryVertical, Tent, Mail, User as UserIcon, LogOut, Shield, Star, Images } from "lucide-react";
+import { Home, Images, Tent, Mail, Star, LogOut, LayoutDashboard, CalendarDays } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Skeleton } from "../ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import api from "@/lib/api";
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/about", label: "About Us", icon: Info },
-  { href: "/gallery", label: "Gallery", icon: GalleryVertical },
-  { href: "/camps", label: "Upcoming Camps", icon: Tent },
+  { href: "/camps", label: "Camps", icon: Tent },
+  { href: "/gallery", label: "Gallery", icon: Images },
   { href: "/reviews", label: "Reviews", icon: Star },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
-function UserProfileSection() {
-  const { user, loading: isUserLoading, logout } = useAuth();
-  const { toast } = useToast();
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
-
-  useEffect(() => { setMounted(true) }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUserProfile = async () => {
-      try {
-        setIsProfileLoading(true);
-        const response = await api.get(`/users/${user._id}`);
-        setUserProfile(response.user || response);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      } finally {
-        setIsProfileLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user]);
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push('/login');
-  };
-  
-  if (!mounted || isUserLoading || (user && isProfileLoading)) {
-    return (
-      <div className="p-2 space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-8 w-full" />
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return (
-      <div className="p-2 space-y-2">
-        <Button asChild className="w-full">
-          <Link href="/login">Login</Link>
-        </Button>
-        <Button asChild variant="outline" className="w-full">
-          <Link href="/admin/login">Admin Login</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  const displayName = userProfile ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() : (user?.email || 'User');
-  const photoURL = userProfile?.photoURL;
-  const userInitial = displayName.charAt(0).toUpperCase();
-  const isAdmin = ['admin', 'super-admin'].includes(user?.role || '');
-
-  return (
-    <div className="p-2 space-y-3">
-        <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 text-xl">
-            <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
-            <AvatarFallback className="bg-primary text-primary-foreground">{userInitial}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col truncate">
-            <span className="font-semibold text-sm truncate">{displayName}</span>
-            <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-          </div>
-        </Link>
-      {isAdmin && (
-         <Button asChild variant="secondary" size="sm" className="w-full">
-            <Link href="/admin/dashboard">
-              <Shield className="mr-2 h-4 w-4" />
-              Admin Dashboard
-            </Link>
-         </Button>
-      )}
-      <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
-        <LogOut className="mr-2 h-4 w-4" />
-        Logout
-      </Button>
-    </div>
-  );
-}
-
 export function AppSidebar() {
   const pathname = usePathname();
-  const { setOpen, setOpenMobile } = useSidebar();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const { user, logout } = useAuth();
 
   const handleLinkClick = () => {
     setOpen(false);
     setOpenMobile(false);
   };
 
+  const handleLogout = () => {
+    logout();
+    handleLinkClick();
+    router.push("/login");
+  };
+
   if (pathname?.startsWith('/admin')) return null;
 
+  const displayName = user?.email?.split("@")[0] || "";
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <SidebarLogo />
+    <Sidebar
+      collapsible="offcanvas"
+      className="border-r border-sidebar-border/60"
+    >
+      <SidebarHeader className="border-b border-sidebar-border/60 bg-sidebar/95 px-3 py-3 backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-2">
+          <SidebarLogo />
+          <div className="shrink-0">
+            <SidebarTrigger className="h-8 w-8 rounded-md text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground" />
+          </div>
+        </div>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col justify-between">
-        <SidebarMenu>
+      <SidebarContent className="flex flex-col bg-sidebar/95 px-3 py-3 backdrop-blur-xl">
+        <SidebarMenu className="gap-1.5">
           {navLinks.map(({ href, label, icon: Icon }) => (
             <SidebarMenuItem key={href}>
               <Link href={href} onClick={handleLinkClick}>
                 <SidebarMenuButton
-                  isActive={pathname === href}
+                  isActive={href === "/" ? pathname === "/" : pathname?.startsWith(href)}
                   tooltip={{ children: label }}
+                  className={cn(
+                    "h-10 rounded-xl px-3 text-[13px] font-medium transition-all duration-300",
+                    "hover:bg-sidebar-accent/70 hover:text-foreground hover:shadow-[0_0_0_1px_hsla(var(--accent)/0.22)]",
+                    "data-[active=true]:bg-sidebar-primary/90 data-[active=true]:text-sidebar-primary-foreground"
+                  )}
                 >
-                  <Icon />
+                  <Icon className="h-4 w-4" />
                   <span>{label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
           ))}
-            {user && !['admin', 'super-admin'].includes(user.role) && (
-              <>
-                <SidebarMenuItem>
-                  <Link href="/dashboard" onClick={handleLinkClick}>
-                    <SidebarMenuButton
-                      isActive={pathname === "/dashboard"}
-                      tooltip={{ children: "User Dashboard" }}
-                    >
-                      <UserIcon />
-                      <span>User Dashboard</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Link href="/dashboard/memories" onClick={handleLinkClick}>
-                    <SidebarMenuButton
-                      isActive={pathname === "/dashboard/memories"}
-                      tooltip={{ children: "My Memories" }}
-                    >
-                      <Images />
-                      <span>My Memories</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              </>
-            )}
         </SidebarMenu>
 
-        <div className="mt-auto">
-          <SidebarSeparator />
-          <UserProfileSection />
+        <div className="mt-5 px-1">
+          <SidebarSeparator className="mx-0 bg-sidebar-border/70" />
+          <p className="mt-3 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/75">
+            Explore
+          </p>
         </div>
       </SidebarContent>
-      <SidebarFooter>
-        <Button asChild className="btn-glow">
-          <Link href="/booking">Book Now</Link>
-        </Button>
+
+      <SidebarFooter className="border-t border-sidebar-border/60 bg-sidebar/95 px-3 py-3 backdrop-blur-xl">
+        {user ? (
+          <div className="rounded-xl border border-sidebar-border/70 bg-background/45 p-3">
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-sidebar-primary/85 text-sidebar-primary-foreground">{initials}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+              </div>
+            </div>
+
+            <SidebarSeparator className="mx-0 my-3 bg-sidebar-border/70" />
+
+            <div className="space-y-2">
+              <Button
+                asChild
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2 rounded-lg border border-sidebar-primary/35 bg-sidebar-primary/12 px-3 text-sm font-medium text-sidebar-primary transition-all duration-300 hover:bg-sidebar-primary/18"
+              >
+                <Link href="/dashboard" onClick={handleLinkClick}>
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2 rounded-lg px-3 text-sm transition-all duration-300 hover:bg-sidebar-accent/70"
+              >
+                <Link href="/dashboard" onClick={handleLinkClick}>
+                  <CalendarDays className="h-4 w-4" />
+                  My Bookings
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2 rounded-lg px-3 text-sm transition-all duration-300 hover:bg-sidebar-accent/70"
+              >
+                <Link href="/dashboard/memories" onClick={handleLinkClick}>
+                  <Images className="h-4 w-4" />
+                  My Memories
+                </Link>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-9 w-full justify-start gap-2 rounded-lg border-sidebar-border/75 bg-background/60"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Button asChild variant="secondary" className="h-9 w-full rounded-lg">
+              <Link href="/login" onClick={handleLinkClick}>Login</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-9 w-full rounded-lg border-sidebar-border/75 bg-background/60">
+              <Link href="/register" onClick={handleLinkClick}>Sign Up</Link>
+            </Button>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

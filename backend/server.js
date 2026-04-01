@@ -7,9 +7,12 @@ import { Server } from "socket.io"
 import helmet from "helmet"
 import compression from "compression"
 import rateLimit from "express-rate-limit"
+import cookieParser from "cookie-parser"
 
 import routes from "./routes/index.js"
 import { createDefaultAdmin } from "./utils/createDefaultAdmin.js"
+import { sanitizeRequestInput } from "./middleware/security.js"
+import logger from "./utils/logger.js"
 
 dotenv.config()
 
@@ -18,7 +21,7 @@ const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET'];
 if (process.env.NODE_ENV === 'production') {
   requiredEnvVars.forEach(varName => {
     if (!process.env[varName]) {
-      console.error(`ERROR: ${varName} is required in production`);
+			logger.error(`Missing required environment variable in production: ${varName}`);
       process.exit(1);
     }
   });
@@ -45,16 +48,42 @@ const corsOptions = {
 		callback(new Error("Not allowed by CORS"))
 	},
 	credentials: true,
+	methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	optionsSuccessStatus: 204,
 }
 
-const loginLimiter = rateLimit({
+const apiLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
+	max: 300,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: {
+		success: false,
+		message: "Too many requests. Please try again shortly.",
+	},
+})
+
+const loginLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: 10,
+	skipSuccessfulRequests: true,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: {
+		success: false,
+		message: "Too many failed login attempts. Please wait a minute and try again.",
+	},
+})
+
+const messageLimiter = rateLimit({
+	windowMs: 10 * 60 * 1000,
 	max: 20,
 	standardHeaders: true,
 	legacyHeaders: false,
 	message: {
 		success: false,
-		message: "Too many login attempts. Please try again later.",
+		message: "Too many messages from this IP. Please try again later.",
 	},
 })
 
@@ -72,10 +101,31 @@ const bookingLimiter = rateLimit({
 app.use(helmet())
 app.use(cors(corsOptions))
 app.use(compression())
-app.use(express.json())
+app.use(express.json({ limit: "100kb" }))
+app.use(express.urlencoded({ extended: true, limit: "100kb" }))
+app.use(cookieParser())
+app.use(sanitizeRequestInput)
+
+app.use((req, res, next) => {
+	const startedAt = Date.now()
+
+	res.on("finish", () => {
+		logger.info("HTTP request", {
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: res.statusCode,
+			durationMs: Date.now() - startedAt,
+			ip: req.ip,
+		})
+	})
+
+	next()
+})
 
 app.use("/api/auth/login", loginLimiter)
 app.use("/api/admin/login", loginLimiter)
+app.use("/api/messages", messageLimiter)
+app.use("/api", apiLimiter)
 app.use("/api/bookings", bookingLimiter)
 
 app.use((req, res, next) => {
@@ -103,8 +153,7 @@ app.use("/api", routes)
 const startServer = async () => {
 	try {
 		await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI)
-		console.log("MongoDB connected")
-		console.log(`MongoDB database: ${mongoose.connection.name}`)
+		logger.info("MongoDB connected", { database: mongoose.connection.name })
 
 		await createDefaultAdmin()
 
@@ -116,17 +165,16 @@ const startServer = async () => {
 		})
 
 		io.on("connection", () => {
-			console.log("Admin connected to socket")
+			logger.info("Admin connected to socket")
 		})
 
 		server.listen(process.env.PORT, () => {
-			console.log("Server running on port " + process.env.PORT)
+			logger.info("Server running", { port: process.env.PORT })
 		})
 	} catch (err) {
-		console.log(err)
+		logger.error("Server startup failed", { error: err?.message || String(err) })
 		process.exit(1)
 	}
 }
 
-console.log("MONGO_URI:", process.env.MONGO_URI)
 startServer()

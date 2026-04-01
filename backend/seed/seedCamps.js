@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Camp from '../models/Camp.js';
+import logger from '../utils/logger.js';
 
 dotenv.config();
 
@@ -93,18 +94,18 @@ const seedCamps = async () => {
   }
 
   await mongoose.connect(process.env.MONGO_URI);
-  console.log(`[seed:camps] Connected to DB: ${mongoose.connection.name}`);
+  logger.info('[seed:camps] Connected to DB', { dbName: mongoose.connection.name });
 
   await Camp.deleteMany({});
   const inserted = await Camp.insertMany(camps);
 
-  console.log(`[seed:camps] Inserted ${inserted.length} camps`);
+  logger.info('[seed:camps] Inserted camps', { count: inserted.length });
   await mongoose.connection.close();
-  console.log('[seed:camps] Done');
+  logger.info('[seed:camps] Done');
 };
 
 seedCamps().catch(async (error) => {
-  console.error('[seed:camps] Failed:', error.message);
+  logger.error('[seed:camps] Failed', { error: error.message });
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }

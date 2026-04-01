@@ -2,14 +2,15 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
 const rawApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim();
-const cleanedApiBaseUrl = rawApiBaseUrl.replace(/\/+$/, '');
-const normalizedApiBaseUrl = cleanedApiBaseUrl
-  ? (cleanedApiBaseUrl.endsWith('/api') ? cleanedApiBaseUrl : `${cleanedApiBaseUrl}/api`)
-  : '';
+const resolvedApiOrigin = rawApiBaseUrl || 'http://localhost:5000';
+const cleanedApiBaseUrl = resolvedApiOrigin.replace(/\/+$/, '');
+const normalizedApiBaseUrl = cleanedApiBaseUrl.endsWith('/api')
+  ? cleanedApiBaseUrl
+  : `${cleanedApiBaseUrl}/api`;
 export const API_BASE_URL = normalizedApiBaseUrl;
 
 const api = axios.create({
-  baseURL: API_BASE_URL || undefined,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

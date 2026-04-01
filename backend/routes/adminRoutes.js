@@ -1,11 +1,10 @@
 import express from 'express';
 import * as adminController from '../controllers/adminController.js';
-import authMiddleware from '../middleware/auth.js';
-import { adminMiddleware } from '../middleware/admin.js';
+import authMiddleware, { requireAdminRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authMiddleware, adminMiddleware);
+router.use(authMiddleware, requireAdminRole);
 
 // Admin identity & user management
 router.get('/me', adminController.getCurrentAdmin);

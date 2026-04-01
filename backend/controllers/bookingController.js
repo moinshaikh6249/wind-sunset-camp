@@ -2,13 +2,17 @@ import Booking from '../models/Booking.js';
 import Activity from '../models/Activity.js';
 import Camp from '../models/Camp.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import mongoose from 'mongoose';
 import { validateBookingData } from '../utils/validators.js';
 import { sendBookingCreatedNotifications, sendBookingStatusNotifications } from '../utils/sendEmail.js';
 import { io } from '../server.js';
 
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || '').trim());
+
 export const createBooking = async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -18,6 +22,13 @@ export const createBooking = async (req, res) => {
     }
 
     const { fullName, email, phone, campId, numberOfPeople, specialRequests } = req.body;
+
+    if (!isValidObjectId(campId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
 
     const errors = validateBookingData({ fullName, email, phone, campId, numberOfPeople });
     if (errors.length > 0) {
@@ -53,6 +64,16 @@ export const createBooking = async (req, res) => {
     });
 
     await booking.save();
+
+    try {
+      await Notification.create({
+        type: 'new_booking_created',
+        title: 'New booking created',
+        message: `${booking.fullName} booked ${booking.campName}.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (booking):', notificationError.message);
+    }
 
     try {
       io?.emit('newBooking', {
@@ -102,14 +123,13 @@ export const createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create booking',
-      error: error.message,
     });
   }
 };
 
 export const getMyBookings = async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -127,14 +147,13 @@ export const getMyBookings = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user bookings',
-      error: error.message,
     });
   }
 };
 
 export const deleteMyBooking = async (req, res) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({
@@ -144,6 +163,14 @@ export const deleteMyBooking = async (req, res) => {
     }
 
     const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(id);
 
     if (!booking) {
@@ -178,39 +205,45 @@ export const deleteMyBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete booking',
-      error: error.message,
     });
   }
 };
 
 export const getAllBookings = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status } = req.query;
+    const currentPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
 
     const query = {};
     if (status) {
       query.status = status;
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (currentPage - 1) * pageLimit;
 
     const bookings = await Booking.find(query)
       .populate('userId', 'firstName lastName email')
       .populate('campId', 'name location price')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(pageLimit);
 
-    const total = await Booking.countDocuments(query);
+    const totalCount = await Booking.countDocuments(query);
+    const totalPages = Math.max(Math.ceil(totalCount / pageLimit), 1);
 
     res.json({
       success: true,
+      data: bookings,
       bookings,
+      currentPage,
+      totalPages,
+      totalCount,
       pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
+        total: totalCount,
+        page: currentPage,
+        limit: pageLimit,
+        pages: totalPages,
       },
     });
   } catch (error) {
@@ -218,13 +251,19 @@ export const getAllBookings = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch bookings',
-      error: error.message,
     });
   }
 };
 
 export const getBookingById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id)
       .populate('userId', 'firstName lastName email')
       .populate('campId');
@@ -245,13 +284,19 @@ export const getBookingById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch booking',
-      error: error.message,
     });
   }
 };
 
 export const updateBookingStatus = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const { status } = req.body;
 
     if (!['pending', 'approved', 'rejected'].includes(status)) {
@@ -288,13 +333,19 @@ export const updateBookingStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update booking',
-      error: error.message,
     });
   }
 };
 
 export const approveBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
@@ -325,13 +376,19 @@ export const approveBooking = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to approve booking',
-      error: error.message,
     });
   }
 };
 
 export const rejectBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
@@ -361,13 +418,19 @@ export const rejectBooking = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to reject booking',
-      error: error.message,
     });
   }
 };
 
 export const deleteBooking = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
     const booking = await Booking.findByIdAndDelete(req.params.id);
 
     if (!booking) {
@@ -386,7 +449,6 @@ export const deleteBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete booking',
-      error: error.message,
     });
   }
 };
