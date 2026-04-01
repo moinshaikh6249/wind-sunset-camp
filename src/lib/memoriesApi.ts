@@ -1,13 +1,5 @@
 import api from '@/lib/api';
 
-const API_ORIGIN = (() => {
-  const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim();
-  if (!raw) return '';
-
-  const withoutApiSuffix = raw.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
-  return withoutApiSuffix;
-})();
-
 const resolveImageUrl = (value: unknown): string => {
   if (typeof value !== 'string' || !value.trim()) {
     return '/images/placeholder.jpg';
@@ -15,11 +7,9 @@ const resolveImageUrl = (value: unknown): string => {
 
   const raw = value.trim();
   if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith('/')) {
-    return API_ORIGIN ? `${API_ORIGIN}${raw}` : raw;
-  }
+  if (raw.startsWith('/')) return raw;
 
-  return API_ORIGIN ? `${API_ORIGIN}/uploads/${raw}` : `/uploads/${raw}`;
+  return `/uploads/${raw}`;
 };
 
 export type MemoryStatus = 'pending' | 'approved' | 'rejected';

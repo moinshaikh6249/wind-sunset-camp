@@ -10,7 +10,7 @@ const userPassword = process.env.TEST_USER_PASSWORD;
 const adminEmail = process.env.TEST_ADMIN_EMAIL;
 const adminPassword = process.env.TEST_ADMIN_PASSWORD;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = `${(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '')}/api`;
 
 // This setup runs once to log in as a standard user and saves the authentication state.
 // This allows subsequent tests to start already logged in, making them faster and more independent.

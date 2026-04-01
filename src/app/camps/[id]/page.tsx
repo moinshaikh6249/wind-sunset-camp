@@ -1,7 +1,7 @@
-import axios from 'axios';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { Calendar, IndianRupee, MapPin, Zap } from 'lucide-react';
 
@@ -17,11 +17,17 @@ type CampDetailPageProps = {
   }>;
 };
 
-const API_BASE_URL = (() => {
-  const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
-  if (!raw) return '';
-  return raw.endsWith('/api') ? raw : `${raw}/api`;
-})();
+const getApiBaseUrl = () => {
+  const headerStore = headers();
+  const host = headerStore.get('x-forwarded-host') || headerStore.get('host');
+  const proto = headerStore.get('x-forwarded-proto') || 'https';
+
+  if (!host) {
+    return process.env.RENDER_EXTERNAL_URL || 'http://127.0.0.1:3000';
+  }
+
+  return `${proto}://${host}`;
+};
 
 const formatCampDate = (value?: string) => {
   if (!value) return 'Date to be announced';
@@ -43,21 +49,23 @@ const getCamp = async (id?: string) => {
     return null;
   }
 
-  if (!API_BASE_URL) {
-    return null;
-  }
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/camps/${id}`, {
-      timeout: 10000,
-      validateStatus: (status) => status >= 200 && status < 500,
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/api/camps/${id}`, {
+      cache: 'no-store',
     });
 
     if (response.status === 404 || response.status === 400) {
       return null;
     }
 
-    const source = response.data?.camp || response.data?.data || response.data;
+    if (!response.ok) {
+      throw new Error(`Failed to fetch camp: ${response.status}`);
+    }
+
+    const payload = await response.json();
+
+    const source = payload?.camp || payload?.data || payload;
     if (!source) {
       return null;
     }
@@ -70,10 +78,6 @@ const getCamp = async (id?: string) => {
 
     return camp;
   } catch (error: any) {
-    if (error?.response?.status === 404) {
-      return null;
-    }
-
     throw error;
   }
 };

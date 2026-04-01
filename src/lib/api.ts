@@ -1,16 +1,11 @@
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
-const rawApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim();
-const resolvedApiOrigin = rawApiBaseUrl || 'http://localhost:5000';
-const cleanedApiBaseUrl = resolvedApiOrigin.replace(/\/+$/, '');
-const normalizedApiBaseUrl = cleanedApiBaseUrl.endsWith('/api')
-  ? cleanedApiBaseUrl
-  : `${cleanedApiBaseUrl}/api`;
-export const API_BASE_URL = normalizedApiBaseUrl;
+export const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

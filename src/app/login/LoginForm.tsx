@@ -18,7 +18,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -71,7 +70,18 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (loginMode === "admin") {
-        const response = await api.post("/admin/login", values);
+        const adminRes = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(values),
+        });
+
+        const response = await adminRes.json();
+
+        if (!adminRes.ok || !response?.token) {
+          throw new Error(response?.message || 'Invalid email or password');
+        }
 
         localStorage.setItem("adminToken", response.token);
         localStorage.removeItem("token");
@@ -87,7 +97,18 @@ export function LoginForm() {
 
         router.push("/admin/dashboard");
       } else {
-        const response = await api.post("/auth/login", values);
+        const loginRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(values),
+        });
+
+        const response = await loginRes.json();
+
+        if (!loginRes.ok || !response?.token) {
+          throw new Error(response?.message || 'Invalid email or password');
+        }
 
         localStorage.setItem("token", response.token);
         localStorage.setItem("authToken", response.token);
@@ -106,9 +127,7 @@ export function LoginForm() {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description:
-          error?.response?.data?.message ||
-          "Invalid email or password",
+        description: error?.message || "Invalid email or password",
         variant: "destructive",
       });
     }

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { USER_AUTH_FILE, ADMIN_AUTH_FILE } from '../playwright.config';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = `${(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '')}/api`;
 
 test.describe('Dashboard Assertions', () => {
   test.describe('User Dashboard', () => {

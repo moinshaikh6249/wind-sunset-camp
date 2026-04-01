@@ -96,7 +96,7 @@ export default function BookingsPage() {
     try {
       const endpoint = '/admin/bookings';
       console.log('[AdminBookings] Fetch start', {
-        baseURL: API_BASE_URL || '(missing NEXT_PUBLIC_API_URL)',
+        baseURL: API_BASE_URL,
         endpoint,
       });
 

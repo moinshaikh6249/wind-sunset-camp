@@ -3,24 +3,14 @@ import { Camp, GalleryImage } from '@/types';
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
-const API_ORIGIN = (() => {
-  const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim();
-  if (!raw) return '';
-
-  const withoutApiSuffix = raw.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
-  return withoutApiSuffix;
-})();
-
 const toPublicImageUrl = (value: unknown): string => {
   if (!isNonEmptyString(value)) return '/images/placeholder.jpg';
 
   const raw = value.trim();
   if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith('/')) {
-    return API_ORIGIN ? `${API_ORIGIN}${raw}` : raw;
-  }
+  if (raw.startsWith('/')) return raw;
 
-  return API_ORIGIN ? `${API_ORIGIN}/uploads/${raw}` : `/uploads/${raw}`;
+  return `/uploads/${raw}`;
 };
 
 export const adaptCamp = (camp: any): Camp => {
