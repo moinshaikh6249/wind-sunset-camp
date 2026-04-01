@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectMongoose } from '@/lib/mongoose';
@@ -7,83 +5,46 @@ import User from '@/models/User';
 
 export const runtime = 'nodejs';
 
-const SEVEN_DAYS = 60 * 60 * 24 * 7;
-const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    console.log('[AUTH_LOGIN] Request received');
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('[AUTH_LOGIN] JWT_SECRET missing');
-      return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
-    }
-
     const body = await req.json();
     const emailNormalized = String(body?.email || '').trim().toLowerCase();
     const password = String(body?.password || '');
 
-    console.log('LOGIN EMAIL:', emailNormalized);
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return Response.json({ error: 'Internal server error' }, { status: 500 });
+    }
 
     if (!emailNormalized || !password) {
-      return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
+      return Response.json({ error: 'Missing fields' }, { status: 400 });
     }
 
     await connectMongoose();
 
     const user = await User.findOne({ email: emailNormalized }).select('+password');
 
-    console.log('USER FOUND:', !!user);
-
     if (!user || !user.password) {
-      return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
+      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const storedPassword = String(user.password || '');
-    const isHashedPassword = BCRYPT_HASH_REGEX.test(storedPassword);
-
-    let isMatch = false;
-
-    if (isHashedPassword) {
-      try {
-        isMatch = await bcrypt.compare(password, storedPassword);
-      } catch (error) {
-        console.error('[AUTH_LOGIN] bcrypt.compare failed', error);
-        return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
-      }
-    } else {
-      isMatch = password === storedPassword;
-      if (isMatch) {
-        user.password = await bcrypt.hash(password, 10);
-        await user.save();
-      }
-    }
+    const isMatch = await bcrypt.compare(password, String(user.password));
 
     if (!isMatch) {
-      return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
+      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     const token = jwt.sign(
-      { id: String(user._id), role: user.role || 'user', email: user.email },
+      { userId: String(user._id), id: String(user._id), role: user.role || 'user' },
       jwtSecret,
       { expiresIn: '7d' }
     );
 
-    cookies().set('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: SEVEN_DAYS,
-    });
-
-    console.log('[AUTH_LOGIN] Login successful for', emailNormalized);
-
-    return NextResponse.json(
+    const res = Response.json(
       {
         success: true,
-        message: 'Login successful',
         token,
         user: {
           id: String(user._id),
@@ -97,8 +58,15 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
+
+    res.headers.set(
+      'Set-Cookie',
+      `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`
+    );
+
+    return res;
   } catch (error) {
-    console.error('[AUTH_LOGIN] Login failed', error);
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    console.error('LOGIN ERROR:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
