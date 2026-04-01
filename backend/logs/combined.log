@@ -301,3 +301,6 @@
 {"level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.705Z"}
 {"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.842Z"}
 {"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.845Z"}
+{"level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T07:09:33.963Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T07:09:34.116Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T07:09:34.119Z"}
