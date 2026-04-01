@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectMongoose } from '@/lib/mongoose';
@@ -7,6 +8,7 @@ import User from '@/models/User';
 export const runtime = 'nodejs';
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
+const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,27 +21,43 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const email = String(body?.email || '').trim().toLowerCase();
+    const emailNormalized = String(body?.email || '').trim().toLowerCase();
     const password = String(body?.password || '');
 
-    if (!email || !password) {
+    console.log('LOGIN EMAIL:', emailNormalized);
+
+    if (!emailNormalized || !password) {
       return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
     }
 
     await connectMongoose();
 
-    const user = await User.findOne({ email }).select('+password').lean();
+    const user = await User.findOne({ email: emailNormalized }).select('+password');
+
+    console.log('USER FOUND:', !!user);
 
     if (!user || !user.password) {
       return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
     }
 
+    const storedPassword = String(user.password || '');
+    const isHashedPassword = BCRYPT_HASH_REGEX.test(storedPassword);
+
     let isMatch = false;
-    try {
-      isMatch = await bcrypt.compare(password, user.password);
-    } catch (error) {
-      console.error('[AUTH_LOGIN] bcrypt.compare failed', error);
-      return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+
+    if (isHashedPassword) {
+      try {
+        isMatch = await bcrypt.compare(password, storedPassword);
+      } catch (error) {
+        console.error('[AUTH_LOGIN] bcrypt.compare failed', error);
+        return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
+      }
+    } else {
+      isMatch = password === storedPassword;
+      if (isMatch) {
+        user.password = await bcrypt.hash(password, 10);
+        await user.save();
+      }
     }
 
     if (!isMatch) {
@@ -52,7 +70,17 @@ export async function POST(req: NextRequest) {
       { expiresIn: '7d' }
     );
 
-    const response = NextResponse.json(
+    cookies().set('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SEVEN_DAYS,
+    });
+
+    console.log('[AUTH_LOGIN] Login successful for', emailNormalized);
+
+    return NextResponse.json(
       {
         success: true,
         message: 'Login successful',
@@ -69,17 +97,6 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-
-    response.cookies.set('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: SEVEN_DAYS,
-    });
-
-    console.log('[AUTH_LOGIN] Login successful for', email);
-    return response;
   } catch (error) {
     console.error('[AUTH_LOGIN] Login failed', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
