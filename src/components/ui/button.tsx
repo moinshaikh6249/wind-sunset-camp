@@ -11,13 +11,16 @@ const buttonVariants = cva(
 {
 variants: {
 variant: {
-primary: "bg-orange-500 text-white hover:bg-orange-600",
-secondary: "border bg-transparent text-black",
-ghost: "bg-transparent hover:bg-gray-100",
-default: "bg-black text-white",
-destructive: "bg-red-500 text-white",
-outline: "border",
-link: "underline text-blue-500",
+  primary: "bg-orange-500 text-white hover:bg-orange-600",
+  secondary: "border bg-transparent text-black",
+  ghost: "bg-transparent hover:bg-gray-100",
+  default: "bg-black text-white",
+  destructive: "bg-red-500 text-white",
+  outline: "border",
+  link: "underline text-blue-500",
+
+  // ✅ ADD THIS
+  glass: "bg-white/10 backdrop-blur-md text-white border border-white/30 hover:bg-white/20",
 },
 size: {
 sm: "h-9 px-4 text-sm",
