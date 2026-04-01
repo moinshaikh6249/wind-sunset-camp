@@ -294,3 +294,10 @@
 {"durationMs":11,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:31:58.644Z"}
 {"durationMs":11,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:32:58.643Z"}
 {"durationMs":13,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:33:58.659Z"}
+{"database":"windcamp","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T06:34:18.797Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T06:34:18.932Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T06:34:18.937Z"}
+{"durationMs":5,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":401,"timestamp":"2026-04-01T06:34:58.647Z"}
+{"level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.705Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.842Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-04-01T06:43:13.845Z"}

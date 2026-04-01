@@ -16,144 +16,86 @@ import logger from "./utils/logger.js"
 
 dotenv.config()
 
-// Validate required environment variables at startup
-const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET'];
-if (process.env.NODE_ENV === 'production') {
-  requiredEnvVars.forEach(varName => {
-    if (!process.env[varName]) {
-			logger.error(`Missing required environment variable in production: ${varName}`);
-      process.exit(1);
-    }
-  });
+// ✅ ENV CHECK
+const requiredEnvVars = ["JWT_SECRET", "JWT_REFRESH_SECRET"]
+if (process.env.NODE_ENV === "production") {
+	requiredEnvVars.forEach((varName) => {
+		if (!process.env[varName]) {
+			logger.error(`Missing env variable: ${varName}`)
+			process.exit(1)
+		}
+	})
 }
 
 const app = express()
 const server = createServer(app)
 export let io = null
 
-const defaultAllowedOrigins = process.env.NODE_ENV === 'production' ? [] : ["http://localhost:3000"]
-const envOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
-	.split(",")
-	.map((origin) => origin.trim())
-	.filter(Boolean)
-const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envOrigins]))
+// ✅ CORS
+const allowedOrigins = [
+	"http://localhost:3000",
+	process.env.FRONTEND_URL,
+	process.env.CORS_ORIGINS,
+].filter(Boolean)
 
-const corsOptions = {
-	origin: (origin, callback) => {
-		if (!origin || allowedOrigins.includes(origin)) {
-			callback(null, true)
-			return
-		}
+app.use(
+	cors({
+		origin: (origin, cb) => {
+			if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+			cb(new Error("Not allowed by CORS"))
+		},
+		credentials: true,
+	})
+)
 
-		callback(new Error("Not allowed by CORS"))
-	},
-	credentials: true,
-	methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-	allowedHeaders: ["Content-Type", "Authorization"],
-	optionsSuccessStatus: 204,
-}
-
-const apiLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 300,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: {
-		success: false,
-		message: "Too many requests. Please try again shortly.",
-	},
-})
-
-const loginLimiter = rateLimit({
-	windowMs: 60 * 1000,
-	max: 10,
-	skipSuccessfulRequests: true,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: {
-		success: false,
-		message: "Too many failed login attempts. Please wait a minute and try again.",
-	},
-})
-
-const messageLimiter = rateLimit({
-	windowMs: 10 * 60 * 1000,
-	max: 20,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: {
-		success: false,
-		message: "Too many messages from this IP. Please try again later.",
-	},
-})
-
-const bookingLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 100,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: {
-		success: false,
-		message: "Too many booking requests. Please try again later.",
-	},
-})
-
+// ✅ SECURITY + MIDDLEWARE
 app.use(helmet())
-app.use(cors(corsOptions))
 app.use(compression())
 app.use(express.json({ limit: "100kb" }))
-app.use(express.urlencoded({ extended: true, limit: "100kb" }))
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(sanitizeRequestInput)
 
+// ✅ LOGGING
 app.use((req, res, next) => {
-	const startedAt = Date.now()
-
+	const start = Date.now()
 	res.on("finish", () => {
 		logger.info("HTTP request", {
 			method: req.method,
 			path: req.originalUrl,
-			statusCode: res.statusCode,
-			durationMs: Date.now() - startedAt,
-			ip: req.ip,
+			status: res.statusCode,
+			time: Date.now() - start,
 		})
 	})
-
 	next()
 })
 
-app.use("/api/auth/login", loginLimiter)
-app.use("/api/admin/login", loginLimiter)
-app.use("/api/messages", messageLimiter)
-app.use("/api", apiLimiter)
-app.use("/api/bookings", bookingLimiter)
+// ✅ RATE LIMIT
+app.use(
+	"/api/auth/login",
+	rateLimit({ windowMs: 60000, max: 10, skipSuccessfulRequests: true })
+)
 
-app.use((req, res, next) => {
-	const originalJson = res.json.bind(res)
+app.use(
+	"/api/admin/login",
+	rateLimit({ windowMs: 60000, max: 10, skipSuccessfulRequests: true })
+)
 
-	res.json = (body) => {
-		if (
-			process.env.NODE_ENV !== "development" &&
-			body &&
-			typeof body === "object" &&
-			"error" in body
-		) {
-			const { error, ...safeBody } = body
-			return originalJson(safeBody)
-		}
+app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }))
 
-		return originalJson(body)
-	}
-
-	next()
+// ✅ ROOT ROUTE (IMPORTANT FIX)
+app.get("/", (req, res) => {
+	res.send("API is running 🚀")
 })
 
+// ✅ ROUTES
 app.use("/api", routes)
 
+// ✅ START SERVER
 const startServer = async () => {
 	try {
-		await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI)
-		logger.info("MongoDB connected", { database: mongoose.connection.name })
+		await mongoose.connect(process.env.MONGO_URI)
+		logger.info("MongoDB connected")
 
 		await createDefaultAdmin()
 
@@ -165,14 +107,14 @@ const startServer = async () => {
 		})
 
 		io.on("connection", () => {
-			logger.info("Admin connected to socket")
+			logger.info("Socket connected")
 		})
 
-		server.listen(process.env.PORT, () => {
-			logger.info("Server running", { port: process.env.PORT })
+		server.listen(process.env.PORT || 10000, () => {
+			logger.info("Server running", { port: process.env.PORT || 10000 })
 		})
 	} catch (err) {
-		logger.error("Server startup failed", { error: err?.message || String(err) })
+		logger.error("Startup failed", { error: err.message })
 		process.exit(1)
 	}
 }
