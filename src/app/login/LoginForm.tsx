@@ -78,7 +78,12 @@ export function LoginForm() {
         });
 
         const adminText = await adminRes.text();
-        const response = adminText ? JSON.parse(adminText) : {};
+        let response: any = {};
+        try {
+          response = adminText ? JSON.parse(adminText) : {};
+        } catch {
+          response = { error: 'Invalid JSON response' };
+        }
 
         if (!adminRes.ok || !response?.token) {
           throw new Error(response?.message || 'Invalid email or password');
@@ -106,7 +111,12 @@ export function LoginForm() {
         });
 
         const loginText = await loginRes.text();
-        const response = loginText ? JSON.parse(loginText) : {};
+        let response: any = {};
+        try {
+          response = loginText ? JSON.parse(loginText) : {};
+        } catch {
+          response = { error: 'Invalid JSON response' };
+        }
 
         if (!loginRes.ok || !response?.token) {
           throw new Error(response?.message || 'Invalid email or password');

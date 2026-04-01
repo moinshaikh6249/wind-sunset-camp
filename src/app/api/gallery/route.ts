@@ -28,4 +28,6 @@ export async function GET() {
     console.error('[API_GALLERY] GET failed', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
+
+  return NextResponse.json({ success: false, error: 'Unknown error' }, { status: 500 });
 }

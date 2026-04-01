@@ -72,4 +72,6 @@ export async function POST(req: Request) {
     console.error('LOGIN ERROR:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
+
+  return Response.json({ success: false, error: 'Unknown error' }, { status: 500 });
 }
