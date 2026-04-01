@@ -287,3 +287,10 @@
 {"durationMs":13,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:24:58.659Z"}
 {"durationMs":10,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:25:58.654Z"}
 {"durationMs":13,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:26:58.650Z"}
+{"durationMs":12,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:27:58.648Z"}
+{"durationMs":239,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:28:58.882Z"}
+{"durationMs":12,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:29:58.650Z"}
+{"durationMs":12,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:30:58.656Z"}
+{"durationMs":11,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:31:58.644Z"}
+{"durationMs":11,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:32:58.643Z"}
+{"durationMs":13,"ip":"::1","level":"info","message":"HTTP request","method":"GET","path":"/api/notifications?limit=80","service":"wind-sunset-backend","statusCode":304,"timestamp":"2026-04-01T06:33:58.659Z"}
