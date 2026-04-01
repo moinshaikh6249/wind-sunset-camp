@@ -58,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(null);
     } catch (error) {
-      console.log('Not authenticated');
       localStorage.removeItem('token');
       localStorage.removeItem('authToken');
       localStorage.removeItem('adminToken');

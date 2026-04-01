@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getMongoDb } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
+export const revalidate = 60;
 
 export async function GET() {
   try {
@@ -23,7 +24,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: normalized });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    console.error('[API_CAMPS] GET failed', error);
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }

@@ -114,7 +114,7 @@ export default function ReviewsPageContent() {
           setUser(response.user || response);
         }
       } catch (error) {
-        console.log('Not authenticated');
+                    // noop: unauthenticated users can still browse reviews
       }
     };
 

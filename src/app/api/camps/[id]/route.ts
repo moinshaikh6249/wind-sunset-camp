@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getMongoDb } from '@/lib/mongodb';
 
 export const runtime = 'nodejs';
+export const revalidate = 60;
 
 export async function GET(
   _req: NextRequest,
