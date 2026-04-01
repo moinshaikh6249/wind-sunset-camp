@@ -20,10 +20,11 @@ outline: "border",
 link: "underline text-blue-500",
 },
 size: {
-sm: "h-9 px-4 text-sm",
-md: "h-11 px-6 text-sm",
-lg: "h-12 px-8 text-base",
-},
+  sm: "h-9 px-4 text-sm",
+  md: "h-11 px-6 text-sm",
+  lg: "h-12 px-8 text-base",
+  icon: "h-10 w-10 p-0", // ADD THIS
+}
 fullWidth: {
 true: "w-full",
 false: "",
@@ -66,4 +67,4 @@ return (
 
 Button.displayName = "Button"
 
-export { Button }
+export { Button, buttonVariants }
