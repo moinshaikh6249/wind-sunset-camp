@@ -1,13 +1,8 @@
 import mongoose from 'mongoose';
 
-type MongooseCache = {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-};
-
 declare global {
   // eslint-disable-next-line no-var
-  var __mongoose__: MongooseCache | undefined;
+  var _mongoose: Promise<typeof mongoose> | undefined;
 }
 
 const resolveMongoUri = () => {
@@ -18,21 +13,13 @@ const resolveMongoUri = () => {
   return uri;
 };
 
-const cache = global.__mongoose__ || { conn: null, promise: null };
-global.__mongoose__ = cache;
-
 export async function connectMongoose() {
-  if (cache.conn) {
-    return cache.conn;
-  }
-
-  if (!cache.promise) {
-    const mongoUri = resolveMongoUri();
-    cache.promise = mongoose.connect(mongoUri, {
+  if (!global._mongoose) {
+    const MONGODB_URI = resolveMongoUri();
+    global._mongoose = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
   }
 
-  cache.conn = await cache.promise;
-  return cache.conn;
+  return global._mongoose;
 }

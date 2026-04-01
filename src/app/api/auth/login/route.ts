@@ -4,11 +4,13 @@ import { connectMongoose } from '@/lib/mongoose';
 import User from '@/models/User';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 export async function POST(req: Request) {
   try {
+    console.log('LOGIN HIT');
     const body = await req.json();
     const emailNormalized = String(body?.email || '').trim().toLowerCase();
     const password = String(body?.password || '');
@@ -25,6 +27,7 @@ export async function POST(req: Request) {
     await connectMongoose();
 
     const user = await User.findOne({ email: emailNormalized }).select('+password');
+    console.log('USER:', user ? { id: String(user._id), email: user.email } : null);
 
     if (!user || !user.password) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });

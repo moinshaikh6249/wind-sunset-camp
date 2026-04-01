@@ -77,7 +77,8 @@ export function LoginForm() {
           body: JSON.stringify(values),
         });
 
-        const response = await adminRes.json();
+        const adminText = await adminRes.text();
+        const response = adminText ? JSON.parse(adminText) : {};
 
         if (!adminRes.ok || !response?.token) {
           throw new Error(response?.message || 'Invalid email or password');
@@ -104,7 +105,8 @@ export function LoginForm() {
           body: JSON.stringify(values),
         });
 
-        const response = await loginRes.json();
+        const loginText = await loginRes.text();
+        const response = loginText ? JSON.parse(loginText) : {};
 
         if (!loginRes.ok || !response?.token) {
           throw new Error(response?.message || 'Invalid email or password');

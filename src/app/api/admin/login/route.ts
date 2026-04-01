@@ -6,6 +6,7 @@ import { connectMongoose } from '@/lib/mongoose';
 import Admin from '@/models/Admin';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;

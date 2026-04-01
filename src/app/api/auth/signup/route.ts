@@ -6,6 +6,7 @@ import { connectMongoose } from '@/lib/mongoose';
 import User from '@/models/User';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 

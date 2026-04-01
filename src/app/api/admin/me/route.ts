@@ -4,6 +4,7 @@ import { connectMongoose } from '@/lib/mongoose';
 import Admin from '@/models/Admin';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
