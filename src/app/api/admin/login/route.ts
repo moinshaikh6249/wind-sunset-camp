@@ -13,7 +13,7 @@ const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('[ADMIN_LOGIN] Request received');
+    console.log('API HIT: /api/admin/login');
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {

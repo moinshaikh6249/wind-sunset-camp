@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('API HIT: /api/admin/me');
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
@@ -29,7 +30,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminId = String(decoded?.id || '');
+    const role = String(decoded?.role || '');
+    if (role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminId = String(decoded?.adminId || decoded?.userId || decoded?.id || '');
     if (!adminId) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }

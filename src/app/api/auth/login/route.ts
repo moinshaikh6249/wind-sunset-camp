@@ -10,7 +10,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 export async function POST(req: Request) {
   try {
-    console.log('LOGIN HIT');
+    console.log('API HIT: /api/auth/login');
     const body = await req.json();
     const emailNormalized = String(body?.email || '').trim().toLowerCase();
     const password = String(body?.password || '');
@@ -33,7 +33,13 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const isMatch = await bcrypt.compare(password, String(user.password));
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, String(user.password));
+    } catch (error) {
+      console.error('LOGIN BCRYPT ERROR:', error);
+      return Response.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
 
     if (!isMatch) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -66,6 +72,8 @@ export async function POST(req: Request) {
       'Set-Cookie',
       `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`
     );
+
+    console.log('TOKEN SET');
 
     return res;
   } catch (error) {

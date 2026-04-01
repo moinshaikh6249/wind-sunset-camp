@@ -86,7 +86,7 @@ export function LoginForm() {
         }
 
         if (!adminRes.ok || !response?.token) {
-          throw new Error(response?.message || 'Invalid email or password');
+          throw new Error(response?.message || response?.error || 'Invalid email or password');
         }
 
         localStorage.setItem("adminToken", response.token);
@@ -119,7 +119,7 @@ export function LoginForm() {
         }
 
         if (!loginRes.ok || !response?.token) {
-          throw new Error(response?.message || 'Invalid email or password');
+          throw new Error(response?.message || response?.error || 'Invalid email or password');
         }
 
         localStorage.setItem("token", response.token);

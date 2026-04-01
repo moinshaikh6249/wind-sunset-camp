@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('API HIT: /api/camps/[id]');
     const id = String(params?.id || '').trim();
     if (!id || !ObjectId.isValid(id)) {
       return NextResponse.json({ success: false, message: 'Camp not found' }, { status: 404 });

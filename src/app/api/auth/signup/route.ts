@@ -12,6 +12,7 @@ const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('API HIT: /api/auth/signup');
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       console.error('[AUTH_SIGNUP] JWT_SECRET missing');

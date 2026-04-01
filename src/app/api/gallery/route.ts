@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    console.log('API HIT: /api/gallery');
     const db = await getMongoDb();
     const collectionName = process.env.MONGODB_GALLERY_COLLECTION || "galleryImages";
 
