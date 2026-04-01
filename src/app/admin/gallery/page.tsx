@@ -59,7 +59,7 @@ export default function GalleryPage() {
       const data = await api.get<{ success: boolean; images: any[] }>('/gallery');
       const mappedImages: GalleryImage[] = (data.images || []).map((img: any) => ({
         id: img._id || img.id,
-        imageUrl: img.imageUrl,
+        imageUrl: img.imageUrl || img.image || '/images/placeholder.jpg',
         description: img.description,
         imageHint: img.imageHint,
         createdAt: img.createdAt,

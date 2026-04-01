@@ -21,13 +21,15 @@ export async function GET() {
     const normalized = images.map((doc) => ({
       id: String(doc._id),
       ...doc,
+      imageUrl: doc.imageUrl || doc.image || '/images/placeholder.jpg',
+      image: doc.image || doc.imageUrl || '/images/placeholder.jpg',
       _id: undefined,
     }));
 
-    return NextResponse.json({ success: true, data: normalized });
+    return NextResponse.json({ success: true, data: normalized, images: normalized });
   } catch (error) {
     console.error('[API_GALLERY] GET failed', error);
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 
   return NextResponse.json({ success: false, error: 'Unknown error' }, { status: 500 });

@@ -25,7 +25,7 @@ export type MemoryItem = {
 
 const normalizeMemory = (memory: any): MemoryItem => ({
   id: memory?.id || memory?._id || '',
-  imageUrl: resolveImageUrl(memory?.imageUrl),
+  imageUrl: resolveImageUrl(memory?.imageUrl || memory?.image),
   caption: memory?.caption || '',
   userName:
     memory?.user?.name ||
@@ -41,6 +41,8 @@ const normalizeMemoryListResponse = (response: any): MemoryItem[] => {
     ? response
     : Array.isArray(response?.memories)
       ? response.memories
+      : Array.isArray(response?.data)
+        ? response.data
       : Array.isArray(response?.data?.memories)
         ? response.data.memories
         : [];
