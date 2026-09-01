@@ -20691,3 +20691,13 @@
 {"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-09-01T16:31:11.663Z"}
 {"host":"ac-q81c7aj-shard-00-00.mnp7uxu.mongodb.net","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-09-01T16:31:11.733Z"}
 {"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-09-01T16:31:11.892Z"}
+{"level":"info","message":"HTTP request","method":"GET","path":"/api/gallery","service":"wind-sunset-backend","status":200,"time":31,"timestamp":"2026-09-01T16:31:49.025Z"}
+{"level":"info","message":"HTTP request","method":"GET","path":"/api/camps","service":"wind-sunset-backend","status":200,"time":11,"timestamp":"2026-09-01T16:31:54.430Z"}
+{"hasAuthSourceParam":true,"hasDatabaseName":false,"hasMongoUri":true,"hasReplicaSetParam":true,"level":"info","message":"[DB Diagnostics] Safe Config Audit:","nodeEnv":"development","protocol":"mongodb","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:36.457Z"}
+{"host":"ac-q81c7aj-shard-00-00.mnp7uxu.mongodb.net","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:36.650Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:36.821Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:36.824Z"}
+{"hasAuthSourceParam":true,"hasDatabaseName":false,"hasMongoUri":true,"hasReplicaSetParam":true,"level":"info","message":"[DB Diagnostics] Safe Config Audit:","nodeEnv":"development","protocol":"mongodb","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:58.957Z"}
+{"host":"ac-q81c7aj-shard-00-00.mnp7uxu.mongodb.net","level":"info","message":"MongoDB connected","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:59.180Z"}
+{"level":"info","message":"Admin bootstrap skipped because an admin account already exists","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:59.366Z"}
+{"level":"info","message":"Server running","port":"5000","service":"wind-sunset-backend","timestamp":"2026-09-01T16:39:59.368Z"}
