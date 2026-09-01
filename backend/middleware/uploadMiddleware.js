@@ -1,5 +1,4 @@
 import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary.js';
 
 const resolveFolder = (req) => {
@@ -18,15 +17,7 @@ const resolveFolder = (req) => {
   return 'wind_sunset_camps';
 };
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => ({
-    folder: resolveFolder(req),
-    resource_type: 'image',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '-').toLowerCase()}`,
-  }),
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -65,8 +56,30 @@ export const useMemoriesUploadFolder = (req, res, next) => {
   next();
 };
 
+const uploadBufferToCloudinary = (fileBuffer, req, file) => {
+  return new Promise((resolve, reject) => {
+    const folder = resolveFolder(req);
+    const cleanFileName = (file.originalname || 'image').replace(/\s+/g, '-').toLowerCase().replace(/\.[^/.]+$/, '');
+    const publicId = `${Date.now()}-${cleanFileName}`;
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+        public_id: publicId,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    uploadStream.end(fileBuffer);
+  });
+};
+
 const withUploadErrorHandling = (uploader) => (req, res, next) => {
-  uploader(req, res, (error) => {
+  uploader(req, res, async (error) => {
     if (error) {
       const message =
         error?.message ||
@@ -81,7 +94,40 @@ const withUploadErrorHandling = (uploader) => (req, res, next) => {
       });
     }
 
-    return next();
+    try {
+      if (req.file && req.file.buffer) {
+        const result = await uploadBufferToCloudinary(req.file.buffer, req, req.file);
+        req.file.path = result.secure_url;
+        req.file.filename = result.public_id;
+        req.file.secure_url = result.secure_url;
+        req.file.public_id = result.public_id;
+      }
+
+      if (Array.isArray(req.files) && req.files.length > 0) {
+        for (const file of req.files) {
+          if (file.buffer) {
+            const result = await uploadBufferToCloudinary(file.buffer, req, file);
+            file.path = result.secure_url;
+            file.filename = result.public_id;
+            file.secure_url = result.secure_url;
+            file.public_id = result.public_id;
+          }
+        }
+      }
+
+      return next();
+    } catch (uploadError) {
+      const message =
+        uploadError?.message ||
+        uploadError?.error?.message ||
+        'Failed to upload image to Cloudinary';
+
+      return res.status(400).json({
+        success: false,
+        message,
+        data: null,
+      });
+    }
   });
 };
 
