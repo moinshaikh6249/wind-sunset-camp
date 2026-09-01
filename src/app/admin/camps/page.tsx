@@ -44,7 +44,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { CampForm, type CampWithId } from './CampForm';
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { adaptCamps } from '@/lib/adapters/campAdapter';
 
@@ -69,6 +69,37 @@ const isValidImageUrl = (url: string | null | undefined): boolean => {
         return false;
     }
 };
+
+import { cn } from '@/lib/utils';
+
+function AdminCampAvailabilityBadge({ campId }: { campId: string }) {
+  const [data, setData] = useState<{ capacity: number; occupied: number; remaining: number; status: string } | null>(null);
+
+  useEffect(() => {
+    if (!campId) return;
+    api.get(`/camps/${campId}/availability`)
+      .then((res) => {
+        const payload = res?.data || res;
+        if (payload?.success) setData(payload);
+      })
+      .catch(() => {});
+  }, [campId]);
+
+  if (!data) return <span className="text-xs text-muted-foreground">Loading...</span>;
+
+  return (
+    <div className="flex flex-col text-xs gap-0.5">
+      <span className="font-semibold text-foreground">{data.remaining} / {data.capacity} spots</span>
+      <span className={cn(
+        "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit border",
+        data.status === 'fully_booked' ? "bg-rose-500/10 text-rose-800 dark:text-rose-300 border-rose-500/30" :
+        data.status === 'limited' ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30" : "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+      )}>
+        {data.status === 'fully_booked' ? '🔴 Full' : data.status === 'limited' ? '🟡 Limited' : '🟢 Available'}
+      </span>
+    </div>
+  );
+}
 
 
 function CampTableRowSkeleton() {
@@ -207,6 +238,9 @@ export default function CampsPage() {
             <TableCell className="hidden md:table-cell">
                 {camp.location}
             </TableCell>
+            <TableCell className="hidden lg:table-cell">
+                <AdminCampAvailabilityBadge campId={camp.id} />
+            </TableCell>
             <TableCell>
             <AlertDialog>
                 <div className="flex justify-end gap-2">
@@ -249,20 +283,23 @@ export default function CampsPage() {
 
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
-         <h1 className="text-lg font-semibold md:text-2xl">Camps</h1>
+         <div>
+           <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Camps</h1>
+           <p className="text-xs text-muted-foreground">Manage listed campsite properties, pricing, capacities, and availability.</p>
+         </div>
          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" onClick={handleAddCamp}>
-                    <PlusCircle className="h-5 w-5 mr-2" />
+                <Button size="sm" onClick={handleAddCamp} className="rounded-full bg-gradient-to-r from-amber-500 to-emerald-700 text-white shadow-md hover:scale-105 transition-all text-xs font-semibold">
+                    <PlusCircle className="h-4 w-4 mr-1.5" />
                     Add Camp
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] border-border/40 bg-background/95 backdrop-blur-xl rounded-2xl">
                  <DialogHeader>
-                    <DialogTitle>{editingCamp ? "Edit Camp" : "Add New Camp"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-base font-bold">{editingCamp ? "Edit Camp" : "Add New Camp"}</DialogTitle>
+                    <DialogDescription className="text-xs">
                         {editingCamp ? "Update the details for this camp." : "Fill in the form to add a new camp to the database."}
                     </DialogDescription>
                 </DialogHeader>
@@ -276,29 +313,32 @@ export default function CampsPage() {
          </Dialog>
       </div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Upcoming Camps</CardTitle>
-          <CardDescription>
-            Manage all upcoming camps.
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-bold">Listed Campsites</CardTitle>
+          <CardDescription className="text-xs">
+            Manage all active camp listings, locations, and live availability.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Camp Name</TableHead>
-                <TableHead className="hidden md:table-cell">Date</TableHead>
-                <TableHead className="hidden md:table-cell">Location</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {renderTableBody()}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/40 hover:bg-transparent">
+                  <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Camp Name</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-bold uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs font-bold uppercase tracking-wider text-muted-foreground">Availability</TableHead>
+                  <TableHead className="text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {renderTableBody()}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

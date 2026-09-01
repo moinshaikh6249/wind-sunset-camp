@@ -4,7 +4,9 @@ const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
 const toPublicImageUrl = (value: unknown): string => {
-  if (!isNonEmptyString(value)) return '/images/placeholder.jpg';
+  if (!isNonEmptyString(value) || value.includes('placeholder.jpg')) {
+    return '/images/light-hero.png';
+  }
 
   const raw = value.trim();
   if (/^https?:\/\//i.test(raw)) return raw;

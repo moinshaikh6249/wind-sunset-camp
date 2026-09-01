@@ -80,35 +80,68 @@ function UserProfileSection() {
                 </SheetClose>
                 <SheetClose asChild>
                      <Button asChild variant="outline" className="w-full">
-                        <Link href="/admin/login">Admin Login</Link>
+                        <Link href="/signup">Sign Up</Link>
                     </Button>
                 </SheetClose>
             </div>
         );
     }
     
-    const displayName = userProfile ? `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() : (user?.email || 'User');
-    const photoURL = userProfile?.photoURL;
-    const userInitial = displayName.charAt(0).toUpperCase();
+    const firstName = user?.firstName || userProfile?.firstName || '';
+    const lastName = user?.lastName || userProfile?.lastName || '';
+    const displayName =
+      `${firstName} ${lastName}`.trim() || userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'User';
+
+    const photoURL = userProfile?.photoURL || user?.photoURL;
+    const userInitial = (
+      firstName && lastName
+        ? `${firstName[0]}${lastName[0]}`
+        : displayName.slice(0, 2)
+    ).toUpperCase();
     const isAdmin = ['admin', 'super-admin'].includes(user?.role || '');
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             <SheetClose asChild>
-                <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/10">
-                    <Avatar className="h-10 w-10 text-xl">
+                <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-3 p-2.5 rounded-xl border border-border/50 bg-accent/5 hover:bg-accent/10">
+                    <Avatar className="h-10 w-10 text-xs font-bold">
                         <AvatarImage src={photoURL ?? undefined} alt={displayName ?? "User"} />
-                        <AvatarFallback>{userInitial}</AvatarFallback>
+                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-emerald-600 text-white">{userInitial}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col truncate">
-                        <span className="font-semibold text-sm truncate">{displayName}</span>
-                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                        <span className="font-semibold text-sm truncate text-foreground">{displayName}</span>
+                        <span className="text-xs text-muted-foreground truncate font-mono">{user.email}</span>
                     </div>
                 </Link>
             </SheetClose>
+
+            <div className="space-y-1.5 pt-1">
+                <SheetClose asChild>
+                    <Button asChild variant="ghost" size="sm" className="w-full justify-start text-xs font-semibold">
+                        <Link href="/dashboard">
+                            My Profile & Bookings
+                        </Link>
+                    </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Button asChild variant="ghost" size="sm" className="w-full justify-start text-xs font-semibold">
+                        <Link href="/dashboard/memories">
+                            My Memories
+                        </Link>
+                    </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Button asChild variant="ghost" size="sm" className="w-full justify-start text-xs font-semibold">
+                        <Link href="/notifications">
+                            Notifications
+                        </Link>
+                    </Button>
+                </SheetClose>
+            </div>
+
             {isAdmin && (
               <SheetClose asChild>
-                <Button asChild variant="secondary" size="sm" className="w-full">
+                <Button asChild variant="secondary" size="sm" className="w-full text-xs font-semibold">
                     <Link href="/admin/dashboard">
                     <Shield className="mr-2 h-4 w-4" />
                     Admin Dashboard
@@ -116,8 +149,9 @@ function UserProfileSection() {
                 </Button>
               </SheetClose>
             )}
+
             <SheetClose asChild>
-                <Button variant="outline" className="w-full" onClick={handleLogout}>
+                <Button variant="outline" size="sm" className="w-full text-xs font-semibold text-rose-600 dark:text-rose-400" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                 </Button>

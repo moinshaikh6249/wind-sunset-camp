@@ -176,15 +176,19 @@ export default function ReportsPage() {
   )
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
-      <h1 className="text-3xl font-bold tracking-tight text-heading-color animate-text-glow">Reports & Analytics</h1>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
+      <div>
+        <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Reports & Analytics</h1>
+        <p className="text-xs text-muted-foreground">Comprehensive insights into guest bookings, camp demand, and camper growth.</p>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {isLoading ? <ChartSkeletons /> : !hasData ? <EmptyState /> : (
             <>
-                <Card className="glass-card">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><BarChart3 className="text-muted-foreground"/> Most Popular Camps</CardTitle>
-                    <CardDescription>Number of bookings per camp.</CardDescription>
+                <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+                <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base font-bold"><BarChart3 className="h-4 w-4 text-amber-700 dark:text-emerald-400"/> Most Popular Camps</CardTitle>
+                    <CardDescription className="text-xs">Number of bookings per camp.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
@@ -205,10 +209,10 @@ export default function ReportsPage() {
                 </CardContent>
                 </Card>
 
-                <Card className="glass-card">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CalendarClock className="text-muted-foreground"/> Booking Status</CardTitle>
-                    <CardDescription>Distribution of booking statuses.</CardDescription>
+                <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+                <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base font-bold"><CalendarClock className="h-4 w-4 text-amber-700 dark:text-emerald-400"/> Booking Status</CardTitle>
+                    <CardDescription className="text-xs">Distribution of booking statuses.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
@@ -241,10 +245,10 @@ export default function ReportsPage() {
                 </CardContent>
                 </Card>
 
-                <Card className="glass-card md:col-span-2 lg:col-span-1">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><LineChartIcon className="text-muted-foreground"/> User Growth</CardTitle>
-                    <CardDescription>New signups over the last 30 days.</CardDescription>
+                <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl md:col-span-2 lg:col-span-1">
+                <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base font-bold"><LineChartIcon className="h-4 w-4 text-amber-700 dark:text-emerald-400"/> User Growth</CardTitle>
+                    <CardDescription className="text-xs">New signups over the last 30 days.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <ResponsiveContainer width="100%" height={250}>

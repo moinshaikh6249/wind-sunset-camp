@@ -101,28 +101,28 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <Card className="border-white/25 bg-background/70 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
-        <CardHeader className="space-y-3">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-slide-in">
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl rounded-3xl shadow-xl">
+        <CardHeader className="space-y-4 pb-4">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-xl text-foreground">
-              <Bell className="h-5 w-5" />
-              All Notifications
+            <CardTitle className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground font-headline">
+              <Bell className="h-5 w-5 text-amber-700 dark:text-emerald-400" />
+              Notifications Center
             </CardTitle>
-            <span className="rounded-full border border-border/70 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+            <span className="rounded-full border border-amber-500/30 dark:border-emerald-500/30 bg-amber-500/10 dark:bg-emerald-500/10 px-3 py-1 text-xs font-bold text-amber-800 dark:text-emerald-300">
               {unreadCount} unread
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={markAllAsRead} disabled={!notifications.length || unreadCount === 0}>
-              <CheckCheck className="mr-1.5 h-4 w-4" />
+          <div className="flex flex-wrap gap-2.5">
+            <Button type="button" variant="secondary" size="sm" onClick={markAllAsRead} disabled={!notifications.length || unreadCount === 0} className="rounded-full text-xs font-semibold">
+              <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
               Mark all as read
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={clearAll} disabled={!notifications.length}>
-              <Trash2 className="mr-1.5 h-4 w-4" />
+            <Button type="button" variant="outline" size="sm" onClick={clearAll} disabled={!notifications.length} className="rounded-full text-xs font-semibold border-border/40">
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Clear all
             </Button>
-            <Button asChild type="button" variant="ghost" size="sm">
+            <Button asChild type="button" variant="ghost" size="sm" className="rounded-full text-xs font-semibold">
               <Link href={role === "admin" ? "/admin/dashboard" : "/dashboard"}>Back to Dashboard</Link>
             </Button>
           </div>
@@ -130,32 +130,32 @@ export default function NotificationsPage() {
 
         <CardContent>
           {!notifications.length ? (
-            <div className="rounded-2xl border border-dashed border-border/70 px-4 py-10 text-center">
-              <p className="text-sm font-medium text-foreground">No notifications</p>
-              <p className="mt-1 text-xs text-muted-foreground">You are all caught up.</p>
+            <div className="rounded-2xl border border-dashed border-border/50 bg-muted/20 px-4 py-12 text-center">
+              <p className="text-sm font-bold text-foreground">No notifications</p>
+              <p className="mt-1 text-xs text-muted-foreground">You are completely caught up with campsite operations.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {notifications.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => void markAsRead(item.id)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
+                  className={`w-full rounded-2xl border px-4 py-3.5 text-left transition-all duration-300 ${
                     item.isRead
-                      ? "border-border/60 bg-background/45 text-muted-foreground"
-                      : "border-emerald-300/45 bg-emerald-50/55 text-foreground shadow-[0_10px_20px_-18px_rgba(16,185,129,0.55)] dark:bg-emerald-950/20"
+                      ? "border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                      : "border-amber-500/30 dark:border-emerald-500/30 bg-amber-500/10 dark:bg-emerald-500/10 text-foreground shadow-sm hover:scale-[1.01]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2.5">
-                      {!item.isRead ? <Circle className="mt-1 h-2.5 w-2.5 shrink-0 fill-red-500 text-red-500" /> : null}
+                      {!item.isRead ? <Circle className="mt-1 h-2.5 w-2.5 shrink-0 fill-amber-600 dark:fill-emerald-400 text-amber-600 dark:text-emerald-400" /> : null}
                       <div className="min-w-0">
-                        <p className={`truncate text-sm ${item.isRead ? "font-medium" : "font-semibold"}`}>{item.title}</p>
-                        <p className="mt-1 text-xs leading-relaxed">{item.message}</p>
+                        <p className={`truncate text-xs ${item.isRead ? "font-semibold" : "font-extrabold text-foreground"}`}>{item.title}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.message}</p>
                       </div>
                     </div>
-                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       {formatNotificationTime(item.createdAt)}
                     </span>
                   </div>

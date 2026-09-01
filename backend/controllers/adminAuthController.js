@@ -66,7 +66,7 @@ export const loginAdmin = async (req, res) => {
       {
         adminId: admin._id,
         id: admin._id,
-        role: 'admin',
+        role: admin.role || 'admin',
         email: admin.email,
       },
       process.env.JWT_SECRET || getJwtSecret(),

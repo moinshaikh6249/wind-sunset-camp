@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 
-const devJwtSecret = `dev-jwt-${randomBytes(32).toString('hex')}`;
-const devRefreshSecret = `dev-refresh-${randomBytes(32).toString('hex')}`;
+const devJwtSecret = 'wind-sunset-camp-dev-secret-key-fixed-2026';
+const devRefreshSecret = 'wind-sunset-camp-dev-refresh-secret-key-fixed-2026';
 
 export const getJwtSecret = () => {
   if (process.env.JWT_SECRET) {

@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 (async () => {
   const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
-  const dbName = process.env.MONGODB_DB || process.env.MONGO_DB || 'windcamp';
+  const dbName = process.env.MONGODB_DB || process.env.MONGO_DB || 'wind-sunset-camp';
   if (!uri) {
     console.error('Missing MONGODB_URI/MONGO_URI');
     process.exit(1);

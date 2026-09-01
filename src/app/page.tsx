@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, type Variants, useAnimationFrame, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, CalendarDays, MapPin, Star, Tent, Users, Award, ShieldCheck, BadgeDollarSign, Headset, ChevronLeft, ChevronRight, Quote, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CalendarDays, MapPin, Star, Tent, Users, Award, ShieldCheck, BadgeDollarSign, Headset, ChevronLeft, ChevronRight, Quote, CheckCircle2, Volume2, VolumeX } from 'lucide-react';
 
 import api from '@/lib/api';
 import { adaptCamps } from '@/lib/adapters/campAdapter';
@@ -35,95 +35,29 @@ type Memory = {
   userName?: string;
 };
 
-type Testimonial = {
-  id: string;
-  name: string;
-  travelerType: string;
-  location: string;
-  visitDate?: string;
-  avatarUrl?: string;
+type Review = {
+  _id: string;
+  id?: string;
+  name?: string;
+  userName?: string;
+  userId?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    photoURL?: string;
+  };
   rating: number;
-  verified: boolean;
-  quote: string;
+  comment?: string;
+  quote?: string;
+  visible?: boolean;
+  pinned?: boolean;
+  verified?: boolean;
+  createdAt?: string;
 };
 
 const FALLBACK_IMAGE = '/images/light-hero.png';
 const HERO_VIDEO_LIGHT = '/videos/light-hero.mp4.mp4';
 const HERO_VIDEO_DARK = '/videos/dark-hero.mp4.mp4';
-
-const testimonials: Testimonial[] = [
-  {
-    id: 'neha',
-    name: 'Neha Kulkarni',
-    travelerType: 'Friends',
-    location: 'Mumbai',
-    visitDate: 'Jan 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
-    rating: 4.7,
-    verified: true,
-    quote:
-      'Booked this for a quick break with college friends and it worked out really well. Check-in took maybe five minutes, tents were neat, and the late-night chai counter was a nice surprise.',
-  },
-  {
-    id: 'aditya',
-    name: 'Aditya Deshpande',
-    travelerType: 'Couple',
-    location: 'Pune',
-    visitDate: 'Feb 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
-    rating: 4.3,
-    verified: true,
-    quote:
-      'Went with my partner for her birthday weekend. Sunset view was honestly the highlight. Dinner came a little late on Saturday, but staff handled it politely and the rest of the stay was smooth.',
-  },
-  {
-    id: 'sameer',
-    name: 'Sameer Khan',
-    travelerType: 'Solo',
-    location: 'Thane',
-    visitDate: 'Mar 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1542204625-de293a0f5f73?auto=format&fit=crop&w=160&q=80',
-    rating: 4.2,
-    verified: true,
-    quote: 'Solo trip. Quiet mornings near the lake were perfect.',
-  },
-  {
-    id: 'prerna',
-    name: 'Prerna Nair',
-    travelerType: 'Couple',
-    location: 'Nashik',
-    visitDate: 'Feb 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=160&q=80',
-    rating: 4.9,
-    verified: true,
-    quote:
-      'Property has a calm vibe and the organizers keep things moving without rushing anyone. We joined the acoustic session after dinner and ended up staying longer than planned.',
-  },
-  {
-    id: 'rutuja',
-    name: 'Rutuja Patil',
-    travelerType: 'Friends',
-    location: 'Kolhapur',
-    visitDate: 'Jan 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=160&q=80',
-    rating: 4.6,
-    verified: true,
-    quote:
-      'This was our second visit and still felt fresh. Bonfire area was better arranged this time and music volume was balanced, so you could actually talk and chill.',
-  },
-  {
-    id: 'harsh',
-    name: 'Harsh Vora',
-    travelerType: 'Solo',
-    location: 'Ahmedabad',
-    visitDate: 'Mar 2026',
-    avatarUrl: 'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=160&q=80',
-    rating: 5.0,
-    verified: true,
-    quote:
-      'Came here after a rough work month and needed a reset. Staff was kind, food portions were generous, and the sunrise kayaking add-on was worth it. I would come again.',
-  },
-];
 
 const trustStats = [
   {
@@ -269,14 +203,32 @@ const normalizeMemories = (response: any): Memory[] => {
 export default function Home() {
   const [camps, setCamps] = useState<Camp[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewStats, setReviewStats] = useState<{ averageRating: number; total: number }>({ averageRating: 0, total: 0 });
   const [isLoadingCamps, setIsLoadingCamps] = useState(true);
   const [isLoadingMemories, setIsLoadingMemories] = useState(true);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [campFallback, setCampFallback] = useState<Record<string, boolean>>({});
   const [memoryFallback, setMemoryFallback] = useState<Record<string, boolean>>({});
   const [activeReview, setActiveReview] = useState(0);
   const [isActivityDragging, setIsActivityDragging] = useState(false);
   const [isActivityHovered, setIsActivityHovered] = useState(false);
   const reduceMotion = useReducedMotion();
+  const lightVideoRef = useRef<HTMLVideoElement | null>(null);
+  const darkVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isHeroMuted, setIsHeroMuted] = useState(true);
+
+  useEffect(() => {
+    if (lightVideoRef.current) {
+      lightVideoRef.current.muted = isHeroMuted;
+      lightVideoRef.current.volume = isHeroMuted ? 0 : 0.8;
+    }
+    if (darkVideoRef.current) {
+      darkVideoRef.current.muted = isHeroMuted;
+      darkVideoRef.current.volume = isHeroMuted ? 0 : 0.8;
+    }
+  }, [isHeroMuted]);
   const heroRef = useRef<HTMLElement | null>(null);
   const activityTrackRef = useRef<HTMLDivElement | null>(null);
   const activityPointerIdRef = useRef<number | null>(null);
@@ -299,9 +251,10 @@ export default function Home() {
     let mounted = true;
 
     const load = async () => {
-      const [campRes, memoryRes] = await Promise.allSettled([
+      const [campRes, memoryRes, reviewRes] = await Promise.allSettled([
         api.get('/camps'),
         api.get('/memories'),
+        api.get('/reviews'),
       ]);
 
       if (!mounted) return;
@@ -328,6 +281,36 @@ export default function Home() {
         setMemories([]);
       }
       setIsLoadingMemories(false);
+
+      if (reviewRes.status === 'fulfilled') {
+        const rawReviews = reviewRes.value?.reviews || reviewRes.value?.data || [];
+        const approvedReviews = Array.isArray(rawReviews) ? rawReviews.filter((r: any) => r.visible !== false) : [];
+
+        const sortedReviews = approvedReviews.sort((a: any, b: any) => {
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+
+        setReviews(sortedReviews);
+
+        const total = reviewRes.value?.pagination?.total ?? sortedReviews.length;
+        const avg = reviewRes.value?.averageRating ?? (
+          sortedReviews.length > 0
+            ? sortedReviews.reduce((acc: number, r: any) => acc + (Number(r.rating) || 5), 0) / sortedReviews.length
+            : 0
+        );
+
+        setReviewStats({
+          averageRating: Number(Number(avg).toFixed(1)),
+          total: total,
+        });
+        setReviewsError(null);
+      } else {
+        setReviews([]);
+        setReviewsError('Reviews are temporarily unavailable.');
+      }
+      setIsLoadingReviews(false);
     };
 
     load();
@@ -338,12 +321,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (testimonials.length <= 1) return;
+    if (reviews.length <= 1) return;
     const interval = setInterval(() => {
-      setActiveReview((prev) => (prev + 1) % testimonials.length);
-    }, 4500);
+      setActiveReview((prev) => (prev + 1) % reviews.length);
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [reviews.length]);
 
   const featuredCamps = useMemo(() => {
     const featured = camps.filter((camp) => camp.featured);
@@ -414,7 +397,8 @@ export default function Home() {
   };
 
   const getReviewRelativeIndex = (index: number) => {
-    const total = testimonials.length;
+    const total = reviews.length;
+    if (total <= 0) return 0;
     let diff = index - activeReview;
 
     if (diff > total / 2) diff -= total;
@@ -506,7 +490,7 @@ export default function Home() {
   };
 
   return (
-    <main className="scroll-smooth bg-[#f4efe6] text-[#1f3b2f] selection:bg-accent/20 dark:bg-slate-900 dark:text-slate-200">
+    <main className="scroll-smooth bg-background text-foreground selection:bg-accent/20">
       <section ref={heroRef} id="hero" className="relative min-h-screen w-full overflow-hidden">
         <motion.div
           style={{ y: parallaxY }}
@@ -515,6 +499,7 @@ export default function Home() {
           className="absolute inset-0 scale-[1.08]"
         >
           <video
+            ref={lightVideoRef}
             className="h-full w-full object-cover dark:hidden"
             autoPlay
             muted
@@ -525,6 +510,7 @@ export default function Home() {
             <source src={HERO_VIDEO_LIGHT} type="video/mp4" />
           </video>
           <video
+            ref={darkVideoRef}
             className="hidden h-full w-full object-cover dark:block"
             autoPlay
             muted
@@ -577,13 +563,13 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="relative w-full max-w-4xl rounded-3xl border border-white/15 bg-black/28 px-7 py-10 shadow-[0_34px_70px_-42px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:px-10 sm:py-12 md:px-12 md:py-14">
-            <div className="pointer-events-none absolute inset-0 rounded-3xl shadow-[inset_0_0_40px_rgba(255,255,255,0.06)]" />
+          <div className="relative w-full max-w-4xl rounded-3xl glass-hero px-7 py-10 shadow-[0_36px_72px_-36px_rgba(0,0,0,0.9)] sm:px-10 sm:py-12 md:px-12 md:py-14">
+            <div className="pointer-events-none absolute inset-0 rounded-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]" />
             <motion.h1
               variants={reduceMotion ? undefined : heroItem}
               initial={reduceMotion ? { opacity: 1 } : undefined}
               animate={reduceMotion ? { opacity: 1 } : undefined}
-              className="mx-auto max-w-3xl font-sans text-5xl font-bold leading-[1.02] tracking-[0.015em] drop-shadow-[0_8px_24px_rgba(0,0,0,0.52)] sm:text-6xl md:text-7xl"
+              className="mx-auto max-w-3xl font-sans text-5xl font-extrabold leading-[1.02] tracking-[0.012em] drop-shadow-[0_10px_28px_rgba(0,0,0,0.65)] sm:text-6xl md:text-7xl"
             >
               <span className="block bg-gradient-to-b from-white via-[#fff8e6] to-[#fde7c3] bg-clip-text text-transparent">Escape the City.</span>
               <span className="mt-1 block bg-gradient-to-b from-white via-[#fff8e6] to-[#fde7c3] bg-clip-text text-transparent">Discover Pawna Lake.</span>
@@ -593,7 +579,7 @@ export default function Home() {
               variants={reduceMotion ? undefined : heroItem}
               initial={reduceMotion ? { opacity: 1 } : undefined}
               animate={reduceMotion ? { opacity: 1 } : undefined}
-              className="mx-auto mt-7 max-w-2xl text-base font-medium leading-relaxed text-[#d1d5db] sm:text-lg"
+              className="mx-auto mt-7 max-w-2xl text-base font-medium leading-relaxed text-slate-200/90 sm:text-lg"
             >
               Lakeside camping with meals, music and bonfire, starting at ₹999.
             </motion.p>
@@ -604,16 +590,16 @@ export default function Home() {
               animate={reduceMotion ? { opacity: 1 } : undefined}
               className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3"
             >
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/88 shadow-[0_0_20px_rgba(255,255,255,0.1)] backdrop-blur-md sm:text-xs">
-                <Star className="h-4 w-4" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/12 px-3.5 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/90 shadow-[0_0_20px_rgba(255,255,255,0.12)] backdrop-blur-md sm:text-xs">
+                <Star className="h-4 w-4 text-amber-400" aria-hidden />
                 4.8 Rating
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/88 shadow-[0_0_20px_rgba(255,255,255,0.1)] backdrop-blur-md sm:text-xs">
-                <Users className="h-4 w-4" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/12 px-3.5 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/90 shadow-[0_0_20px_rgba(255,255,255,0.12)] backdrop-blur-md sm:text-xs">
+                <Users className="h-4 w-4 text-emerald-400" aria-hidden />
                 500+ Campers
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/88 shadow-[0_0_20px_rgba(255,255,255,0.1)] backdrop-blur-md sm:text-xs">
-                <ShieldCheck className="h-4 w-4" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/12 px-3.5 py-1 text-[11px] font-semibold tracking-[0.14em] text-white/90 shadow-[0_0_20px_rgba(255,255,255,0.12)] backdrop-blur-md sm:text-xs">
+                <ShieldCheck className="h-4 w-4 text-teal-300" aria-hidden />
                 Verified
               </span>
             </motion.div>
@@ -629,7 +615,7 @@ export default function Home() {
                   asChild
                   size="lg"
                   variant="primary"
-                  className="w-full rounded-full px-10 py-3.5 text-base font-semibold shadow-[0_0_30px_rgba(245,158,11,0.42)] transition-all duration-300 hover:translate-y-[-1px] sm:w-auto"
+                  className="w-full rounded-full px-10 py-3.5 text-base font-bold tracking-wide shadow-[0_0_32px_rgba(245,158,11,0.48)] transition-all duration-300 hover:scale-[1.03] ios-press sm:w-auto"
                 >
                   <Link href="/booking">Check Availability</Link>
                 </Button>
@@ -639,7 +625,7 @@ export default function Home() {
                   asChild
                   size="lg"
                   variant="glass"
-                  className="w-full rounded-full border-white/30 bg-white/10 px-10 py-3.5 text-base font-semibold text-white backdrop-blur-lg transition-all duration-300 hover:bg-white/18 sm:w-auto"
+                  className="w-full rounded-full border-white/35 bg-white/12 px-10 py-3.5 text-base font-semibold text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/22 hover:scale-[1.03] ios-press sm:w-auto"
                 >
                   <Link href="/camps">View Camps</Link>
                 </Button>
@@ -657,11 +643,37 @@ export default function Home() {
             <span className="text-xl leading-none">↓</span>
             <span className="mt-1 text-[10px] font-semibold tracking-[0.28em]">SCROLL</span>
           </motion.a>
+
+          <motion.div
+            initial={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
+            animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.6 }}
+            className="absolute bottom-6 right-6 z-20"
+          >
+            <button
+              type="button"
+              onClick={() => setIsHeroMuted((prev) => !prev)}
+              className="group flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-white/40 hover:bg-black/60 shadow-lg"
+              aria-label={isHeroMuted ? "Unmute Ambient Sound" : "Mute Ambient Sound"}
+            >
+              {isHeroMuted ? (
+                <>
+                  <VolumeX className="h-4 w-4 text-white/80 transition-transform group-hover:scale-110" />
+                  <span className="hidden sm:inline">Sound Off</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-4 w-4 text-emerald-400 transition-transform group-hover:scale-110" />
+                  <span className="hidden sm:inline">Sound On</span>
+                </>
+              )}
+            </button>
+          </motion.div>
         </motion.div>
       </section>
 
-      <section id="trust-strip" className="border-y border-[#e6d8c0] bg-[#fbf5ea]/90 py-2.5 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-6 text-center text-sm font-semibold text-[#3e5f50] dark:text-slate-200 md:px-10">
+      <section id="trust-strip" className="border-y border-border/60 bg-card/60 py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-6 text-center text-sm font-semibold text-primary dark:text-foreground md:px-10">
           {trustStrip.map((item) => (
             <span key={item} className="tracking-wide">
               {item}
@@ -1000,100 +1012,137 @@ export default function Home() {
           <div className="mb-12 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#b45309]">Reviews</p>
             <h2 className="mt-4 font-sans text-3xl font-bold tracking-tight text-[#143023] sm:text-4xl dark:text-slate-100">What Guests Are Saying</h2>
-            <p className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-[#e3d8c7] bg-white/75 px-4 py-1.5 text-xs font-semibold text-[#3f594c] shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
-              <Star className="h-3.5 w-3.5 fill-[#f59e0b] text-[#f59e0b]" />
-              4.8/5 from 500+ campers
-            </p>
+            
+            {reviewStats.total > 0 ? (
+              <p className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-[#e3d8c7] bg-white/75 px-4 py-1.5 text-xs font-semibold text-[#3f594c] shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
+                <Star className="h-3.5 w-3.5 fill-[#f59e0b] text-[#f59e0b]" />
+                {`${reviewStats.averageRating.toFixed(1)}/5 from ${reviewStats.total} ${reviewStats.total === 1 ? 'camper' : 'campers'}`}
+              </p>
+            ) : (
+              <p className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-[#e3d8c7] bg-white/75 px-4 py-1.5 text-xs font-semibold text-[#3f594c] shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
+                <Star className="h-3.5 w-3.5 fill-[#f59e0b] text-[#f59e0b]" />
+                Real stays. Real experiences.
+              </p>
+            )}
           </div>
 
-          <div className="relative mx-auto mt-10 h-[28rem] w-full max-w-6xl overflow-hidden">
-            {testimonials.map((review, index) => {
-              const relative = getReviewRelativeIndex(index);
-              const abs = Math.abs(relative);
-
-              if (abs > 2) return null;
-
-              return (
-                <motion.article
-                  key={`${review.id}-${activeReview}`}
-                  initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
-                  animate={
-                    reduceMotion
-                      ? undefined
-                      : {
-                          x: relative * 330,
-                          scale: abs === 0 ? 1 : abs === 1 ? 0.92 : 0.84,
-                          opacity: abs === 0 ? 1 : abs === 1 ? 0.66 : 0.34,
-                          filter: abs === 0 ? 'blur(0px)' : abs === 1 ? 'blur(1px)' : 'blur(2px)',
-                        }
-                  }
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ zIndex: 20 - abs }}
-                  className="absolute left-1/2 top-1/2 w-[92%] max-w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-[#e3d9c8] bg-white/80 p-7 shadow-[0_14px_40px_rgba(50,35,14,0.1)] backdrop-blur-md dark:border-white/10 dark:bg-slate-800/55 dark:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.75)]"
-                >
-                  <div className="inline-flex items-center gap-1 rounded-full border border-[#f59e0b]/30 bg-[#fff4df] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#b45309] dark:border-[#4ade80]/35 dark:bg-[#4ade80]/10 dark:text-[#86efac]">
-                    {abs === 0 ? 'Featured Review' : 'Guest Review'}
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-3">
-                    <Avatar className={`${abs === 0 ? 'h-14 w-14' : 'h-11 w-11'} border border-white/40 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.45)]`}>
-                      <AvatarImage src={review.avatarUrl} alt={review.name} />
-                      <AvatarFallback className="bg-gradient-to-br from-[#f59e0b] to-[#2f5d50] text-sm font-bold text-white">
-                        {review.name
-                          .split(' ')
-                          .map((chunk) => chunk[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <p className="font-semibold text-[#163528] dark:text-slate-100">{review.name}</p>
-                      <p className="text-xs uppercase tracking-[0.16em] text-[#6b7f72] dark:text-slate-400">
-                        {review.travelerType} • {review.location}
-                        {review.visitDate ? ` • ${review.visitDate}` : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={`${review.id}-star-${i}`}
-                        className={`h-4 w-4 ${i < Math.round(review.rating) ? 'fill-[#f59e0b] text-[#f59e0b] drop-shadow-[0_0_6px_rgba(245,158,11,0.55)]' : 'text-[#d1d5db]'}`}
-                      />
-                    ))}
-                    <span className="text-sm font-semibold text-[#355446] dark:text-slate-200">{review.rating.toFixed(1)}</span>
-                    {review.verified ? (
-                      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#d9cbb4] bg-[#f9f2e5] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3f5f50] dark:border-slate-600 dark:bg-slate-700/70 dark:text-slate-200">
-                        <CheckCircle2 className="h-3 w-3 text-[#16a34a]" />
-                        ✔ Verified Stay
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className={`${abs === 0 ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[#2f4a3d] dark:text-slate-300`}>
-                    {review.quote}
-                  </p>
-                </motion.article>
-              );
-            })}
-
-            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
-              <button
-                aria-label="Previous review"
-                onClick={() => setActiveReview((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d4c6af] bg-white/85 text-[#2f4a3d] transition hover:bg-white dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                aria-label="Next review"
-                onClick={() => setActiveReview((prev) => (prev + 1) % testimonials.length)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d4c6af] bg-white/85 text-[#2f4a3d] transition hover:bg-white dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {isLoadingReviews ? (
+            <p className="text-center text-sm text-[#4b6355] dark:text-slate-300">Loading guest reviews...</p>
+          ) : reviewsError ? (
+            <p className="text-center text-sm text-rose-600 dark:text-rose-400">{reviewsError}</p>
+          ) : reviews.length === 0 ? (
+            <div className="mx-auto max-w-md rounded-2xl border border-[#e3d9c8] bg-white/80 p-8 text-center shadow-md dark:border-white/10 dark:bg-slate-800/60">
+              <p className="text-base font-semibold text-[#163528] dark:text-slate-100">No approved guest reviews yet.</p>
+              <p className="mt-2 text-sm text-[#51685b] dark:text-slate-300">Be the first to share your experience with us!</p>
+              <div className="mt-6">
+                <Button asChild variant="primary" className="rounded-full px-6 py-2.5 text-sm font-semibold">
+                  <Link href="/reviews">Leave a Review</Link>
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative mx-auto mt-10 h-[28rem] w-full max-w-6xl overflow-hidden">
+              {reviews.map((review, index) => {
+                const relative = getReviewRelativeIndex(index);
+                const abs = Math.abs(relative);
+
+                if (abs > 2 && reviews.length > 3) return null;
+
+                const reviewerName = review.userName || review.name || (review.userId ? `${review.userId.firstName || ''} ${review.userId.lastName || ''}`.trim() : '') || 'Guest Camper';
+                const avatar = review.userId?.photoURL || (review as any).avatarUrl || null;
+                const reviewComment = review.comment || review.quote || '';
+                const ratingValue = Number(review.rating) || 5;
+                const reviewId = review._id || review.id || `review-${index}`;
+                const isVerified = Boolean(review.verified);
+
+                return (
+                  <motion.article
+                    key={`${reviewId}-${activeReview}`}
+                    initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
+                    animate={
+                      reduceMotion
+                        ? undefined
+                        : {
+                            x: relative * 330,
+                            scale: abs === 0 ? 1 : abs === 1 ? 0.92 : 0.84,
+                            opacity: abs === 0 ? 1 : abs === 1 ? 0.66 : 0.34,
+                            filter: abs === 0 ? 'blur(0px)' : abs === 1 ? 'blur(1px)' : 'blur(2px)',
+                          }
+                    }
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ zIndex: 20 - abs }}
+                    className="absolute left-1/2 top-1/2 w-[92%] max-w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-[#e3d9c8] bg-white/80 p-7 shadow-[0_14px_40px_rgba(50,35,14,0.1)] backdrop-blur-md dark:border-white/10 dark:bg-slate-800/55 dark:shadow-[0_16px_36px_-24px_rgba(15,23,42,0.75)]"
+                  >
+                    <div className="inline-flex items-center gap-1 rounded-full border border-[#f59e0b]/30 bg-[#fff4df] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#b45309] dark:border-[#4ade80]/35 dark:bg-[#4ade80]/10 dark:text-[#86efac]">
+                      {review.pinned || abs === 0 ? 'Featured Review' : 'Guest Review'}
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-3">
+                      <Avatar className={`${abs === 0 ? 'h-14 w-14' : 'h-11 w-11'} border border-white/40 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.45)]`}>
+                        {avatar ? <AvatarImage src={avatar} alt={reviewerName} /> : null}
+                        <AvatarFallback className="bg-gradient-to-br from-[#f59e0b] to-[#2f5d50] text-sm font-bold text-white">
+                          {reviewerName
+                            .split(' ')
+                            .map((chunk) => chunk[0])
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .join('') || 'GC'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="font-semibold text-[#163528] dark:text-slate-100">{reviewerName}</p>
+                        {((review as any).travelerType || (review as any).location || review.createdAt) && (
+                          <p className="text-xs uppercase tracking-[0.16em] text-[#6b7f72] dark:text-slate-400">
+                            {[(review as any).travelerType, (review as any).location, review.createdAt ? formatDate(review.createdAt) : null]
+                              .filter(Boolean)
+                              .join(' • ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={`${reviewId}-star-${i}`}
+                          className={`h-4 w-4 ${i < Math.round(ratingValue) ? 'fill-[#f59e0b] text-[#f59e0b] drop-shadow-[0_0_6px_rgba(245,158,11,0.55)]' : 'text-[#d1d5db]'}`}
+                        />
+                      ))}
+                      <span className="text-sm font-semibold text-[#355446] dark:text-slate-200">{ratingValue.toFixed(1)}</span>
+                      {isVerified ? (
+                        <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#d9cbb4] bg-[#f9f2e5] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3f5f50] dark:border-slate-600 dark:bg-slate-700/70 dark:text-slate-200">
+                          <CheckCircle2 className="h-3 w-3 text-[#16a34a]" />
+                          ✔ Verified Stay
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className={`${abs === 0 ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[#2f4a3d] dark:text-slate-300`}>
+                      {reviewComment}
+                    </p>
+                  </motion.article>
+                );
+              })}
+
+              {reviews.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+                  <button
+                    aria-label="Previous review"
+                    onClick={() => setActiveReview((prev) => (prev - 1 + reviews.length) % reviews.length)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d4c6af] bg-white/85 text-[#2f4a3d] transition hover:bg-white dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="Next review"
+                    onClick={() => setActiveReview((prev) => (prev + 1) % reviews.length)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d4c6af] bg-white/85 text-[#2f4a3d] transition hover:bg-white dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="mt-8 text-center">
             <Button asChild variant="secondary" className="rounded-full px-6">

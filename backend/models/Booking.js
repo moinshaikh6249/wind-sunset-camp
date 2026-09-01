@@ -53,7 +53,7 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending'],
+      enum: ['pending', 'paid'],
       default: 'pending',
       index: true,
     },
@@ -63,6 +63,10 @@ const bookingSchema = new mongoose.Schema(
       default: 'cash',
       trim: true,
       index: true,
+    },
+    paidAt: {
+      type: Date,
+      default: null,
     },
     createdAt: {
       type: Date,

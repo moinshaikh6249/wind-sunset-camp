@@ -10,6 +10,7 @@ router.get('/bookings', bookingController.getAllBookings);
 router.get('/bookings/:id', bookingController.getBookingById);
 router.patch('/bookings/:id/approve', bookingController.approveBooking);
 router.patch('/bookings/:id/reject', bookingController.rejectBooking);
+router.patch('/bookings/:id/mark-paid', bookingController.markBookingAsPaid);
 router.put('/bookings/:id/status', bookingController.updateBookingStatus);
 router.delete('/bookings/:id', bookingController.deleteBooking);
 

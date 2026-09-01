@@ -11,7 +11,6 @@ const campSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
     date: {
       type: Date,

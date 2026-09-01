@@ -1109,3 +1109,77 @@ export const deleteMessage = async (req, res) => {
   }
 };
 
+export const markMessagesAsReadBulk = async (req, res) => {
+  try {
+    const { ids, read = true } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No message IDs provided',
+      });
+    }
+
+    const validIds = ids.filter((id) => isValidObjectId(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid message IDs provided',
+      });
+    }
+
+    const result = await Message.updateMany(
+      { _id: { $in: validIds } },
+      { $set: { read: Boolean(read) } }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} messages marked as read`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error('Bulk mark messages as read error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update messages read status',
+    });
+  }
+};
+
+export const deleteMessagesBulk = async (req, res) => {
+  try {
+    const ids = req.body?.ids || req.query?.ids;
+    const parsedIds = Array.isArray(ids) ? ids : (typeof ids === 'string' ? ids.split(',') : []);
+
+    if (parsedIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No message IDs provided',
+      });
+    }
+
+    const validIds = parsedIds.filter((id) => isValidObjectId(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid message IDs provided',
+      });
+    }
+
+    const result = await Message.deleteMany({ _id: { $in: validIds } });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} messages deleted`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Bulk delete messages error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete messages',
+    });
+  }
+};
+
+

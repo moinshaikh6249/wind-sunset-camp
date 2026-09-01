@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Camp from '../models/Camp.js';
+import Booking from '../models/Booking.js';
 import logger from '../utils/logger.js';
 
 const isAbsoluteUrl = (value = '') => /^https?:\/\//i.test(String(value));
@@ -426,6 +427,60 @@ export const deleteCamp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete camp',
+    });
+  }
+};
+
+export const getCampAvailability = async (req, res) => {
+  try {
+    if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid camp id',
+      });
+    }
+
+    const camp = await Camp.findById(req.params.id);
+
+    if (!camp) {
+      return res.status(404).json({
+        success: false,
+        message: 'Camp not found',
+      });
+    }
+
+    const capacity = typeof camp.capacity === 'number' && camp.capacity > 0 ? camp.capacity : 20;
+
+    const existingBookings = await Booking.find({
+      campId: camp._id,
+      status: { $in: ['pending', 'approved'] },
+    }).select('numberOfPeople');
+
+    const occupied = existingBookings.reduce((sum, b) => sum + (b.numberOfPeople || 0), 0);
+    const remaining = Math.max(0, capacity - occupied);
+
+    let status = 'available';
+    if (remaining <= 0) {
+      status = 'fully_booked';
+    } else if (remaining <= Math.max(2, Math.ceil(capacity * 0.2))) {
+      status = 'limited';
+    }
+
+    res.json({
+      success: true,
+      campId: camp._id,
+      campName: camp.name,
+      capacity,
+      occupied,
+      remaining,
+      status,
+      date: camp.date || null,
+    });
+  } catch (error) {
+    console.error('Get camp availability error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch camp availability',
     });
   }
 };

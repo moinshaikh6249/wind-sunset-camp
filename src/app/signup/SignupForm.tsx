@@ -22,6 +22,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
+import { useAuth } from "@/context/AuthContext";
+
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -32,6 +34,7 @@ const formSchema = z.object({
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,8 +62,11 @@ export function SignupForm() {
       });
 
       // Store the token
+      localStorage.setItem('token', response.token);
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
+
+      await refreshUser();
 
       toast({
         title: "Account Created!",

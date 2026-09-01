@@ -1,6 +1,6 @@
 'use client';
 
-import Image from "next/image";
+import Image from "@/components/ui/safe-image";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,3 +52,4 @@ export function SafeImage({
     />
   );
 }
+

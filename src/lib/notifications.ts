@@ -1,6 +1,8 @@
 export type NotificationType =
   | "new_booking_created"
   | "pending_booking_approval"
+  | "booking_approved"
+  | "booking_rejected"
   | "booking_cancelled"
   | "payment_received"
   | "new_review_submitted"

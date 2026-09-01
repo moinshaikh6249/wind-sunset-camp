@@ -1,9 +1,19 @@
+import mongoose from 'mongoose';
 import GalleryImage from '../models/GalleryImage.js';
 
 export const getAllGalleryImages = async (req, res) => {
   try {
     const { featured, category, page = 1, limit = 12 } = req.query;
     const skip = (page - 1) * limit;
+
+    if (mongoose.connection.readyState < 1) {
+      return res.status(200).json({
+        success: true,
+        images: [],
+        pagination: { total: 0, page: parseInt(page), limit: parseInt(limit), pages: 0 },
+        message: 'Database authenticating or offline.',
+      });
+    }
 
     const query = { isPublic: true };
     if (featured === 'true') {

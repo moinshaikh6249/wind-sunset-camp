@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 import { io as socketClient } from 'socket.io-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -423,6 +423,7 @@ export default function AdminDashboardPage() {
     },
   }), [chartColors]);
 
+  const adminFirstName = user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin';
   const displayName = user?.firstName || user?.email ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email : 'Admin';
 
   const todayStats = useMemo(() => {
@@ -482,25 +483,25 @@ export default function AdminDashboardPage() {
   return (
     <div className="flex-1 space-y-7 p-4 pt-6 md:p-8">
       {liveNotification ? (
-        <div className="fixed right-4 top-20 z-50 w-[min(92vw,360px)] rounded-2xl border border-emerald-400/35 bg-slate-950/95 p-4 text-slate-100 shadow-[0_0_35px_rgba(16,185,129,0.35)] backdrop-blur-lg">
+        <div className="fixed right-4 top-20 z-50 w-[min(92vw,360px)] rounded-2xl border border-emerald-500/40 bg-background/95 p-4 text-foreground shadow-[0_20px_40px_-15px_rgba(34,197,94,0.35)] backdrop-blur-xl">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">New Booking Received</p>
-              <p className="mt-2 text-sm text-slate-200">
-                <span className="font-semibold text-white">Name:</span> {liveNotification.name}
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">New Booking Received</p>
+              <p className="mt-2 text-xs text-foreground">
+                <span className="font-semibold">Name:</span> {liveNotification.name}
               </p>
-              <p className="mt-1 text-sm text-slate-200">
-                <span className="font-semibold text-white">Camp:</span> {liveNotification.camp}
+              <p className="mt-1 text-xs text-foreground">
+                <span className="font-semibold">Camp:</span> {liveNotification.camp}
               </p>
-              <p className="mt-1 text-sm text-slate-200">
-                <span className="font-semibold text-white">People:</span> {liveNotification.people}
+              <p className="mt-1 text-xs text-foreground">
+                <span className="font-semibold">People:</span> {liveNotification.people}
               </p>
             </div>
             <button
               type="button"
               aria-label="Close notification"
               onClick={() => setLiveNotification(null)}
-              className="rounded-full border border-emerald-300/30 bg-emerald-500/10 p-1.5 text-emerald-200 transition-colors hover:bg-emerald-500/20"
+              className="rounded-full border border-emerald-500/30 bg-emerald-500/10 p-1.5 text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-500/20"
             >
               <X className="h-4 w-4" />
             </button>
@@ -508,19 +509,39 @@ export default function AdminDashboardPage() {
         </div>
       ) : null}
 
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/65 p-6 shadow-[0_0_45px_rgba(34,197,94,0.2)] before:pointer-events-none before:absolute before:-left-16 before:top-1/2 before:h-40 before:w-40 before:-translate-y-1/2 before:rounded-full before:bg-emerald-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-20 after:top-0 after:h-44 after:w-44 after:rounded-full after:bg-orange-400/14 after:blur-3xl">
-        <h2 className="text-2xl font-black tracking-tight text-slate-100 sm:text-3xl">Welcome back, {displayName}!</h2>
-        <p className="mt-2 text-sm text-slate-300/90">
-          Here&apos;s a live overview of bookings, engagement, and growth across Wind &amp; Sunset Camp.
-        </p>
+      {/* Welcome Hero Banner */}
+      <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/75 dark:bg-card/45 p-6 md:p-8 shadow-xl backdrop-blur-xl before:pointer-events-none before:absolute before:-left-16 before:top-1/2 before:h-40 before:w-40 before:-translate-y-1/2 before:rounded-full before:bg-emerald-500/10 before:blur-3xl after:pointer-events-none after:absolute after:-right-20 after:top-0 after:h-44 after:w-44 after:rounded-full after:bg-amber-500/10 after:blur-3xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Camp Operations • Live
+            </div>
+            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl font-headline">
+              Good day, {adminFirstName} 👋
+            </h2>
+            <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground">
+              Here&apos;s what&apos;s happening across Wind &amp; Sunset Camp operations today.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="outline" className="rounded-full border-border/40 text-xs font-semibold">
+              <Link href="/admin/camps">Manage Camps</Link>
+            </Button>
+            <Button asChild className="rounded-full bg-gradient-to-r from-amber-500 to-emerald-700 text-white text-xs font-semibold shadow-md hover:scale-105 transition-all">
+              <Link href="/admin/bookings">View Bookings</Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
+      {/* KPI Cards Grid */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard
           title="Total Bookings"
           value={(analytics?.totals?.totalBookings ?? 0).toLocaleString()}
           icon={CalendarCheck}
-          description="Total number of bookings"
+          description="Total bookings recorded"
           isLoading={isLoading}
           color="green"
         />
@@ -528,7 +549,7 @@ export default function AdminDashboardPage() {
           title="Total Users"
           value={(analytics?.totals?.totalUsers ?? 0).toLocaleString()}
           icon={Users}
-          description="Total registered users"
+          description="Registered guest accounts"
           isLoading={isLoading}
           color="blue"
         />
@@ -536,7 +557,7 @@ export default function AdminDashboardPage() {
           title="Total Camps"
           value={(analytics?.totals?.totalCamps ?? 0).toLocaleString()}
           icon={Activity}
-          description="Total listed camps"
+          description="Listed camp properties"
           isLoading={isLoading}
           color="purple"
         />
@@ -544,7 +565,7 @@ export default function AdminDashboardPage() {
           title="Pending Bookings"
           value={(analytics?.totals?.pendingBookings ?? 0).toLocaleString()}
           icon={Clock3}
-          description="Awaiting admin confirmation"
+          description="Awaiting status confirmation"
           isLoading={isLoading}
           color="orange"
         />
@@ -552,7 +573,7 @@ export default function AdminDashboardPage() {
           title="Total Reviews"
           value={(analytics?.totals?.totalReviews ?? 0).toLocaleString()}
           icon={Star}
-          description="Camp feedback submitted"
+          description="Customer reviews submitted"
           isLoading={isLoading}
           color="purple"
         />
@@ -566,79 +587,83 @@ export default function AdminDashboardPage() {
         />
       </div>
 
+      {/* Recent Bookings & Quick Actions Section */}
       <div className="grid gap-6 xl:grid-cols-12">
-        <Card className="glass-card xl:col-span-7">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 xl:col-span-7">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle>Recent Bookings</CardTitle>
-              <CardDescription>Latest booking requests with quick visibility into status and people count.</CardDescription>
+              <CardTitle className="text-base font-bold tracking-tight">Recent Bookings</CardTitle>
+              <CardDescription className="text-xs">Latest booking requests with guest details and status.</CardDescription>
             </div>
-            <Button asChild variant="outline" size="sm" className="border-primary/30 bg-primary/5 hover:bg-primary/10">
+            <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold border-border/40">
               <Link href="/admin/bookings">Open all</Link>
             </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full rounded-2xl shimmer-bg" />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Camp</TableHead>
-                    <TableHead>People</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentBookings.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No recent bookings available.
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/40 hover:bg-transparent">
+                      <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Guest</TableHead>
+                      <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Camp</TableHead>
+                      <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Guests</TableHead>
+                      <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                      <TableHead className="text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">Action</TableHead>
                     </TableRow>
-                  ) : (
-                    recentBookings.map((booking) => {
-                      const statusUi = getStatusUi(booking.status);
+                  </TableHeader>
+                  <TableBody>
+                    {recentBookings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                          No recent bookings available.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      recentBookings.map((booking) => {
+                        const statusUi = getStatusUi(booking.status);
 
-                      return (
-                        <TableRow key={booking._id} className="border-white/10 transition-all duration-300 hover:bg-gradient-to-r hover:from-emerald-500/10 hover:to-orange-500/5 hover:shadow-[inset_0_0_0_1px_rgba(34,197,94,0.15)]">
-                          <TableCell>
-                            <div className="font-medium text-foreground">{booking.fullName}</div>
-                            <p className="text-xs text-muted-foreground">{booking.email}</p>
-                          </TableCell>
-                          <TableCell className="font-medium">{booking.campName}</TableCell>
-                          <TableCell>{booking.numberOfPeople}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusUi.className}`}>
-                              {statusUi.label}
-                            </span>
-                          </TableCell>
-                          <TableCell>{formatDate(booking.createdAt)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild size="sm" variant="ghost" className="h-8 px-2 text-primary hover:text-primary">
-                              <Link href="/admin/bookings">
-                                <Eye className="mr-1 h-4 w-4" />
-                                View
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
+                        return (
+                          <TableRow key={booking._id} className="border-border/30 transition-colors hover:bg-muted/40">
+                            <TableCell className="py-3">
+                              <div className="font-semibold text-xs text-foreground">{booking.fullName}</div>
+                              <p className="text-[11px] text-muted-foreground font-mono">{booking.email}</p>
+                            </TableCell>
+                            <TableCell className="font-medium text-xs py-3">{booking.campName}</TableCell>
+                            <TableCell className="text-xs py-3">{booking.numberOfPeople}</TableCell>
+                            <TableCell className="py-3">
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusUi.className}`}>
+                                {statusUi.label}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground py-3">{formatDate(booking.createdAt)}</TableCell>
+                            <TableCell className="text-right py-3">
+                              <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs font-medium text-amber-700 dark:text-emerald-400 hover:bg-muted">
+                                <Link href="/admin/bookings">
+                                  <Eye className="mr-1 h-3.5 w-3.5" />
+                                  View
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="glass-card xl:col-span-5">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Most-used admin workflows for faster operations.</CardDescription>
+        {/* Quick Actions Panel */}
+        <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 xl:col-span-5">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-bold tracking-tight">Quick Actions</CardTitle>
+            <CardDescription className="text-xs">Most-used campsite administration workflows.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {quickActions.map((action) => {
@@ -648,15 +673,15 @@ export default function AdminDashboardPage() {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className={`group relative overflow-hidden rounded-xl border border-emerald-400/20 bg-gradient-to-br from-slate-950/70 via-slate-900/70 to-emerald-950/35 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/45 hover:shadow-[0_16px_36px_-20px_rgba(34,197,94,0.85)] before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(120deg,rgba(34,197,94,0.12),transparent_45%,rgba(249,115,22,0.14))] before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${action.glow}`}
+                  className="group relative overflow-hidden rounded-2xl border border-border/40 bg-muted/30 p-4 transition-all duration-300 hover:border-amber-500/30 dark:hover:border-emerald-500/30 hover:shadow-lg ios-press hover:-translate-y-0.5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h4 className="font-semibold text-slate-100">{action.label}</h4>
-                      <p className="mt-1 text-xs text-slate-300/80">{action.description}</p>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">{action.label}</h4>
+                      <p className="mt-1 text-[11px] text-muted-foreground">{action.description}</p>
                     </div>
-                    <div className="rounded-lg border border-emerald-400/25 bg-gradient-to-br from-emerald-500/20 to-orange-500/20 p-2 text-emerald-200 transition-transform duration-300 group-hover:scale-110 group-hover:text-orange-200">
-                      <Icon className="h-4 w-4" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-500/20 dark:border-emerald-500/20 bg-amber-500/10 dark:bg-emerald-500/15 text-amber-700 dark:text-emerald-300 transition-transform duration-300 group-hover:scale-110">
+                      <Icon className="h-4.5 w-4.5" />
                     </div>
                   </div>
                 </Link>
@@ -692,40 +717,40 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-emerald-300">
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                   <CalendarDays className="h-3.5 w-3.5" />
                   Today Bookings
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.bookingsCount}</p>
+                <p className="mt-2 text-2xl font-extrabold text-foreground font-headline">{todayStats.bookingsCount}</p>
               </div>
-              <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-cyan-300">
+              <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-3.5">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
                   <IndianRupee className="h-3.5 w-3.5" />
                   Today Revenue
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-100">{formatCurrency(todayStats.revenue)}</p>
+                <p className="mt-2 text-2xl font-extrabold text-foreground font-headline">{formatCurrency(todayStats.revenue)}</p>
               </div>
-              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-violet-300">
+              <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-3.5">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
                   <Tent className="h-3.5 w-3.5" />
                   Active Camps
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.activeCamps}</p>
+                <p className="mt-2 text-2xl font-extrabold text-foreground font-headline">{todayStats.activeCamps}</p>
               </div>
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-amber-300">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                   <Clock3 className="h-3.5 w-3.5" />
                   Pending Bookings
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-100">{todayStats.pendingBookings}</p>
+                <p className="mt-2 text-2xl font-extrabold text-foreground font-headline">{todayStats.pendingBookings}</p>
               </div>
             </div>
 
-            <div className="rounded-xl border border-primary/15 bg-slate-950/35 p-4">
+            <div className="rounded-2xl border border-border/40 bg-muted/30 p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-slate-100">Recent Bookings Snapshot</h4>
-                <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-primary hover:text-primary">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Recent Bookings Snapshot</h4>
+                <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs font-medium text-amber-700 dark:text-emerald-400 hover:bg-muted">
                   <Link href="/admin/bookings">View all</Link>
                 </Button>
               </div>
@@ -734,12 +759,12 @@ export default function AdminDashboardPage() {
                   const statusUi = getStatusUi(booking.status);
 
                   return (
-                    <div key={`snapshot-${booking._id}`} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+                    <div key={`snapshot-${booking._id}`} className="flex items-center justify-between rounded-xl border border-border/40 bg-background/60 px-3 py-2">
                       <div>
-                        <p className="text-sm font-medium text-foreground">{booking.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{booking.campName} • {formatDate(booking.createdAt)}</p>
+                        <p className="text-xs font-semibold text-foreground">{booking.fullName}</p>
+                        <p className="text-[11px] text-muted-foreground">{booking.campName} • {formatDate(booking.createdAt)}</p>
                       </div>
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusUi.className}`}>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusUi.className}`}>
                         {statusUi.label}
                       </span>
                     </div>
@@ -751,33 +776,33 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-primary/15 bg-slate-950/35 p-4">
-              <h4 className="mb-3 text-sm font-semibold text-slate-100">Pending Actions</h4>
+            <div className="rounded-2xl border border-border/40 bg-muted/30 p-4">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Pending Actions</h4>
               <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2">
-                  <div className="flex items-center gap-2 text-sm text-amber-200">
+                <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
                     <Clock3 className="h-4 w-4" />
                     Pending approvals
                   </div>
-                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-100">
+                  <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-900 dark:text-amber-100">
                     {pendingActionCounts.pendingApprovals}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-2">
-                  <div className="flex items-center gap-2 text-sm text-violet-200">
+                <div className="flex items-center justify-between rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-purple-800 dark:text-purple-300">
                     <Star className="h-4 w-4" />
                     New reviews
                   </div>
-                  <span className="rounded-full bg-violet-400/20 px-2 py-0.5 text-xs font-bold text-violet-100">
+                  <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-bold text-purple-900 dark:text-purple-100">
                     {pendingActionCounts.newReviews}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2">
-                  <div className="flex items-center gap-2 text-sm text-rose-200">
+                <div className="flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-rose-800 dark:text-rose-300">
                     <BadgeAlert className="h-4 w-4" />
                     Refund requests
                   </div>
-                  <span className="rounded-full bg-rose-400/20 px-2 py-0.5 text-xs font-bold text-rose-100">
+                  <span className="rounded-full bg-rose-500/20 px-2.5 py-0.5 text-xs font-bold text-rose-900 dark:text-rose-100">
                     {pendingActionCounts.refundRequests}
                   </span>
                 </div>
@@ -819,36 +844,36 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card md:col-span-2 xl:col-span-6">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 md:col-span-2 xl:col-span-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle>Recent Messages</CardTitle>
-              <CardDescription>Latest 5 customer inquiries from the contact form.</CardDescription>
+              <CardTitle className="text-base font-bold tracking-tight">Recent Messages</CardTitle>
+              <CardDescription className="text-xs">Latest customer inquiries from the contact form.</CardDescription>
             </div>
-            <Button asChild variant="outline" size="sm" className="border-primary/30 bg-primary/5 hover:bg-primary/10">
+            <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold border-border/40">
               <Link href="/admin/messages">Open inbox</Link>
             </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-56 w-full" />
+              <Skeleton className="h-56 w-full rounded-2xl shimmer-bg" />
             ) : recentMessages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No recent messages found.</p>
+              <p className="text-xs text-muted-foreground">No recent messages found.</p>
             ) : (
               <div className="space-y-3">
                 {recentMessages.map((message) => (
                   <div
                     key={message._id}
-                    className="rounded-xl border border-primary/15 bg-slate-950/30 p-3 transition-all duration-300 hover:border-primary/35 hover:shadow-[0_0_24px_rgba(34,197,94,0.15)]"
+                    className="rounded-2xl border border-border/40 bg-muted/30 p-3.5 transition-all duration-300 hover:border-amber-500/30 dark:hover:border-emerald-500/30 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-slate-100">{message.name}</p>
-                        <p className="text-xs text-slate-300/80">{message.email}</p>
+                        <p className="font-semibold text-xs text-foreground">{message.name}</p>
+                        <p className="text-[11px] text-muted-foreground font-mono">{message.email}</p>
                       </div>
-                      <span className="text-xs text-muted-foreground">{formatDate(message.timestamp || message.createdAt)}</span>
+                      <span className="text-[11px] text-muted-foreground">{formatDate(message.timestamp || message.createdAt)}</span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-300/85">{message.message}</p>
+                    <p className="mt-2 line-clamp-2 text-xs text-foreground/80 leading-relaxed">{message.message}</p>
                   </div>
                 ))}
               </div>
@@ -857,43 +882,44 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-        <Card className="glass-card">
-        <CardHeader className="flex flex-row items-center justify-between">
+      {/* Customer Memories Section */}
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
           <div>
-            <CardTitle>Customer Memories</CardTitle>
-            <CardDescription>Photos approved from customers shown in the homepage memories section.</CardDescription>
+            <CardTitle className="text-base font-bold tracking-tight">Customer Memories</CardTitle>
+            <CardDescription className="text-xs">Approved camper photos displayed in the homepage memory gallery.</CardDescription>
           </div>
-          <Button asChild variant="outline" size="sm" className="border-primary/30 bg-primary/5 hover:bg-primary/10">
+          <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold border-border/40">
             <Link href="/admin/memories">Manage Memories</Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-5">
-          {memoryError ? <p className="text-sm text-destructive">{memoryError}</p> : null}
+          {memoryError ? <p className="text-xs text-rose-600 dark:text-rose-400">{memoryError}</p> : null}
 
           {memories.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No customer memories yet.</p>
+            <p className="text-xs text-muted-foreground py-4">No customer memories uploaded yet.</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {memories.map((memory) => (
-                <div key={memory._id} className="overflow-hidden rounded-xl border border-primary/20 bg-slate-950/35">
-                  <div className="relative aspect-[4/5]">
+                <div key={memory._id} className="group overflow-hidden rounded-2xl border border-border/40 bg-muted/20 transition-all duration-300 hover:border-amber-500/30 dark:hover:border-emerald-500/30 hover:shadow-lg">
+                  <div className="relative aspect-[4/5] overflow-hidden">
                     <Image
                       src={memory.imageUrl}
                       alt={memory.caption || 'Customer memory'}
                       fill
                       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                      className="object-cover"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex items-start justify-between gap-3 p-3">
-                    <p className="line-clamp-2 text-xs text-slate-300">{memory.caption || 'No caption'}</p>
+                    <p className="line-clamp-2 text-xs font-medium text-foreground">{memory.caption || 'No caption'}</p>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleMemoryDelete(memory._id)}
-                      className="h-8 w-8 shrink-0 text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                      className="h-7 w-7 shrink-0 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>

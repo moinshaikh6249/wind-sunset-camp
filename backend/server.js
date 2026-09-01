@@ -1,103 +1,44 @@
-import express from "express"
-import mongoose from "mongoose"
-import cors from "cors"
 import dotenv from "dotenv"
 import { createServer } from "http"
 import { Server } from "socket.io"
-import helmet from "helmet"
-import compression from "compression"
-import rateLimit from "express-rate-limit"
-import cookieParser from "cookie-parser"
+import path from "path"
+import { fileURLToPath } from "url"
+import mongoose from "mongoose"
 
-import routes from "./routes/index.js"
+import app from "./app.js"
+import connectDB from "./config/database.js"
 import { createDefaultAdmin } from "./utils/createDefaultAdmin.js"
-import { sanitizeRequestInput } from "./middleware/security.js"
 import logger from "./utils/logger.js"
+import { setIO } from "./utils/socket.js"
 
-dotenv.config()
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-// ✅ ENV CHECK
-const requiredEnvVars = ["JWT_SECRET", "JWT_REFRESH_SECRET"]
-if (process.env.NODE_ENV === "production") {
-	requiredEnvVars.forEach((varName) => {
-		if (!process.env[varName]) {
-			logger.error(`Missing env variable: ${varName}`)
-			process.exit(1)
-		}
-	})
-}
+dotenv.config({ path: path.resolve(__dirname, ".env") })
+dotenv.config({ path: path.resolve(__dirname, "../.env") })
 
-const app = express()
 const server = createServer(app)
 export let io = null
 
-// ✅ CORS
 const allowedOrigins = [
 	"http://localhost:3000",
+	"http://localhost:3001",
 	process.env.FRONTEND_URL,
 	process.env.CORS_ORIGINS,
 ].filter(Boolean)
 
-app.use(
-	cors({
-		origin: (origin, cb) => {
-			if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
-			cb(new Error("Not allowed by CORS"))
-		},
-		credentials: true,
-	})
-)
-
-// ✅ SECURITY + MIDDLEWARE
-app.use(helmet())
-app.use(compression())
-app.use(express.json({ limit: "100kb" }))
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
-app.use(sanitizeRequestInput)
-
-// ✅ LOGGING
-app.use((req, res, next) => {
-	const start = Date.now()
-	res.on("finish", () => {
-		logger.info("HTTP request", {
-			method: req.method,
-			path: req.originalUrl,
-			status: res.statusCode,
-			time: Date.now() - start,
-		})
-	})
-	next()
-})
-
-// ✅ RATE LIMIT
-app.use(
-	"/api/auth/login",
-	rateLimit({ windowMs: 60000, max: 10, skipSuccessfulRequests: true })
-)
-
-app.use(
-	"/api/admin/login",
-	rateLimit({ windowMs: 60000, max: 10, skipSuccessfulRequests: true })
-)
-
-app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }))
-
-// ✅ ROOT ROUTE (IMPORTANT FIX)
-app.get("/", (req, res) => {
-	res.send("API is running 🚀")
-})
-
-// ✅ ROUTES
-app.use("/api", routes)
-
-// ✅ START SERVER
 const startServer = async () => {
 	try {
-		await mongoose.connect(process.env.MONGO_URI)
-		logger.info("MongoDB connected")
+		const conn = await connectDB().catch((err) => {
+			logger.error("Initial MongoDB connection deferred", { error: err.message })
+			return null
+		})
 
-		await createDefaultAdmin()
+		if (conn && mongoose.connection.readyState >= 1) {
+			await createDefaultAdmin().catch((err) => {
+				logger.error("Default admin creation skipped", { error: err.message })
+			})
+		}
 
 		io = new Server(server, {
 			cors: {
@@ -105,17 +46,18 @@ const startServer = async () => {
 				credentials: true,
 			},
 		})
+		setIO(io)
 
 		io.on("connection", () => {
 			logger.info("Socket connected")
 		})
 
-		server.listen(process.env.PORT || 10000, () => {
-			logger.info("Server running", { port: process.env.PORT || 10000 })
+		const port = process.env.PORT || 5000
+		server.listen(port, () => {
+			logger.info("Server running", { port })
 		})
 	} catch (err) {
-		logger.error("Startup failed", { error: err.message })
-		process.exit(1)
+		logger.error("Server startup encountered issue", { error: err.message })
 	}
 }
 

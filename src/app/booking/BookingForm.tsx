@@ -30,6 +30,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
 import { buildBookingWhatsappUrl } from "@/lib/whatsapp";
+import { AvailabilityIndicator, AvailabilityStatus } from "@/components/booking/AvailabilityIndicator";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -66,6 +67,10 @@ function BookingFormComponent() {
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [upcomingCamps, setUpcomingCamps] = useState<Camp[]>([]);
   const [campsLoading, setCampsLoading] = useState(true);
+
+  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>(null);
+  const [remainingSpots, setRemainingSpots] = useState<number | null>(null);
+  const [capacity, setCapacity] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -122,6 +127,38 @@ function BookingFormComponent() {
       numberOfPeople: 1,
     },
   });
+
+  const selectedCampId = form.watch("campId");
+
+  const fetchAvailability = React.useCallback(async (campId: string) => {
+    if (!campId || campId === "loading" || campId === "no-camps") {
+      setAvailabilityStatus(null);
+      setRemainingSpots(null);
+      setCapacity(null);
+      return;
+    }
+
+    try {
+      setAvailabilityStatus("loading");
+      const response = await api.get(`/camps/${campId}/availability`);
+      const data = response?.data || response;
+      if (data?.success) {
+        setAvailabilityStatus(data.status as AvailabilityStatus);
+        setRemainingSpots(typeof data.remaining === "number" ? data.remaining : null);
+        setCapacity(typeof data.capacity === "number" ? data.capacity : null);
+      } else {
+        setAvailabilityStatus("error");
+      }
+    } catch (err) {
+      setAvailabilityStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedCampId) {
+      void fetchAvailability(selectedCampId);
+    }
+  }, [selectedCampId, fetchAvailability]);
 
   useEffect(() => {
     if (user) {
@@ -214,21 +251,21 @@ function BookingFormComponent() {
   const isReadonly = !!user;
 
   return (
-    <Card>
-       <CardHeader>
-        <CardTitle className="font-headline text-2xl text-gradient">Booking Details</CardTitle>
+    <Card className="border border-border/40 bg-card/90 dark:bg-card/70 backdrop-blur-xl shadow-2xl rounded-3xl">
+      <CardHeader className="pb-4 border-b border-border/40">
+        <CardTitle className="font-headline text-2xl text-foreground">Guest Information</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Appleseed" {...field} readOnly={isReadonly} />
+                    <Input placeholder="Jane Appleseed" {...field} readOnly={isReadonly} className="text-xs rounded-xl" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -239,25 +276,25 @@ function BookingFormComponent() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="jane@example.com" {...field} readOnly={isReadonly} />
+                    <Input placeholder="jane@example.com" {...field} readOnly={isReadonly} className="text-xs rounded-xl" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your contact number" {...field} />
+                    <Input placeholder="Your contact number" {...field} className="text-xs rounded-xl" />
                   </FormControl>
-                   <FormDescription>
-                    We'll use this to contact you about your booking.
+                  <FormDescription className="text-[11px] text-muted-foreground">
+                    We'll send your booking confirmation & Pass via WhatsApp / SMS.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -268,10 +305,10 @@ function BookingFormComponent() {
               name="campId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Which camp are you interested in?</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Which camp are you interested in?</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full text-xs rounded-xl">
                         <SelectValue placeholder="Select a camp" />
                       </SelectTrigger>
                     </FormControl>
@@ -293,9 +330,21 @@ function BookingFormComponent() {
                 </FormItem>
               )}
             />
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Payment Method</p>
-              <p className="text-sm text-muted-foreground">Pay at Camp</p>
+
+            {selectedCampId && selectedCampId !== "loading" && selectedCampId !== "no-camps" && (
+              <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+                <AvailabilityIndicator
+                  status={availabilityStatus}
+                  remaining={remainingSpots}
+                  capacity={capacity}
+                  onRetry={() => fetchAvailability(selectedCampId)}
+                />
+              </div>
+            )}
+
+            <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-1">
+              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Payment Option</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Pay at Campsite (Cash / UPI upon arrival)</p>
             </div>
 
             <FormField
@@ -303,20 +352,27 @@ function BookingFormComponent() {
               name="numberOfPeople"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of People</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Number of People</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" {...field} />
+                    <Input type="number" min="1" {...field} className="text-xs rounded-xl" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="space-y-4">
-              <Button type="submit" size="lg" className="w-full btn-glow" disabled={form.formState.isSubmitting || !isFormReady}>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full btn-glow text-xs font-bold rounded-2xl py-6"
+                disabled={form.formState.isSubmitting || !isFormReady || availabilityStatus === "fully_booked"}
+              >
                 {form.formState.isSubmitting
                   ? "Processing..."
-                  : "Reserve Camp"}
+                  : availabilityStatus === "fully_booked"
+                    ? "Fully Booked — Select Another Date/Camp"
+                    : "Reserve Camp"}
               </Button>
             </div>
           </form>

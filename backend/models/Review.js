@@ -68,6 +68,7 @@ const reviewSchema = new mongoose.Schema(
 
 reviewSchema.index({ visible: 1, pinned: -1, createdAt: -1 });
 reviewSchema.index({ rating: 1, visible: 1 });
+reviewSchema.index({ campId: 1, visible: 1, createdAt: -1 });
 
 const Review = mongoose.model('Review', reviewSchema);
 

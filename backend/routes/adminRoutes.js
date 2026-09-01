@@ -19,6 +19,9 @@ router.put('/reviews/:id/pin', adminController.updateReviewPin);
 router.delete('/reviews/:id', adminController.deleteReview);
 
 // Messages
+router.put('/messages/bulk-read', adminController.markMessagesAsReadBulk);
+router.delete('/messages/bulk-delete', adminController.deleteMessagesBulk);
+router.post('/messages/bulk-delete', adminController.deleteMessagesBulk);
 router.get('/messages', adminController.getAllMessages);
 router.get('/messages/:id', adminController.getMessageById);
 router.put('/messages/:id/read', adminController.markMessageAsRead);

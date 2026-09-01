@@ -50,8 +50,16 @@ export function AppSidebar() {
 
   if (pathname?.startsWith('/admin')) return null;
 
-  const displayName = user?.email?.split("@")[0] || "";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const firstName = user?.firstName || '';
+  const lastName = user?.lastName || '';
+  const displayName =
+    `${firstName} ${lastName}`.trim() || user?.displayName || user?.email?.split('@')[0] || 'User';
+
+  const initials = (
+    firstName && lastName
+      ? `${firstName[0]}${lastName[0]}`
+      : displayName.slice(0, 2)
+  ).toUpperCase();
 
   return (
     <Sidebar
@@ -105,6 +113,7 @@ export function AppSidebar() {
               </Avatar>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+                <p className="truncate text-[11px] text-muted-foreground font-mono">{user.email}</p>
               </div>
             </div>
 
@@ -146,7 +155,7 @@ export function AppSidebar() {
 
               <Button
                 variant="outline"
-                className="h-9 w-full justify-start gap-2 rounded-lg border-sidebar-border/75 bg-background/60"
+                className="h-9 w-full justify-start gap-2 rounded-lg border-sidebar-border/75 bg-background/60 text-rose-600 dark:text-rose-400"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
@@ -160,7 +169,7 @@ export function AppSidebar() {
               <Link href="/login" onClick={handleLinkClick}>Login</Link>
             </Button>
             <Button asChild variant="outline" className="h-9 w-full rounded-lg border-sidebar-border/75 bg-background/60">
-              <Link href="/register" onClick={handleLinkClick}>Sign Up</Link>
+              <Link href="/signup" onClick={handleLinkClick}>Sign Up</Link>
             </Button>
           </div>
         )}

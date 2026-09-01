@@ -302,20 +302,23 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Users & Accounts</h1>
+          <p className="text-xs text-muted-foreground">Manage user permissions, admin roles, and registered guest profiles.</p>
+        </div>
         <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
-              <UserPlus className="mr-2 h-4 w-4" />
+            <Button size="sm" className="rounded-full bg-gradient-to-r from-amber-500 to-emerald-700 text-white shadow-md hover:scale-105 transition-all text-xs font-semibold">
+              <UserPlus className="mr-1.5 h-4 w-4" />
               Add User
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="border-border/40 bg-background/95 backdrop-blur-xl rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-base font-bold">Add New User</DialogTitle>
+              <DialogDescription className="text-xs">
                 Create a new user account and add them to the database.
               </DialogDescription>
             </DialogHeader>
@@ -324,26 +327,28 @@ export default function UsersPage() {
         </Dialog>
       </div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>Manage all registered users in your application.</CardDescription>
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-bold">Registered Users</CardTitle>
+          <CardDescription className="text-xs">Manage user accounts, roles, and authorization status.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Role</TableHead>
-                <TableHead className="hidden md:table-cell">Joined</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>{renderTableBody()}</TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/40 hover:bg-transparent">
+                  <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">User</TableHead>
+                  <TableHead className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-bold uppercase tracking-wider text-muted-foreground">Role</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-bold uppercase tracking-wider text-muted-foreground">Joined</TableHead>
+                  <TableHead className="text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{renderTableBody()}</TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { format } from 'date-fns';
 
@@ -26,9 +26,9 @@ import {
 } from '@/components/ui/table';
 
 const statusStyles = {
-  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-300 dark:border-amber-700',
-  approved: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 border-green-300 dark:border-green-700',
-  rejected: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-300 dark:border-red-700',
+  pending: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30',
+  approved: 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
+  rejected: 'bg-rose-500/10 text-rose-800 dark:text-rose-300 border-rose-500/30',
 };
 
 export default function AdminMemoriesPage() {
@@ -84,15 +84,18 @@ export default function AdminMemoriesPage() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold md:text-2xl">Customer Memories</h1>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Customer Memories</h1>
+          <p className="text-xs text-muted-foreground">Moderate and approve camper photo submissions for public showcase.</p>
+        </div>
       </div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Manage Customer Memories</CardTitle>
-          <CardDescription>Approve, reject, or delete user-submitted memories.</CardDescription>
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-bold">Memory Moderation</CardTitle>
+          <CardDescription className="text-xs">Approve or reject user photos before they appear on the campsite website.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

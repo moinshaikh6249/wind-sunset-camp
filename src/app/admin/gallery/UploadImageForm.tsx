@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect } from "react";
 import { LoaderCircle, Upload, ImageOff } from "lucide-react";
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 type UploadImageFormProps = {

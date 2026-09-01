@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState, useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/safe-image";
 
 const formSchema = z.object({
   name: z.string().min(3, "Camp name is required."),

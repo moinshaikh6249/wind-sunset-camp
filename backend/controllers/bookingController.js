@@ -5,8 +5,14 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import mongoose from 'mongoose';
 import { validateBookingData } from '../utils/validators.js';
-import { sendBookingCreatedNotifications, sendBookingStatusNotifications } from '../utils/sendEmail.js';
-import { io } from '../server.js';
+import {
+  sendBookingCreatedNotifications,
+  sendBookingStatusNotifications,
+  sendBookingApprovedNotification,
+  sendBookingRejectedOrCancelledNotification,
+  sendPaymentReceivedNotification,
+} from '../utils/sendEmail.js';
+import { getIO } from '../utils/socket.js';
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || '').trim());
 
@@ -39,6 +45,14 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    const numPeople = parseInt(numberOfPeople, 10);
+    if (isNaN(numPeople) || numPeople < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Number of people must be at least 1',
+      });
+    }
+
     // Get camp details to get camp name
     const camp = await Camp.findById(campId);
     if (!camp) {
@@ -46,6 +60,36 @@ export const createBooking = async (req, res) => {
         success: false,
         message: 'Camp not found',
       });
+    }
+
+    if (camp.status === 'inactive' || camp.isActive === false) {
+      return res.status(400).json({
+        success: false,
+        message: 'This camp is currently unavailable for booking',
+      });
+    }
+
+    // Enforce camp capacity if specified
+    if (typeof camp.capacity === 'number' && camp.capacity > 0) {
+      const existingBookings = await Booking.find({
+        campId: camp._id,
+        status: { $in: ['pending', 'approved'] },
+      }).select('numberOfPeople');
+
+      const currentBookedCount = existingBookings.reduce(
+        (sum, b) => sum + (b.numberOfPeople || 0),
+        0
+      );
+
+      const availableCapacity = camp.capacity - currentBookedCount;
+
+      if (numPeople > availableCapacity) {
+        return res.status(400).json({
+          success: false,
+          message: `Booking exceeds available capacity for this camp. Available spots: ${Math.max(0, availableCapacity)}. Requested: ${numPeople}.`,
+          availableCapacity: Math.max(0, availableCapacity),
+        });
+      }
     }
 
     const booking = new Booking({
@@ -76,7 +120,7 @@ export const createBooking = async (req, res) => {
     }
 
     try {
-      io?.emit('newBooking', {
+      getIO()?.emit('newBooking', {
         name: booking.fullName,
         camp: booking.campName,
         people: booking.numberOfPeople,
@@ -195,6 +239,22 @@ export const deleteMyBooking = async (req, res) => {
     }
 
     await Booking.findByIdAndDelete(id);
+
+    try {
+      await Notification.create({
+        type: 'booking_cancelled',
+        title: 'Booking Cancelled',
+        message: `Booking for ${booking.fullName} (${booking.campName}) was cancelled by the user.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (booking_cancelled):', notificationError.message);
+    }
+
+    try {
+      await sendBookingRejectedOrCancelledNotification(booking, 'cancelled');
+    } catch (emailError) {
+      console.error('Booking cancelled email error:', emailError.message);
+    }
 
     res.json({
       success: true,
@@ -361,7 +421,28 @@ export const approveBooking = async (req, res) => {
     await booking.save();
 
     try {
-      await sendBookingStatusNotifications(booking, 'approved');
+      await Notification.create({
+        type: 'booking_approved',
+        title: 'Booking Approved',
+        message: `Booking for ${booking.fullName} (${booking.campName}) has been approved.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (booking_approved):', notificationError.message);
+    }
+
+    try {
+      io?.emit('bookingStatusChanged', {
+        bookingId: booking._id,
+        status: 'approved',
+        campName: booking.campName,
+        fullName: booking.fullName,
+      });
+    } catch (socketError) {
+      console.error('Realtime booking status error:', socketError.message);
+    }
+
+    try {
+      await sendBookingApprovedNotification(booking);
     } catch (emailError) {
       console.error('Booking approved email error:', emailError.message);
     }
@@ -403,7 +484,28 @@ export const rejectBooking = async (req, res) => {
     await booking.save();
 
     try {
-      await sendBookingStatusNotifications(booking, 'rejected');
+      await Notification.create({
+        type: 'booking_rejected',
+        title: 'Booking Rejected',
+        message: `Booking for ${booking.fullName} (${booking.campName}) was rejected.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (booking_rejected):', notificationError.message);
+    }
+
+    try {
+      io?.emit('bookingStatusChanged', {
+        bookingId: booking._id,
+        status: 'rejected',
+        campName: booking.campName,
+        fullName: booking.fullName,
+      });
+    } catch (socketError) {
+      console.error('Realtime booking status error:', socketError.message);
+    }
+
+    try {
+      await sendBookingRejectedOrCancelledNotification(booking, 'rejected');
     } catch (emailError) {
       console.error('Booking rejected email error:', emailError.message);
     }
@@ -440,6 +542,22 @@ export const deleteBooking = async (req, res) => {
       });
     }
 
+    try {
+      await Notification.create({
+        type: 'booking_cancelled',
+        title: 'Booking Deleted',
+        message: `Booking for ${booking.fullName} (${booking.campName}) was removed by admin.`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (booking_deleted):', notificationError.message);
+    }
+
+    try {
+      await sendBookingRejectedOrCancelledNotification(booking, 'cancelled');
+    } catch (emailError) {
+      console.error('Booking deleted email error:', emailError.message);
+    }
+
     res.json({
       success: true,
       message: 'Booking deleted successfully',
@@ -452,4 +570,79 @@ export const deleteBooking = async (req, res) => {
     });
   }
 };
+
+export const markBookingAsPaid = async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ID',
+      });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+    }
+
+    // Idempotency check: If already paid, return safe response without duplicate side effects
+    if (booking.paymentStatus === 'paid') {
+      return res.json({
+        success: true,
+        message: 'Booking is already marked as paid',
+        booking,
+      });
+    }
+
+    booking.paymentStatus = 'paid';
+    booking.paidAt = new Date();
+    booking.updatedAt = new Date();
+    await booking.save();
+
+    try {
+      await Notification.create({
+        type: 'payment_received',
+        title: 'Payment Received',
+        message: `Payment of ₹${booking.totalPrice || 0} received for ${booking.fullName}'s booking (${booking.campName}).`,
+      });
+    } catch (notificationError) {
+      console.error('Notification create error (payment_received):', notificationError.message);
+    }
+
+    try {
+      io?.emit('paymentReceived', {
+        bookingId: booking._id,
+        fullName: booking.fullName,
+        campName: booking.campName,
+        amount: booking.totalPrice,
+        paidAt: booking.paidAt,
+      });
+    } catch (socketError) {
+      console.error('Realtime payment notification error:', socketError.message);
+    }
+
+    try {
+      await sendPaymentReceivedNotification(booking);
+    } catch (emailError) {
+      console.error('Payment received email error:', emailError.message);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Payment status updated to paid',
+      booking,
+    });
+  } catch (error) {
+    console.error('Mark booking as paid error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update payment status',
+    });
+  }
+};
+
 

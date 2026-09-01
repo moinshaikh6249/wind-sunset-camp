@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
+import api from "@/lib/api";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -70,23 +71,10 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (loginMode === "admin") {
-        const adminRes = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(values),
-        });
+        const response = await api.post('/admin/login', values);
 
-        const adminText = await adminRes.text();
-        let response: any = {};
-        try {
-          response = adminText ? JSON.parse(adminText) : {};
-        } catch {
-          response = { error: 'Invalid JSON response' };
-        }
-
-        if (!adminRes.ok || !response?.token) {
-          throw new Error(response?.message || response?.error || 'Invalid email or password');
+        if (!response?.token) {
+          throw new Error(response?.message || 'Invalid email or password');
         }
 
         localStorage.setItem("adminToken", response.token);
@@ -103,23 +91,10 @@ export function LoginForm() {
 
         router.push("/admin/dashboard");
       } else {
-        const loginRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(values),
-        });
+        const response = await api.post('/auth/login', values);
 
-        const loginText = await loginRes.text();
-        let response: any = {};
-        try {
-          response = loginText ? JSON.parse(loginText) : {};
-        } catch {
-          response = { error: 'Invalid JSON response' };
-        }
-
-        if (!loginRes.ok || !response?.token) {
-          throw new Error(response?.message || response?.error || 'Invalid email or password');
+        if (!response?.token) {
+          throw new Error(response?.message || 'Invalid email or password');
         }
 
         localStorage.setItem("token", response.token);
@@ -149,8 +124,8 @@ export function LoginForm() {
     <Card>
       <CardContent className="p-6">
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <button onClick={() => setLoginMode("user")}>User</button>
-          <button onClick={() => setLoginMode("admin")}>Admin</button>
+          <button type="button" onClick={() => setLoginMode("user")}>User</button>
+          <button type="button" onClick={() => setLoginMode("admin")}>Admin</button>
         </div>
 
         {message && <p className="mb-2 text-sm">{message}</p>}

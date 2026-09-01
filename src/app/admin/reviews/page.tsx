@@ -187,17 +187,20 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
-         <h1 className="text-lg font-semibold md:text-2xl">Manage Reviews</h1>
+         <div>
+           <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Reviews Moderation</h1>
+           <p className="text-xs text-muted-foreground">Approve, pin, or hide genuine guest reviews for public display.</p>
+         </div>
       </div>
-       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>
-            All Submitted Reviews
+       <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-bold">
+            Submitted Reviews
           </CardTitle>
-          <CardDescription>
-            Moderate user-submitted reviews. Pinned reviews appear first on the public page.
+          <CardDescription className="text-xs">
+            Moderate guest feedback. Pinned reviews appear highlighted on the homepage.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -210,14 +213,14 @@ export default function ReviewsPage() {
                   </>
               )}
                {!isLoading && filteredReviews.length === 0 && (
-                <div className="col-span-full text-center text-muted-foreground py-10 bg-card/50 rounded-lg">
-                  <MessageSquare className="mx-auto h-12 w-12 mb-4" />
-                  <p className="text-lg font-semibold">No reviews yet 🌄</p>
-                  <p className="text-sm">User reviews will appear here once submitted.</p>
+                <div className="col-span-full text-center text-muted-foreground py-10 bg-muted/20 rounded-2xl border border-border/40">
+                  <MessageSquare className="mx-auto h-12 w-12 mb-4 text-muted-foreground/60" />
+                  <p className="text-base font-bold text-foreground">No reviews found 🌄</p>
+                  <p className="text-xs text-muted-foreground">Guest reviews will appear here once submitted.</p>
                 </div>
               )}
               {!isLoading && filteredReviews.map((review) => (
-                  <div key={review.id} className="review-card bg-card/80 dark:bg-card/70 backdrop-blur-sm rounded-2xl p-5 shadow-md border border-border/50 hover:border-primary/50 hover:shadow-primary/10 transition-all duration-300 group">
+                  <div key={review.id} className="review-card bg-muted/20 rounded-2xl p-5 border border-border/40 hover:border-amber-500/30 dark:hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-foreground">{review.name}</h3>

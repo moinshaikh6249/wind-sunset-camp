@@ -1,6 +1,6 @@
 import { MongoClient, Db } from "mongodb";
 
-const dbName = process.env.MONGODB_DB || process.env.MONGO_DB || "windcamp";
+const dbName = process.env.MONGODB_DB || process.env.MONGO_DB || "wind-sunset-camp";
 
 type GlobalMongo = typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>;

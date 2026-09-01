@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"FRONTEND,BACKEND\" -c \"cyan.bold,magenta.bold\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "next dev",
+    "dev:backend": "npm --prefix backend run dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint --max-warnings=0",
@@ -68,6 +70,7 @@
     "@types/node": "20.14.12",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.3",
+    "concurrently": "^10.0.4",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.35",
     "postcss": "8.4.39",

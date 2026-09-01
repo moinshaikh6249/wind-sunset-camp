@@ -61,20 +61,8 @@ export const uploadUserMemory = async (payload: FormData) => {
 };
 
 export const getApprovedMemories = async (): Promise<MemoryItem[]> => {
-  const res = await fetch('/api/memories', {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  const text = await res.text();
-  let data: any = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { success: false, data: [] };
-  }
-
-  return normalizeMemoryListResponse(data);
+  const response = await api.get('/memories');
+  return normalizeMemoryListResponse(response);
 };
 
 export const getMyMemories = async (): Promise<MemoryItem[]> => {

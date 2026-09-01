@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Trash2, LoaderCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/api';
-import Image from 'next/image';
+import Image from '@/components/ui/safe-image';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,7 +59,7 @@ export default function GalleryPage() {
       const data = await api.get<{ success: boolean; images: any[] }>('/gallery');
       const mappedImages: GalleryImage[] = (data.images || []).map((img: any) => ({
         id: img._id || img.id,
-        imageUrl: img.imageUrl || img.image || '/images/placeholder.jpg',
+        imageUrl: img.imageUrl || img.image || '/images/light-hero.png',
         description: img.description,
         imageHint: img.imageHint,
         createdAt: img.createdAt,
@@ -127,7 +127,7 @@ export default function GalleryPage() {
        <Card key={image.id} className="group relative overflow-hidden rounded-2xl">
             <div className="w-full aspect-video relative">
                 <Image
-                  src={image?.imageUrl || "/images/placeholder.jpg"}
+                  src={image?.imageUrl || "/images/light-hero.png"}
                     alt={image.description}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -174,17 +174,20 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-fade-slide-in">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 animate-fade-slide-in">
       <div className="flex items-center justify-between">
-         <h1 className="text-lg font-semibold md:text-2xl">Gallery</h1>
-<UploadImageForm onSuccess={fetchGalleryImages} />
+         <div>
+           <h1 className="text-xl font-extrabold tracking-tight md:text-2xl font-headline text-foreground">Gallery Management</h1>
+           <p className="text-xs text-muted-foreground">Upload and manage official camp photos shown across the site.</p>
+         </div>
+         <UploadImageForm onSuccess={fetchGalleryImages} />
       </div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Manage Gallery</CardTitle>
-          <CardDescription>
-            Add, view, and delete images from your public gallery. Changes here will be reflected live for users.
+      <Card className="glass-card border border-border/40 bg-card/65 dark:bg-card/45 backdrop-blur-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-bold">Photo Gallery</CardTitle>
+          <CardDescription className="text-xs">
+            Curate high-definition camp images, sunset views, and amenities.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,66 +1,40 @@
+import { Card } from "@/components/ui/card";
+import { ShieldCheck } from "lucide-react";
+
 export default function TermsOfServicePage() {
   return (
-    <section className="max-w-[800px] mx-auto py-20 px-6">
-      <h1 className="text-4xl font-bold mb-10">Terms of Service</h1>
-
-      <div className="space-y-10 text-muted-foreground leading-relaxed">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Introduction</h2>
-          <p>
-            These Terms of Service govern access to and use of our platform. By using the website,
-            you agree to comply with these terms and all applicable laws and regulations.
+    <div className="bg-background woody-texture-background min-h-screen pb-20">
+      <div className="container mx-auto px-4 py-12 md:py-16 max-w-4xl space-y-8">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-300">
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-500" /> Guest Agreement
+          </div>
+          <h1 className="font-headline text-4xl sm:text-5xl text-foreground font-extrabold tracking-tight">
+            Terms of Service
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
+            Operational policies and rules for guests staying at Wind & Sunset Camp.
           </p>
         </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">User Responsibilities</h2>
-          <p>
-            Users are responsible for providing accurate information, maintaining account security,
-            and using the platform in a lawful, respectful, and non-disruptive manner.
-          </p>
-        </div>
+        <Card className="border border-border/40 bg-card/80 dark:bg-card/50 backdrop-blur-xl shadow-xl rounded-3xl p-6 sm:p-10 space-y-8">
+          <div className="space-y-8 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-foreground font-headline">1. Campsite Rules & Conduct</h2>
+              <p>
+                Guests are requested to respect nature, fellow campers, and campsite quiet hours (11:00 PM onwards). Plastic littering along Pawna Lake is strictly prohibited.
+              </p>
+            </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Booking Policy</h2>
-          <p>
-            All bookings are subject to availability and confirmation. Submitted booking details must
-            be accurate, and users should review confirmation information carefully.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Cancellation Policy</h2>
-          <p>
-            Cancellation and rescheduling requests are handled according to the active cancellation
-            rules at the time of booking and may vary by camp schedule or operational requirements.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Payments</h2>
-          <p>
-            Payment terms, due dates, and accepted methods are communicated during booking. Users
-            are responsible for ensuring timely and valid payment completion.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Liability Disclaimer</h2>
-          <p>
-            Services are provided on an as-available basis. While we strive for reliability and
-            safety, we do not guarantee uninterrupted availability and disclaim liability to the
-            fullest extent permitted by applicable law.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Changes to Terms</h2>
-          <p>
-            We may update these terms from time to time. Continued use of the website after updates
-            become effective constitutes acceptance of the revised terms.
-          </p>
-        </div>
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-foreground font-headline">2. Reservation Confirmation</h2>
+              <p>
+                A booking is confirmed once approved or reserved through our online system. Present your digital Booking Pass upon arrival at check-in.
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
-    </section>
+    </div>
   );
 }

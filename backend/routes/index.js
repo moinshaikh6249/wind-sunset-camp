@@ -16,6 +16,7 @@ import adminGalleryRoutes from './adminGalleryRoutes.js';
 import adminMemoryRoutes from './adminMemoryRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
+import testCleanupRoutes from './testCleanupRoutes.js';
 
 const router = express.Router();
 
@@ -35,5 +36,6 @@ router.use('/admin', adminGalleryRoutes);
 router.use('/admin', adminMemoryRoutes);
 router.use('/admin', adminRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/test-cleanup', testCleanupRoutes);
 
 export default router;

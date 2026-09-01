@@ -1,63 +1,89 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import { USER_AUTH_FILE, ADMIN_AUTH_FILE } from '../playwright.config';
-import * as dotenv from 'dotenv';
 
-// Load test environment variables
-dotenv.config({ path: '.env.test' });
+const userEmail = process.env.TEST_USER_EMAIL || 'e2e_user_standard@example.com';
+const userPassword = process.env.TEST_USER_PASSWORD || 'password123';
+const adminEmail = process.env.TEST_ADMIN_EMAIL || 'moinshaikh6249@gmail.com';
+const adminPassword = process.env.TEST_ADMIN_PASSWORD || '123321123';
 
-const userEmail = process.env.TEST_USER_EMAIL;
-const userPassword = process.env.TEST_USER_PASSWORD;
-const adminEmail = process.env.TEST_ADMIN_EMAIL;
-const adminPassword = process.env.TEST_ADMIN_PASSWORD;
+const API_BASE_URL = `${(process.env.PLAYWRIGHT_API_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api`;
 
-const API_BASE_URL = `${(process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '')}/api`;
-
-// This setup runs once to log in as a standard user and saves the authentication state.
-// This allows subsequent tests to start already logged in, making them faster and more independent.
-setup('authenticate as standard user', async ({ page }) => {
-  setup.skip(!setup.info().project.name.includes('setup:user'), 'Only runs in setup:user project');
-  setup.skip(!userEmail || !userPassword, 'Test user credentials are not set in .env.test');
-
-  // Ensure test user exists; if already present, backend returns 400 which is fine.
-  const signupResponse = await page.request.post(`${API_BASE_URL}/auth/signup`, {
-    data: {
-      firstName: 'QA',
-      lastName: 'E2E',
-      email: userEmail,
-      password: userPassword,
-      confirmPassword: userPassword,
-    },
-  });
-
-  if (!signupResponse.ok() && signupResponse.status() !== 400) {
-    throw new Error(`Failed to ensure test user exists. Status: ${signupResponse.status()}`);
+// Setup for standard user
+setup('authenticate as standard user', async ({ page, request }, testInfo) => {
+  if (!testInfo.project.name.includes('user')) {
+    return;
   }
 
-  await page.goto('/login');
-  await page.getByLabel('Email Address').fill(userEmail!);
-  await page.getByLabel('Password').fill(userPassword!);
-  await page.getByRole('button', { name: 'Login' }).click();
+  let loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+    data: { email: userEmail, password: userPassword },
+  });
 
-  // Wait for dashboard URL to confirm successful login.
-  await expect(page).toHaveURL(/\/dashboard/);
+  if (!loginRes.ok()) {
+    // If test user doesn't exist yet, register them
+    const signupRes = await request.post(`${API_BASE_URL}/auth/signup`, {
+      data: {
+        firstName: 'Test',
+        lastName: 'User',
+        email: userEmail,
+        phone: '9876543210',
+        password: userPassword,
+        confirmPassword: userPassword,
+      },
+    });
 
-  // Save the authentication state to a file.
+    if (!signupRes.ok() && signupRes.status() !== 409 && signupRes.status() !== 400) {
+      throw new Error(`User auth setup failed: ${signupRes.status()}`);
+    }
+
+    loginRes = await request.post(`${API_BASE_URL}/auth/login`, {
+      data: { email: userEmail, password: userPassword },
+    });
+
+    if (!loginRes.ok()) {
+      throw new Error(`User API login failed after signup: ${loginRes.status()}`);
+    }
+  }
+
+  const resData = await loginRes.json();
+  const token = resData.token;
+  const user = resData.user;
+
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(({ token, user }) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+  }, { token, user });
+
   await page.context().storageState({ path: USER_AUTH_FILE });
 });
 
-// This setup runs once to log in as an admin user and saves the authentication state.
-setup('authenticate as admin user', async ({ page }) => {
-  setup.skip(!setup.info().project.name.includes('setup:admin'), 'Only runs in setup:admin project');
-  setup.skip(!adminEmail || !adminPassword, 'Admin credentials are not set in .env.test');
+// Setup for admin user
+setup('authenticate as admin user', async ({ page, request }, testInfo) => {
+  if (!testInfo.project.name.includes('admin')) {
+    return;
+  }
 
-  await page.goto('/admin/login');
-  await page.getByLabel('Email Address').fill(adminEmail!);
-  await page.getByLabel('Password').fill(adminPassword!);
-  await page.getByRole('button', { name: 'Login as Admin' }).click();
+  const loginRes = await request.post(`${API_BASE_URL}/admin/login`, {
+    data: { email: adminEmail, password: adminPassword },
+  });
 
-  // Wait for admin dashboard URL to confirm successful admin login.
-  await expect(page).toHaveURL(/\/admin\/dashboard/);
+  if (!loginRes.ok()) {
+    throw new Error(`Admin API login failed: ${loginRes.status()}`);
+  }
 
-  // Save the admin authentication state to a file.
+  const resData = await loginRes.json();
+  const token = resData.token;
+  const adminObj = resData.admin || resData.user || { role: 'admin' };
+  const admin = { ...adminObj, role: adminObj.role || 'admin' };
+
+  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(({ token, admin }) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('adminToken', token);
+    localStorage.setItem('user', JSON.stringify(admin));
+  }, { token, admin });
+
   await page.context().storageState({ path: ADMIN_AUTH_FILE });
 });

@@ -1,7 +1,7 @@
 
 export type BookingStatus = 'pending' | 'approved' | 'rejected';
 export type PaymentMethod = 'cash';
-export type PaymentStatus = 'pending';
+export type PaymentStatus = 'pending' | 'paid';
 
 // This is the shape of a booking record from the /bookings API
 export type Booking = {
@@ -20,4 +20,5 @@ export type Booking = {
   status: BookingStatus;
   paymentMethod?: PaymentMethod;
   paymentStatus?: PaymentStatus;
+  paidAt?: string;
 };

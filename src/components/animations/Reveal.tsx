@@ -9,6 +9,25 @@ type RevealProps = {
   delay?: number;
 };
 
+export function HeroReveal({ children, className, delay = 0 }: RevealProps) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (shouldReduceMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0.01, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -21,8 +40,8 @@ export function Reveal({ children, className, delay = 0 }: RevealProps) {
       className={className}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.5, delay, ease: 'easeOut' }}
       style={{ willChange: 'transform, opacity' }}
     >
       {children}
@@ -48,7 +67,7 @@ export function StaggerReveal({ children, className, amount = 0.05 }: StaggerRev
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.1 }}
+      viewport={{ once: true, amount: 0.05 }}
       variants={{
         hidden: {},
         visible: {
@@ -62,10 +81,10 @@ export function StaggerReveal({ children, className, amount = 0.05 }: StaggerRev
         <motion.div
           key={index}
           variants={{
-            hidden: { opacity: 0, y: 20 },
+            hidden: { opacity: 0, y: 16 },
             visible: { opacity: 1, y: 0 },
           }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
           style={{ willChange: 'transform, opacity' }}
         >
           {child}

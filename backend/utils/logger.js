@@ -7,10 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logDir = path.resolve(__dirname, '../logs');
 
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-
 const baseFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.errors({ stack: true }),
@@ -28,23 +24,39 @@ const devConsoleFormat = winston.format.combine(
   })
 );
 
+const isServerlessOrProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+
+const transports = [
+  new winston.transports.Console({
+    format: isServerlessOrProd ? baseFormat : devConsoleFormat,
+  }),
+];
+
+if (!isServerlessOrProd) {
+  try {
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(logDir, 'error.log'),
+        level: 'error',
+        format: baseFormat,
+      }),
+      new winston.transports.File({
+        filename: path.join(logDir, 'combined.log'),
+        format: baseFormat,
+      })
+    );
+  } catch {
+    // Fallback safely if filesystem is restricted
+  }
+}
+
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   defaultMeta: { service: 'wind-sunset-backend' },
-  transports: [
-    new winston.transports.Console({
-      format: process.env.NODE_ENV === 'production' ? baseFormat : devConsoleFormat,
-    }),
-    new winston.transports.File({
-      filename: path.join(logDir, 'error.log'),
-      level: 'error',
-      format: baseFormat,
-    }),
-    new winston.transports.File({
-      filename: path.join(logDir, 'combined.log'),
-      format: baseFormat,
-    }),
-  ],
+  transports,
 });
 
 export default logger;

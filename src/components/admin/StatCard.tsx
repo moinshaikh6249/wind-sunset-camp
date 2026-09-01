@@ -17,78 +17,75 @@ interface StatCardProps {
 
 const colorConfig = {
     green: {
-    glow: 'shadow-[0_12px_28px_-20px_rgba(34,197,94,0.75)] hover:shadow-[0_24px_46px_-24px_rgba(34,197,94,0.9)]',
-    textGlow: '[text-shadow:0_0_16px_rgba(34,197,94,0.62)]',
-    iconBg: 'bg-gradient-to-br from-green-400/20 to-green-600/10 ring-1 ring-green-400/25',
-    iconColor: 'text-green-300',
-    },
-    blue: {
-    glow: 'shadow-[0_12px_28px_-20px_rgba(59,130,246,0.75)] hover:shadow-[0_24px_46px_-24px_rgba(59,130,246,0.9)]',
-    textGlow: '[text-shadow:0_0_16px_rgba(59,130,246,0.62)]',
-    iconBg: 'bg-gradient-to-br from-blue-400/20 to-blue-600/10 ring-1 ring-blue-400/25',
-    iconColor: 'text-blue-300',
-    },
-    purple: {
-    glow: 'shadow-[0_12px_28px_-20px_rgba(168,85,247,0.75)] hover:shadow-[0_24px_46px_-24px_rgba(168,85,247,0.9)]',
-    textGlow: '[text-shadow:0_0_16px_rgba(168,85,247,0.62)]',
-    iconBg: 'bg-gradient-to-br from-purple-400/20 to-purple-600/10 ring-1 ring-purple-400/25',
-    iconColor: 'text-purple-300',
+        glow: 'shadow-[0_8px_24px_-12px_rgba(34,197,94,0.3)] hover:shadow-[0_16px_36px_-16px_rgba(34,197,94,0.45)]',
+        textGlow: 'text-emerald-800 dark:text-emerald-300',
+        iconBg: 'bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30',
+        iconColor: 'text-emerald-700 dark:text-emerald-400',
     },
     orange: {
-    glow: 'shadow-[0_12px_28px_-20px_rgba(249,115,22,0.78)] hover:shadow-[0_24px_46px_-24px_rgba(249,115,22,0.92)]',
-    textGlow: '[text-shadow:0_0_16px_rgba(249,115,22,0.62)]',
-    iconBg: 'bg-gradient-to-br from-orange-400/20 to-orange-600/10 ring-1 ring-orange-400/30',
-    iconColor: 'text-orange-300',
+        glow: 'shadow-[0_8px_24px_-12px_rgba(245,158,11,0.35)] hover:shadow-[0_16px_36px_-16px_rgba(245,158,11,0.5)]',
+        textGlow: 'text-amber-800 dark:text-amber-300',
+        iconBg: 'bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30',
+        iconColor: 'text-amber-700 dark:text-amber-400',
+    },
+    blue: {
+        glow: 'shadow-[0_8px_24px_-12px_rgba(14,165,233,0.3)] hover:shadow-[0_16px_36px_-16px_rgba(14,165,233,0.45)]',
+        textGlow: 'text-sky-800 dark:text-sky-300',
+        iconBg: 'bg-sky-500/10 dark:bg-sky-500/20 border border-sky-500/30',
+        iconColor: 'text-sky-700 dark:text-sky-400',
+    },
+    purple: {
+        glow: 'shadow-[0_8px_24px_-12px_rgba(168,85,247,0.3)] hover:shadow-[0_16px_36px_-16px_rgba(168,85,247,0.45)]',
+        textGlow: 'text-purple-800 dark:text-purple-300',
+        iconBg: 'bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/30',
+        iconColor: 'text-purple-700 dark:text-purple-400',
     },
     default: {
-    glow: 'shadow-[0_10px_20px_-16px_rgba(148,163,184,0.7)] hover:shadow-[0_18px_32px_-18px_rgba(148,163,184,0.8)]',
-        textGlow: '',
-    iconBg: 'bg-muted/60 ring-1 ring-white/10',
+        glow: 'shadow-[0_8px_24px_-12px_rgba(148,163,184,0.3)] hover:shadow-[0_16px_36px_-16px_rgba(148,163,184,0.45)]',
+        textGlow: 'text-foreground',
+        iconBg: 'bg-muted border border-border/40',
         iconColor: 'text-muted-foreground',
     }
 };
 
 export function StatCard({ title, value, icon: Icon, description, isLoading, color }: StatCardProps) {
-
     if (isLoading) {
       return (
-        <Card className="glass-card rounded-2xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Skeleton className="h-5 w-24 shimmer-bg" />
-            <Skeleton className="h-10 w-10 rounded-full shimmer-bg" />
+        <Card className="glass-card rounded-2xl p-5 border border-border/40 bg-card/65 dark:bg-card/45">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
+            <Skeleton className="h-9 w-9 rounded-xl shimmer-bg" />
           </CardHeader>
-          <CardContent>
-             <Skeleton className="h-10 w-20 mb-2 shimmer-bg" />
-             <Skeleton className="h-3 w-40 shimmer-bg" />
+          <CardContent className="p-0 pt-2">
+             <Skeleton className="h-8 w-20 mb-2 shimmer-bg" />
+             <Skeleton className="h-3 w-36 shimmer-bg" />
           </CardContent>
         </Card>
-      )
+      );
     }
 
     const styles = color ? colorConfig[color] : colorConfig.default;
 
     return (
         <Card className={cn(
-        "relative overflow-hidden border border-white/10 bg-slate-900/55 transition-all duration-300 ease-out",
-        "transform hover:scale-[1.03] hover:-translate-y-1.5",
-        "glass-card rounded-2xl before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(120deg,rgba(34,197,94,0.08),transparent_35%,rgba(249,115,22,0.08))] before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100",
+            "relative overflow-hidden glass-card rounded-2xl p-5 border border-border/40 bg-card/65 dark:bg-card/45 transition-all duration-300 ease-out ios-press hover:-translate-y-1",
             styles.glow
         )}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-              <div className={cn("rounded-full p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]", styles.iconBg)}>
-                 <Icon className={cn("h-6 w-6", styles.iconColor)} />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
+            <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl shadow-sm transition-transform group-hover:scale-110", styles.iconBg)}>
+                 <Icon className={cn("h-5 w-5", styles.iconColor)} />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-2">
             <div className={cn(
-                "text-4xl font-bold leading-tight",
+                "text-3xl font-extrabold tracking-tight font-headline",
                 styles.textGlow
              )}>
                 {value}
             </div>
-            <p className="text-xs text-muted-foreground/70">{description}</p>
+            <p className="mt-1 text-[11px] font-medium text-muted-foreground/80">{description}</p>
           </CardContent>
         </Card>
-    )
+    );
 }

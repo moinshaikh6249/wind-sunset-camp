@@ -8,5 +8,6 @@ router.get('/search', campController.searchCamps);
 router.get('/upcoming', campController.getUpcomingCamps);
 router.get('/featured', campController.getFeaturedCamps);
 router.get('/:id', campController.getCampById);
+router.get('/:id/availability', campController.getCampAvailability);
 
 export default router;
