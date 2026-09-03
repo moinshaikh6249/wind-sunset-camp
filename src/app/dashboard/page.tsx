@@ -54,7 +54,7 @@ import { UserMemoryUploadModal } from "@/components/memories/UserMemoryUploadMod
 import { CampsiteBookingPassModal } from "@/components/booking/CampsiteBookingPassModal";
 import { buildBookingWhatsappUrl } from "@/lib/whatsapp";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { DEFAULT_USER_NOTIFICATIONS, NotificationItem } from "@/lib/notifications";
+import { buildUserNotificationsFromBookings, NotificationItem } from "@/lib/notifications";
 import {
   Dialog,
   DialogContent,
@@ -135,7 +135,8 @@ export default function DashboardPage() {
   const [camps, setCamps] = useState<Camp[]>([]);
   const [history, setHistory] = useState<ActivityLog[]>([]);
   const [memoriesCount, setMemoriesCount] = useState<number>(0);
-  const [notifications] = useState<NotificationItem[]>(DEFAULT_USER_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
 
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [areCampsLoading, setAreCampsLoading] = useState(false);
@@ -225,10 +226,7 @@ export default function DashboardPage() {
     const fetchBookings = async () => {
       try {
         setAreBookingsLoading(true);
-        const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-        const response = await api.get("/bookings/my", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const response = await api.get("/bookings/my");
         const bookingsData = Array.isArray(response)
           ? response
           : Array.isArray(response?.bookings)
@@ -240,6 +238,8 @@ export default function DashboardPage() {
             status: typeof booking.status === "string" ? booking.status.toLowerCase() : "pending",
           }))
         );
+        setNotifications(buildUserNotificationsFromBookings(bookingsData));
+
       } catch (error) {
         console.error("Error fetching bookings:", error);
       } finally {

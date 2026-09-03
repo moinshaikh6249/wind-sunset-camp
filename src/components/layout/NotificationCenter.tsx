@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import {
-  DEFAULT_USER_NOTIFICATIONS,
+  buildUserNotificationsFromBookings,
   formatNotificationTime,
   getUnreadCountFromApi,
   NotificationItem,
@@ -24,18 +24,14 @@ import {
 } from "@/lib/notifications";
 
 export function NotificationCenter() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const role = ["admin", "super-admin"].includes(user?.role || "") ? "admin" : "user";
   const isAdmin = role === "admin";
-  const [notifications, setNotifications] = React.useState<NotificationItem[]>(
-    isAdmin ? [] : DEFAULT_USER_NOTIFICATIONS
-  );
-  const [unreadCount, setUnreadCount] = React.useState<number>(
-    isAdmin ? 0 : DEFAULT_USER_NOTIFICATIONS.filter((item) => !item.isRead).length
-  );
+  const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = React.useState<number>(0);
 
   const fetchAdminNotifications = React.useCallback(async () => {
-    if (!isAdmin) return;
+    if (!isAdmin || !user) return;
 
     try {
       const payload = await api.get("/notifications?limit=80");
@@ -45,22 +41,40 @@ export function NotificationCenter() {
     } catch {
       // Keep current list if request fails.
     }
-  }, [isAdmin]);
+  }, [isAdmin, user]);
+
+  const fetchUserNotifications = React.useCallback(async () => {
+    if (!user || isAdmin) return;
+
+    try {
+      const userBookings = await api.get("/bookings/my");
+      const userNotifs = buildUserNotificationsFromBookings(userBookings);
+      setNotifications(userNotifs);
+      setUnreadCount(userNotifs.filter((n) => !n.isRead).length);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user, isAdmin]);
 
   React.useEffect(() => {
-    if (!isAdmin) {
-      setNotifications(DEFAULT_USER_NOTIFICATIONS);
-      setUnreadCount(DEFAULT_USER_NOTIFICATIONS.filter((item) => !item.isRead).length);
+    if (loading || !user) {
+      setNotifications([]);
+      setUnreadCount(0);
       return;
     }
 
-    void fetchAdminNotifications();
-    const intervalId = window.setInterval(() => {
+    if (isAdmin) {
       void fetchAdminNotifications();
-    }, 30000);
+      const intervalId = window.setInterval(() => {
+        void fetchAdminNotifications();
+      }, 30000);
 
-    return () => window.clearInterval(intervalId);
-  }, [fetchAdminNotifications, isAdmin]);
+      return () => window.clearInterval(intervalId);
+    }
+
+    void fetchUserNotifications();
+  }, [fetchAdminNotifications, fetchUserNotifications, isAdmin, loading, user]);
 
   const notificationsPageHref = isAdmin ? "/admin/notifications" : "/notifications";
 

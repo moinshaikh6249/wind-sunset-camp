@@ -119,3 +119,52 @@ export function getUnreadCountFromApi(payload: any, notifications: NotificationI
 
   return notifications.filter((item) => !item.isRead).length;
 }
+
+export function buildUserNotificationsFromBookings(bookings: any[]): NotificationItem[] {
+  if (!Array.isArray(bookings)) return [];
+  const items: NotificationItem[] = [];
+
+  for (const b of bookings) {
+    const bookingId = String(b._id || b.id || "");
+    if (!bookingId) continue;
+
+    const campName = b.campName || b.campId?.name || "Pawna Lake Camp";
+    const status = String(b.status || "pending").toLowerCase();
+    const createdAt = b.createdAt || new Date().toISOString();
+    const updatedAt = b.updatedAt || createdAt;
+
+    if (status === "approved" || status === "confirmed") {
+      items.push({
+        id: `unotif-${bookingId}-approved`,
+        type: "booking_approved",
+        title: "Booking Confirmed",
+        message: `Your booking for ${campName} is confirmed!`,
+        isRead: false,
+        createdAt: updatedAt,
+      });
+    } else if (status === "pending") {
+      items.push({
+        id: `unotif-${bookingId}-pending`,
+        type: "pending_booking_approval",
+        title: "Booking Received",
+        message: `Your booking request for ${campName} is pending approval.`,
+        isRead: false,
+        createdAt: createdAt,
+      });
+    } else if (status === "rejected" || status === "cancelled") {
+      items.push({
+        id: `unotif-${bookingId}-rejected`,
+        type: "booking_rejected",
+        title: "Booking Update",
+        message: `Your booking for ${campName} status is ${status}.`,
+        isRead: false,
+        createdAt: updatedAt,
+      });
+    }
+  }
+
+  return dedupeNotifications(items).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
