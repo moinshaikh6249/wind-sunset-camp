@@ -58,7 +58,11 @@ const getCamp = async (id?: string) => {
   }
 
   try {
-    const backendApiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const backendApiUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}/api`
+        : 'http://localhost:5000/api');
     const response = await fetch(`${backendApiUrl}/camps/${id}`, {
       cache: 'no-store',
     });
