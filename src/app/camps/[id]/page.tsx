@@ -60,9 +60,11 @@ const getCamp = async (id?: string) => {
   try {
     const backendApiUrl =
       process.env.NEXT_PUBLIC_API_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}/api`
-        : 'http://localhost:5000/api');
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api`
+        : process.env.NODE_ENV === 'production'
+          ? 'https://wind-sunset-camp.vercel.app/api'
+          : 'http://localhost:5000/api');
     const response = await fetch(`${backendApiUrl}/camps/${id}`, {
       cache: 'no-store',
     });
@@ -73,6 +75,13 @@ const getCamp = async (id?: string) => {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch camp: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(
+        `Camp API returned non-JSON response: ${response.status} ${contentType} (${backendApiUrl})`
+      );
     }
 
     const payload = await response.json();
